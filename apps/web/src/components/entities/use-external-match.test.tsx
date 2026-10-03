@@ -107,6 +107,26 @@ function Harness() {
 }
 
 describe("external matching", () => {
+  it.each(["zh-Hans", "zh-Hant"])(
+    "preserves %s when reviewing provider details",
+    async (language) => {
+      vi.mocked(reviewMatch).mockResolvedValue({
+        entityType: "stories",
+        candidate: result("chosen").items[0].candidate,
+        fields: [],
+        sections: [],
+      });
+      useLanguageStore.setState({ language });
+      const screen = await render(<Harness />);
+      await screen.getByRole("button", { name: "Open", exact: true }).click();
+      await screen.getByRole("button", { name: "Choose" }).click();
+      expect(reviewMatch).toHaveBeenLastCalledWith("first", {
+        candidate: result("chosen").items[0].candidate,
+        language,
+      });
+    },
+  );
+
   it("shares provider availability and ignores a superseded response", async () => {
     const screen = await render(<Harness />);
     await screen.getByRole("button", { name: "Open", exact: true }).click();

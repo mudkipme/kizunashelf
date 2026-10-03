@@ -1361,6 +1361,99 @@ fn bangumi_candidate() -> Value {
     })
 }
 
+/// Exercises the thin-search → detail → Markdown path against TMDB. Run with
+/// KIZUNASHELF_TMDB_API_KEY set; ordinary tests never require network access.
+#[tokio::test]
+#[ignore = "hits live TMDB API; needs KIZUNASHELF_TMDB_API_KEY"]
+async fn external_match_preserves_chinese_summary_live() {
+    for language in ["zh-Hans", "zh-Hant"] {
+        let temp = TempDir::new().unwrap();
+        let vault = temp.path().join("vault");
+        write_vault_config(
+            &vault,
+            &json!({
+                "taxonomyRoot": "Taxonomy",
+                "types": [{
+                    "id": "movie", "label": "Movie", "path": "Movies",
+                    "fields": [
+                        { "field": "title", "fieldType": "title", "titleLanguage": "zh" },
+                        { "field": "source", "fieldType": "externalRef",
+                          "externalRef": "tmdb", "externalTypes": ["movie"] }
+                    ],
+                    "bodySections": [{ "heading": "Summary", "kind": "external",
+                        "externalFields": [{ "source": "tmdb", "field": "overview" }] }]
+                }]
+            }),
+        );
+        write_file(
+            &vault.join("Taxonomy/Movies/Film.md"),
+            "---\ntitle: Film\n---\n",
+        );
+        let app = inline_router(&vault, true, true);
+        let (status, search) = request_json(
+            &app,
+            Method::GET,
+            &format!(
+                "/api/external/search?type=movie&provider=tmdb&q=Inception&language={language}"
+            ),
+            None,
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+        let candidate = search["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|item| &item["candidate"])
+            .find(|candidate| {
+                candidate["url"]
+                    .as_str()
+                    .is_some_and(|url| url.ends_with("/27205"))
+            })
+            .expect("TMDB should return Inception");
+        assert_eq!(candidate["needsDetail"], true);
+        let overview = candidate["metadata"]["overview"].as_str().unwrap();
+        assert!(overview
+            .chars()
+            .any(|c| ('\u{4e00}'..='\u{9fff}').contains(&c)));
+        let path = "/api/entities/movie%3AFilm";
+        let (status, review) = request_json(
+            &app,
+            Method::POST,
+            &format!("{path}/external/review"),
+            Some(json!({ "candidate": candidate, "language": language })),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(review["sections"][0]["markdown"], overview);
+        assert_ne!(review["candidate"]["needsDetail"], true);
+
+        // Both the normal reviewed-candidate path and direct apply of a thin
+        // candidate must preserve the language. Each apply gets a fresh revision.
+        for incoming in [&review["candidate"], candidate] {
+            let (_, detail) = request_json(&app, Method::GET, path, None).await;
+            let (status, applied) = request_json(
+                &app,
+                Method::POST,
+                &format!("{path}/external/apply"),
+                Some(json!({
+                    "revision": detail["entity"]["revision"],
+                    "candidate": incoming, "language": language,
+                    "fields": [], "sections": [review["sections"][0]["key"]]
+                })),
+            )
+            .await;
+            assert_eq!(status, StatusCode::OK);
+            assert_eq!(
+                applied["entity"]["body"].as_str().unwrap().trim(),
+                format!("## Summary\n\n{overview}")
+            );
+        }
+        let saved = fs::read_to_string(vault.join("Taxonomy/Movies/Film.md")).unwrap();
+        assert!(saved.contains(overview));
+    }
+}
+
 #[tokio::test]
 async fn external_review_reports_defaults_against_the_entity() {
     let (app, _vault, _temp) = external_apply_fixture();

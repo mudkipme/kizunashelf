@@ -37,8 +37,13 @@ pub(crate) async fn review_external_candidate(
     let vfs = state.vault_vfs(&library.config.vault_root);
     let entity = load_entity(&library.config, vfs.as_ref(), &record.summary).await?;
 
-    let candidate =
-        super::enrich_candidate_for_type(&state, request.candidate, type_config, None).await?;
+    let candidate = super::enrich_candidate_for_type(
+        &state,
+        request.candidate,
+        type_config,
+        request.language.as_deref(),
+    )
+    .await?;
     let resolved = match_candidate(candidate.clone(), type_config);
     let fields = resolved
         .fields
@@ -107,8 +112,13 @@ pub(crate) async fn apply_external_candidate(
     let source_rel = record.summary.path.clone();
 
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let candidate =
-        super::enrich_candidate_for_type(&state, request.candidate, type_config, None).await?;
+    let candidate = super::enrich_candidate_for_type(
+        &state,
+        request.candidate,
+        type_config,
+        request.language.as_deref(),
+    )
+    .await?;
     let resolved = match_candidate(candidate, type_config);
     let selected_fields: HashSet<&str> = request.fields.iter().map(String::as_str).collect();
     let selected_sections: HashSet<&str> = request.sections.iter().map(String::as_str).collect();

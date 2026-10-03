@@ -24,6 +24,7 @@ export const ApplyExternalCandidateBody = zod.object({
   "metadata": zod.record(zod.string(), zod.unknown()).default(applyExternalCandidateBodyCandidateMetadataDefault),
   "needsDetail": zod.boolean().optional().describe('Set on free-text search results, which providers return deliberately\nthin: before the candidate is reviewed, applied, or quick-added, the\nserver re-resolves its full detail (once — the flag is cleared then).\nClients pass it back unchanged with the candidate.')
 }),
+  "language": zod.string().nullish().describe('The viewer\'s language preference (including script subtags), used when\nresolving full provider details for a search candidate.'),
   "fields": zod.array(zod.string()).default(applyExternalCandidateBodyFieldsDefault).describe('Field keys to apply, from the review\'s `fields`.'),
   "sections": zod.array(zod.string()).default(applyExternalCandidateBodySectionsDefault).describe('Body-section keys to apply, from the review\'s `sections`.')
 }).describe('Apply a reviewed candidate to an existing entity. The core re-resolves the\ncandidate server-side (it never trusts client-mapped values), merges the\nselected fields into frontmatter, and splices each selected body section\nunder its heading (replacing existing content, appending a new `##` section\notherwise). Revision-guarded like every entity write.')

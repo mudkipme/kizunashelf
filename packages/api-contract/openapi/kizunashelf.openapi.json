@@ -8020,6 +8020,13 @@
         "properties": {
           "candidate": {
             "$ref": "#/components/schemas/ExternalCandidate"
+          },
+          "language": {
+            "description": "The viewer's language preference (including script subtags), used when\nresolving full provider details for a search candidate.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -8153,6 +8160,13 @@
           },
           "candidate": {
             "$ref": "#/components/schemas/ExternalCandidate"
+          },
+          "language": {
+            "description": "The viewer's language preference (including script subtags), used when\nresolving full provider details for a search candidate.",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "fields": {
             "description": "Field keys to apply, from the review's `fields`.",

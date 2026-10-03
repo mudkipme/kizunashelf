@@ -73,7 +73,7 @@ import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { todayLocal } from "@/lib/date";
-import { useTitleLanguage } from "@/lib/language";
+import { useLanguagePreference, useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
 import { entityTitle } from "@/lib/title-language";
 import {
@@ -97,6 +97,7 @@ export function EntityPage() {
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
   const language = useTitleLanguage();
+  const providerLanguage = useLanguagePreference();
   const { saving, run } = useEntityMutation();
   const [renameOpen, setRenameOpen] = useState(false);
   const [manageListsOpen, setManageListsOpen] = useState(false);
@@ -179,6 +180,7 @@ export function EntityPage() {
         const result = await applyMatch(entity.id, {
           revision: entity.revision,
           candidate,
+          language: providerLanguage,
           fields: [...external.selectedFields],
           sections: [...external.selectedBodySections],
         });

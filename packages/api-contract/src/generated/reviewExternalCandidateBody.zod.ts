@@ -20,7 +20,8 @@ export const ReviewExternalCandidateBody = zod.object({
   "titles": zod.record(zod.string(), zod.string()).default(reviewExternalCandidateBodyCandidateTitlesDefault),
   "metadata": zod.record(zod.string(), zod.unknown()).default(reviewExternalCandidateBodyCandidateMetadataDefault),
   "needsDetail": zod.boolean().optional().describe('Set on free-text search results, which providers return deliberately\nthin: before the candidate is reviewed, applied, or quick-added, the\nserver re-resolves its full detail (once — the flag is cleared then).\nClients pass it back unchanged with the candidate.')
-})
+}),
+  "language": zod.string().nullish().describe('The viewer\'s language preference (including script subtags), used when\nresolving full provider details for a search candidate.')
 }).describe('Review a chosen candidate against an existing entity: the core re-resolves\nthe candidate\'s schema mapping and returns, per field and body section, the\nincoming and current values plus the default selection policy. The client\nrenders toggles from this and passes the confirmed keys to the apply\nendpoint — the policy and the Markdown section comparison live here so every\nruntime reviews a match identically.')
 
 export type ReviewExternalCandidateBody = zod.input<typeof ReviewExternalCandidateBody>;

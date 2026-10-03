@@ -1656,6 +1656,10 @@ pub struct ExternalSearchResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ExternalReviewRequest {
     pub candidate: ExternalCandidate,
+    /// The viewer's language preference (including script subtags), used when
+    /// resolving full provider details for a search candidate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
 }
 
 /// One frontmatter field of a reviewed candidate, with its default selection.
@@ -1721,6 +1725,10 @@ pub struct ExternalReviewResponse {
 pub struct ExternalApplyRequest {
     pub revision: String,
     pub candidate: ExternalCandidate,
+    /// The viewer's language preference (including script subtags), used when
+    /// resolving full provider details for a search candidate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
     /// Field keys to apply, from the review's `fields`.
     #[serde(default)]
     pub fields: Vec<String>,

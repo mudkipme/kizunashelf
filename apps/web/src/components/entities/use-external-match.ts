@@ -297,7 +297,7 @@ export function useExternalMatch({
       if (!entityId) return;
       void (async () => {
         try {
-          const result = await reviewMatch(entityId, { candidate: match.candidate });
+          const result = await reviewMatch(entityId, { candidate: match.candidate, language });
           if (token !== reviewToken.current) return;
           setReview(result);
           setSelectedFields(
@@ -314,7 +314,7 @@ export function useExternalMatch({
         }
       })();
     },
-    [entityId],
+    [entityId, language],
   );
 
   // Locked/replace-vs-append flags for the dialog, straight from the review.
