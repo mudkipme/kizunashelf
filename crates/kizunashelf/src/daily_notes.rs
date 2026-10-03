@@ -129,11 +129,28 @@ pub(crate) async fn daily_note_candidates(
     Ok(pending)
 }
 
-/// Largest number of daily notes whose contents are held in memory at once when
-/// scanning the whole vault (e.g. building daily-note relations). Bounds peak
-/// memory so a vault with very many (or very large) daily notes cannot OOM the
-/// relation pass.
-pub(crate) const DAILY_NOTE_READ_CHUNK: usize = 64;
+/// Choose a content-read batch using sizes from the discovery listing. Tiny
+/// fixed-count batches repeatedly enumerate large directories on document-backed
+/// VFSes. Pack small notes together, while limiting both estimated bytes and FFI
+/// record count. Unknown sizes retain the old 64-file bound. A single oversized
+/// file still needs to be read, and listing sizes can become stale, so this is a
+/// working-set target rather than a hard allocation limit.
+pub(crate) fn daily_note_read_batch_len(sizes: impl Iterator<Item = u64>) -> usize {
+    const TARGET_BYTES: u64 = 8 * 1024 * 1024;
+    const MAX_FILES: usize = 1024;
+    const UNKNOWN_BYTES: u64 = TARGET_BYTES / 64;
+    let mut bytes = 0u64;
+    let mut count = 0;
+    for size in sizes.take(MAX_FILES) {
+        let size = if size == 0 { UNKNOWN_BYTES } else { size };
+        if count > 0 && size > TARGET_BYTES.saturating_sub(bytes) {
+            break;
+        }
+        bytes = bytes.saturating_add(size);
+        count += 1;
+    }
+    count
+}
 
 /// Reads a batch of daily-note files, returning `(relative_path, contents)` for
 /// each that could be read and UTF-8 decoded. Files that fail either are dropped
@@ -528,6 +545,25 @@ pub(crate) async fn write_log_line(
 #[cfg(test)]
 mod tests {
     use super::{daily_note_date, moment_format_to_chrono, normalize_wikilink_target};
+
+    #[test]
+    fn daily_note_batches_pack_small_files_and_bound_large_or_unknown_sizes() {
+        use super::daily_note_read_batch_len;
+        assert_eq!(daily_note_read_batch_len(std::iter::repeat(1024)), 1024);
+        assert_eq!(
+            daily_note_read_batch_len(std::iter::repeat(2 * 1024 * 1024)),
+            4
+        );
+        assert_eq!(daily_note_read_batch_len(std::iter::repeat(0)), 64);
+        assert_eq!(daily_note_read_batch_len([u64::MAX, 1].into_iter()), 1);
+        assert_eq!(daily_note_read_batch_len([1, u64::MAX].into_iter()), 1);
+        assert_eq!(
+            daily_note_read_batch_len([4 * 1024 * 1024, 4 * 1024 * 1024, 1].into_iter()),
+            2
+        );
+        assert_eq!(daily_note_read_batch_len([17, 0, 23].into_iter()), 3);
+        assert_eq!(daily_note_read_batch_len(std::iter::empty()), 0);
+    }
 
     #[test]
     fn moment_tokens_map_to_chrono() {

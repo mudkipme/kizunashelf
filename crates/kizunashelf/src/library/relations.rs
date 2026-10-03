@@ -1,6 +1,6 @@
 use crate::daily_notes::{
-    daily_note_candidates, normalize_wikilink_target, read_daily_note_contents, strip_frontmatter,
-    DAILY_NOTE_READ_CHUNK,
+    daily_note_candidates, daily_note_read_batch_len, normalize_wikilink_target,
+    read_daily_note_contents, strip_frontmatter,
 };
 use crate::types::{EntityRecord, FieldType, KizunaConfig, Relation, RelationDirection};
 use crate::vfs::Vfs;
@@ -225,9 +225,17 @@ pub(super) async fn read_daily_note_links(
     }
 
     let misses = miss_paths.len();
-    // Read changed/new notes in bounded chunks so a vault with very many/large
-    // daily notes can't OOM here.
-    for chunk in miss_paths.chunks(DAILY_NOTE_READ_CHUNK) {
+    // Use the already-listed sizes to amortize document-provider directory
+    // lookups for small notes without holding many large bodies at once.
+    let mut remaining = miss_paths.as_slice();
+    while !remaining.is_empty() {
+        let count = daily_note_read_batch_len(
+            remaining
+                .iter()
+                .map(|path| miss_meta.get(path).map_or(0, |meta| meta.1)),
+        );
+        let (chunk, rest) = remaining.split_at(count);
+        remaining = rest;
         for (relative_path, contents) in read_daily_note_contents(vfs, chunk).await? {
             let Some((source_id, len, modified_unix_nanos)) = miss_meta.remove(&relative_path)
             else {
