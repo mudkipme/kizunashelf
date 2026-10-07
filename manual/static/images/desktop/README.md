@@ -1,6 +1,6 @@
 # Desktop manual captures
 
-Captured on 2026-09-05 from the installed `/Applications/KizunaShelf.app` on macOS. These are native Retina app-window captures: **2704 × 1786 pixels for a 1352 × 893-point window (2×)**, stored as lossless PNGs with their original color profile. The screen-mirroring badge was replaced with the standard red, yellow, and green window controls. Only the 136 × 44-pixel badge area at `(10, 10)` was repaired; all other pixels retain the native capture. No images were upscaled. The app uses an existing vault with custom English labels and multilingual content; the recipes use the English built-in presets, so their labels can differ.
+Captured on 2026-09-05 from the installed `/Applications/KizunaShelf.app` on macOS. These are native Retina app-window captures: **2704 × 1786 pixels for a 1352 × 893-point window (2×)**, stored as lossless PNGs with their original color profile. The screen-mirroring badge was replaced with the standard red, yellow, and green window controls. Only the 136 × 44-pixel badge area at `(10, 10)` was repaired; all other pixels retain the native capture. No images were upscaled. The app uses an existing vault with custom English labels and multilingual content; its labels can differ from the English built-in presets.
 
 | File | View |
 | --- | --- |

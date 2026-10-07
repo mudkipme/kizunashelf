@@ -1,51 +1,58 @@
-/* The self-hosted brand faces (`static/assets/fonts/`), shared by the landing
- * page and the manual: Bookman for display headings, JetBrains Mono for code,
- * Century Schoolbook for the landing page's body prose. */
+/* Shared brand faces loaded from jsDelivr at pinned upstream commits:
+ * Bookman for display headings, JetBrains Mono for code, and Century Schoolbook
+ * for the landing page's body prose. System fonts remain available as fallbacks. */
 @font-face {
   font-family: "Bookman";
-  src: url("/assets/fonts/bookman-demi.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@3c0ba3b5687632dfc66526544a4e811fe0ec0cd9/fonts/URWBookman-Demi.otf")
+    format("opentype");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Bookman";
-  src: url("/assets/fonts/bookman-light.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@3c0ba3b5687632dfc66526544a4e811fe0ec0cd9/fonts/URWBookman-Light.otf")
+    format("opentype");
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Bookman";
-  src: url("/assets/fonts/bookman-lightitalic.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@3c0ba3b5687632dfc66526544a4e811fe0ec0cd9/fonts/URWBookman-LightItalic.otf")
+    format("opentype");
   font-weight: 300;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: "Schoolbook";
-  src: url("/assets/fonts/c059-roman.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@3c0ba3b5687632dfc66526544a4e811fe0ec0cd9/fonts/C059-Roman.otf")
+    format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Schoolbook";
-  src: url("/assets/fonts/c059-italic.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@3c0ba3b5687632dfc66526544a4e811fe0ec0cd9/fonts/C059-Italic.otf")
+    format("opentype");
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: "Schoolbook";
-  src: url("/assets/fonts/c059-bold.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@3c0ba3b5687632dfc66526544a4e811fe0ec0cd9/fonts/C059-Bold.otf")
+    format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "JBMono";
-  src: url("/assets/fonts/jbmono.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@19371302b95d218af43299bce79ddbddd0bc364d/fonts/webfonts/JetBrainsMono-Regular.woff2")
+    format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;

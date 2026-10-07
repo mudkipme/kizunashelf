@@ -11,12 +11,11 @@ Your library is a folder of Markdown files. You can open the same files in Obsid
 ## Start here
 
 - [Create your first vault](./start/quickstart.md), then [add something to it](./features/adding.mdx).
-- Try a [cookbook example](./cookbook/index.md) for anime, games, books, movies, or music.
 - Learn how to [use an existing Obsidian vault](./guides/obsidian.md) or [sync between devices](./guides/syncing.md).
 - Look up an option in the [reference](./reference/index.md).
 
 ## Choose an app
 
-The iPhone and iPad app is available through [TestFlight](https://testflight.apple.com/join/hE7k3sWd). Desktop and self-hosted web releases are coming soon.
+The iPhone and iPad app is available through [TestFlight](https://testflight.apple.com/join/hE7k3sWd). The [self-hosted web app](./start/self-hosting.md) is available as a Docker image, with source code on [GitHub](https://github.com/mudkipme/kizunashelf). Desktop releases are coming soon.
 
 All three use the same vault format. The iOS app also has [widgets, reminders, Spotlight search, and Shortcuts](./features/ios.mdx).

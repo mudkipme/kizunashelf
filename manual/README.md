@@ -11,10 +11,10 @@ The site is a normal pnpm workspace project, so a plain `pnpm install` at the re
 
 ## Structure
 
-- **`src/pages/index.tsx` — the landing page at `/`.** It is deliberately standalone: it renders *without* the Docusaurus `<Layout>` (no navbar, no footer, no sidebar) and brings its own complete stylesheet, `src/css/home.css`. Its assets live in `static/assets/` (fonts + webp images; favicons and og-image are shared with `static/icons/` and `static/images/`). The header nav and a hero button link to `/introduction/`, and the manual's navbar wordmark links back to `/`.
+- **`src/pages/index.tsx` — the landing page at `/`.** It is deliberately standalone: it renders *without* the Docusaurus `<Layout>` (no navbar, no footer, no sidebar) and brings its own complete stylesheet, `src/css/home.css`. Its images live in `static/assets/` (favicons and og-image are shared with `static/icons/` and `static/images/`). Fonts load from jsDelivr via `src/css/fonts.css`, using pinned upstream commits and system font fallbacks. The header nav and a hero button link to `/introduction/`, and the manual's navbar wordmark links back to `/`.
   - Every rule in `home.css` is scoped under `body.home-page` (the class is set from the page's `<Head>`). That is load-bearing twice over: it outranks Infima's bare element selectors, which are loaded on every route, and it stops the landing-page styles from leaking into docs pages after a client-side navigation.
   - Light/dark keys off Docusaurus's own `data-theme` attribute on `<html>`, so the theme toggle in the manual carries over to the landing page.
-- **`content/` — the docs.** Served at the site root (`routeBasePath: "/"`), so pages live at `/introduction/`, `/reference/config/`, and so on. Order: `introduction` → `start/` → `concepts/` → `features/` → `cookbook/` → `guides/` → `reference/` → `faq` → `privacy`, from each page's `sidebar_position` and each section's `_category_.json`. Sidebar, search (⌘K, via `@easyops-cn/docusaurus-search-local`), and the dark/light toggle come from the theme.
+- **`content/` — the docs.** Served at the site root (`routeBasePath: "/"`), so pages live at `/introduction/`, `/reference/config/`, and so on. Order: `introduction` → `start/` → `concepts/` → `features/` → `guides/` → `reference/` → `privacy`, from each page's `sidebar_position` and each section's `_category_.json`. Sidebar, search (⌘K, via `@easyops-cn/docusaurus-search-local`), and the dark/light toggle come from the theme.
 - `features/` has one page per workflow. Each page links to the reference for configuration details; keep procedures here instead of repeating them in the reference.
 - **Terminology is standardized** in `concepts/terminology.md` — notably *entity* (never entry/item/record) for one thing in the library, *item* only for checklist/list items, *match* (not sync) for provider metadata. Follow it in every page.
 - **Generated pages** — `reference/field-types.md`, `reference/providers.md`, and `reference/presets.md` are emitted from the Rust source by the `kizunashelf-docs` bin (`pnpm docs:generate` at the repo root) and carry a GENERATED banner; CI regenerates and diffs `manual/content/reference`, so edit the Rust source (types.rs / the provider registry / presets.rs / bin/docs.rs), never these files.
@@ -48,7 +48,7 @@ Personal dates, ratings, and notes are illustrative. Unit tests may use syntheti
 
 ## Adding screenshots
 
-Desktop captures from `docs/manual-update` (`1a3c9b9`) live in `manual/static/images/desktop/`; their [capture notes](static/images/desktop/README.md) list each view and how to replace it. The original PNGs are preserved. Some show an earlier app version or different examples and can be refreshed later.
+Desktop captures live in `manual/static/images/desktop/`; their [capture notes](static/images/desktop/README.md) list each view and how to replace it. The original PNGs are preserved. Some show an earlier app version or different examples and can be refreshed later.
 
 Put iOS captures in `manual/static/assets/screenshots/ios/`. Reference them with `/assets/screenshots/ios/<name>.webp`; do not add paths until the corresponding files exist.
 
@@ -69,15 +69,16 @@ Priority iOS captures:
 | Capture | Placement |
 | --- | --- |
 | Updated Home with pinned smart lists | Replace `/assets/screenshot.webp` in the homepage hero; also use on `features/home.mdx`. |
-| Library browsing | Homepage “A closer look” first slot; optionally `features/browse.mdx`. |
-| Entity detail and episodes | Homepage second slot and `features/episodes.mdx`. |
-| Activity history | Homepage third slot and `features/calendar.mdx`. |
+| Library browsing | `features/browse.mdx`. |
+| Entity detail and episodes | `features/episodes.mdx`. |
+| Activity history | `features/calendar.mdx`. |
 | Quick Capture and import review | Their feature pages; keep lookup and collection-import captures distinct. |
 | Widget, Spotlight, sharing, and Shortcuts | The reserved frames on `features/ios.mdx`. |
 
 Reuse a capture when it illustrates the same task. Other feature pages already have captioned iOS spaces. The existing hero is an earlier beta capture; update its alt text when replacing it.
 
-## Planned
+## Deployment
 
-- Translations (ja / zh-Hans / zh-Hant) after the English manual settles.
-- Deployment of `manual/build/`; building and link checking already run in CI.
+The [GitHub workflow](../.github/workflows/ci.yml) builds the site with the app's checks and publishes `manual/build/` to GitHub Pages after a successful run on `main`. Pull requests build and check the site without deploying it.
+
+In the GitHub repository's **Settings → Pages**, select **GitHub Actions** as the source and set the custom domain to `kizunashelf.app`. Configure the domain's DNS for GitHub Pages and enable **Enforce HTTPS** once the certificate is ready. The Docusaurus configuration already uses `https://kizunashelf.app` with root-relative routes. With an Actions deployment, the custom domain is configured in repository settings rather than a `CNAME` file. See [GitHub's custom-domain instructions](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).

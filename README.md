@@ -46,8 +46,8 @@ One Rust core interprets the schema and Markdown everywhere. Web and desktop sha
 
 | App | How it fits |
 | --- | --- |
-| **Self-hosted web** | Serves one vault per instance through a browser. |
-| **Desktop** | Opens, creates, and switches between local vaults. |
+| **Self-hosted web** | Available via Docker. Serves one vault per instance through a browser. |
+| **Desktop** | Coming soon. Opens, creates, and switches between local vaults. |
 | **iOS** | Full native mobile app with Liquid Glass design, widgets, notifications, Spotlight and Shortcuts integration. |
 
 Browsing and editing a locally available vault do not depend on a KizunaShelf server. External metadata searches, cover downloads, and cloud or File Provider synchronization use their respective network services when needed.
@@ -67,18 +67,31 @@ KizunaShelf can import a library from MyAnimeList, AniList, Kitsu, Trakt, Steam,
 
 ## Quick start
 
+Run the web app with the published Docker image:
+
+```bash
+mkdir -p vault
+docker run -p 127.0.0.1:8787:8787 \
+  -v "$PWD/vault:/vault" \
+  -e KIZUNASHELF_CONTENT_WRITABLE=true \
+  -e KIZUNASHELF_SETTINGS_WRITABLE=true \
+  ghcr.io/mudkipme/kizunashelf:latest
+```
+
+Open `http://localhost:8787/`. Your library is stored in the local `vault` folder; to use an existing vault, replace `$PWD/vault` with its absolute path. If the vault has no `KizunaShelf/config.yaml`, onboarding helps you choose some built-in types or create a schema of your own.
+
+Source code is available on [GitHub](https://github.com/mudkipme/kizunashelf). See [Self-hosting](manual/content/start/self-hosting.md) for deployment and authentication, the [schema & configuration reference](manual/content/reference/config.md) for the complete schema and runtime configuration, and [Syncing your vault](manual/content/guides/syncing.md) for using a vault across devices.
+
+## Development
+
+To run from source:
+
 ```bash
 pnpm install
 KIZUNASHELF_VAULT_ROOT=/path/to/your/vault pnpm dev
 ```
 
-Open `http://localhost:5173/`. The web app points at the vault named by `KIZUNASHELF_VAULT_ROOT`; if that vault has no `KizunaShelf/config.yaml`, onboarding helps you choose some built-in types or create a schema of your own.
-
-See the [schema & configuration reference](manual/content/reference/config.md) for the complete schema and runtime configuration, and [Syncing your vault](manual/content/guides/syncing.md) for using a vault across devices.
-
-## Development
-
-`pnpm dev` starts the Rust API and Vite together. Vite proxies `/api` to the Rust server on port `8787`.
+Open `http://localhost:5173/`. `pnpm dev` starts the Rust API and Vite together. Vite proxies `/api` to the Rust server on port `8787`.
 
 Use separate terminals if preferred:
 
@@ -117,3 +130,5 @@ pnpm build:desktop
 ## License
 
 KizunaShelf is licensed under the [Mozilla Public License 2.0](LICENSE). You can use it, self-host it, and build on it; modifications to MPL-covered files must be shared under the same license, while larger works that merely combine with it can carry their own terms.
+
+See [Contributing](CONTRIBUTING.md) and the [security policy](SECURITY.md) for contributor guidance.

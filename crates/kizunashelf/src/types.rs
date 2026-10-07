@@ -58,7 +58,7 @@ pub struct FieldConfig {
     pub enum_options: Vec<String>,
     /// Semantic role of an `enum` field. `status` marks the one field the engine
     /// treats as the entity's lifecycle status; behavior keys off this role, never
-    /// the field name. See [`EnumRole`] and `docs/status-role-plan.md`.
+    /// the field name. See [`EnumRole`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enum_role: Option<EnumRole>,
     /// For an `enumRole: status` field: maps each canonical status to the user
@@ -179,7 +179,7 @@ pub enum DateRole {
     // `Event` — a date the user *attends* (a concert, exhibition, release event)
     // rather than a release they passively consume. Whether it reads as an intention
     // (up next) or a record (recent) is derived from the entity's status, not encoded
-    // as separate roles — see `docs/status-role-plan.md`.
+    // as separate roles. See `manual/content/reference/titles-dates-status.md`.
     Planning,
     Started,
     Completed,

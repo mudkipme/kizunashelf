@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the kizunashelf-ffi static library for iOS device + simulator, generates
 # the UniFFI Swift bindings, and packages the native code into
-# KizunaFFI.xcframework for the KizunaCore Swift package in ../kizunashelf-ios.
+# KizunaFFI.xcframework for a KizunaCore Swift package at the given destination.
 #
 # UniFFI produces two halves:
 #   - a low-level clang module (kizunashelf_ffiFFI.h + module.modulemap) packaged
@@ -13,14 +13,19 @@
 # Run on macOS with Xcode + the Rust iOS targets installed:
 #   rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
 #
-# Usage: scripts/build-ios.sh [ios_repo_root]
-#   ios_repo_root defaults to ../kizunashelf-ios
+# Usage: scripts/build-ios.sh <destination_root>
+#   Writes artifacts under <destination_root>/Packages/KizunaCore/.
 set -euo pipefail
+
+if [[ $# -ne 1 || -z "$1" ]]; then
+    echo "Usage: $0 <destination_root>" >&2
+    exit 2
+fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CRATE="kizunashelf-ffi"
 LIB="libkizunashelf_ffi.a"
-IOS_ROOT="${1:-$REPO_ROOT/../kizunashelf-ios}"
+IOS_ROOT="$1"
 PKG="$IOS_ROOT/Packages/KizunaCore"
 XCFRAMEWORK="$PKG/Frameworks/KizunaFFI.xcframework"
 SWIFT_GEN_DIR="$PKG/Sources/KizunaCore/Generated"

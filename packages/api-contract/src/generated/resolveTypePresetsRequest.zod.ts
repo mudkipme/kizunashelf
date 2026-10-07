@@ -42,7 +42,7 @@ export const ResolveTypePresetsRequest = zod.object({
   "field": zod.string()
 })).optional(),
   "enumOptions": zod.array(zod.string()).optional(),
-  "enumRole": zod.union([zod.enum(['status']).describe('A field\'s semantic \*role\* beyond its raw `FieldType`. Currently only `status`:\nit marks the one enum field the engine treats as the entity\'s lifecycle status.\nLike `DateRole`\/`TitleRole`, meaning flows from this role, never from the field\nname. Kept a flat string enum so swift-openapi-generator renders proper cases.'),zod.null()]).optional().describe('Semantic role of an `enum` field. `status` marks the one field the engine\ntreats as the entity\'s lifecycle status; behavior keys off this role, never\nthe field name. See [`EnumRole`] and `docs\/status-role-plan.md`.'),
+  "enumRole": zod.union([zod.enum(['status']).describe('A field\'s semantic \*role\* beyond its raw `FieldType`. Currently only `status`:\nit marks the one enum field the engine treats as the entity\'s lifecycle status.\nLike `DateRole`\/`TitleRole`, meaning flows from this role, never from the field\nname. Kept a flat string enum so swift-openapi-generator renders proper cases.'),zod.null()]).optional().describe('Semantic role of an `enum` field. `status` marks the one field the engine\ntreats as the entity\'s lifecycle status; behavior keys off this role, never\nthe field name. See [`EnumRole`].'),
   "statusValues": zod.union([zod.object({
   "planning": zod.array(zod.string()).optional(),
   "ongoing": zod.array(zod.string()).optional(),

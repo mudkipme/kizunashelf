@@ -7,8 +7,7 @@ import { themes as prismThemes } from "prism-react-renderer";
 // `src/pages/index.tsx`. Keep it that way — those URLs are public.
 const config: Config = {
   title: "KizunaShelf Manual",
-  tagline:
-    "The KizunaShelf user manual: concepts, cookbook recipes, guides, and the full schema reference.",
+  tagline: "The KizunaShelf user manual: concepts, guides, and the full schema reference.",
   favicon: "icons/favicon.ico",
 
   url: "https://kizunashelf.app",
@@ -33,14 +32,21 @@ const config: Config = {
     },
   },
 
-  // English only for now; ja / zh-Hans / zh-Hant are planned once the English
-  // manual is complete (see README).
+  // The manual currently ships in English.
   i18n: {
     defaultLocale: "en",
     locales: ["en"],
   },
 
   headTags: [
+    {
+      tagName: "link",
+      attributes: {
+        rel: "preconnect",
+        href: "https://cdn.jsdelivr.net",
+        crossorigin: "anonymous",
+      },
+    },
     {
       tagName: "link",
       attributes: {
@@ -117,38 +123,12 @@ const config: Config = {
       items: [
         { to: "/introduction/", label: "Manual", position: "left" },
         { to: "/reference/config/", label: "Reference", position: "left" },
-        { to: "/faq/", label: "FAQ", position: "left" },
         {
           href: "https://testflight.apple.com/join/hE7k3sWd",
           label: "iOS beta",
           position: "right",
         },
       ],
-    },
-    footer: {
-      style: "light",
-      links: [
-        {
-          title: "Manual",
-          items: [
-            { label: "Introduction", to: "/introduction/" },
-            { label: "Quickstart", to: "/start/quickstart/" },
-            { label: "Reference", to: "/reference/config/" },
-          ],
-        },
-        {
-          title: "More",
-          items: [
-            { label: "Privacy", to: "/privacy/" },
-            { label: "FAQ & troubleshooting", to: "/faq/" },
-            {
-              label: "The story behind KizunaShelf",
-              href: "https://mudkip.me/2026/07/16/Introduction-to-KizunaShelf/",
-            },
-          ],
-        },
-      ],
-      copyright: "KizunaShelf · Forever for dreaming",
     },
     prism: {
       theme: prismThemes.github,

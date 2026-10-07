@@ -69,8 +69,7 @@ use tracing::Instrument;
 
 /// Builds the router with an injected vault filesystem and inline app config —
 /// the iOS entry point. The vault config and entities are read through `vault_fs`
-/// and the app config comes from `app_config` instead of a file on disk. See
-/// ../kizunashelf-ios/docs/ios-port-plan.md §4/§5.
+/// and the app config comes from `app_config` instead of a file on disk.
 pub fn router_with_vault(
     options: ApiOptions,
     vault_fs: Arc<dyn Vfs>,

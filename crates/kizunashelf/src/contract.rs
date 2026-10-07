@@ -1743,7 +1743,7 @@ pub struct ExternalApplyRequest {
 // export (CSV) into vault entities. A `plan` job fetches and resolves items
 // against the same "in library" dedup quick capture uses; a `commit` job then
 // creates the approved entities through the quick-add primitives (schema
-// mapping, atomic write, episode import). See `docs/batch-import-plan.md`.
+// mapping, atomic write, episode import). See `manual/content/reference/external.md`.
 
 /// How an import source receives its input.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
@@ -2211,7 +2211,7 @@ pub struct LogActivityResponse {
     /// `started`/`completed` log when the type has a mapped `enumRole: status`
     /// field and the flip is a promotion (never a demotion, never from `dropped`).
     /// Always `None` on `remove` — a status flip has no safe inverse, so removing a
-    /// log deliberately leaves status untouched (see `docs/status-role-plan.md`).
+    /// log deliberately leaves status untouched.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub will_flip_status: Option<FlippedStatus>,
     /// The refreshed entity detail when the log mutated the entity (a date stamp or

@@ -3,8 +3,6 @@ import Link from "@docusaurus/Link";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import type { CSSProperties, ReactNode } from "react";
 
-import Screenshot from "../components/Screenshot";
-
 import "../css/home.css";
 
 const TITLE = "KizunaShelf — a shelf for everything you love";
@@ -67,28 +65,28 @@ export default function Home(): ReactNode {
         <meta name="twitter:card" content="summary" />
         <link
           rel="preload"
-          href="/assets/fonts/bookman-demi.woff2"
+          href="https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@3c0ba3b5687632dfc66526544a4e811fe0ec0cd9/fonts/URWBookman-Demi.otf"
           as="font"
-          type="font/woff2"
+          type="font/otf"
           crossOrigin=""
         />
         <link
           rel="preload"
-          href="/assets/fonts/bookman-lightitalic.woff2"
+          href="https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@3c0ba3b5687632dfc66526544a4e811fe0ec0cd9/fonts/URWBookman-LightItalic.otf"
           as="font"
-          type="font/woff2"
+          type="font/otf"
           crossOrigin=""
         />
         <link
           rel="preload"
-          href="/assets/fonts/c059-roman.woff2"
+          href="https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@3c0ba3b5687632dfc66526544a4e811fe0ec0cd9/fonts/C059-Roman.otf"
           as="font"
-          type="font/woff2"
+          type="font/otf"
           crossOrigin=""
         />
         <link
           rel="preload"
-          href="/assets/fonts/jbmono.woff2"
+          href="https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@19371302b95d218af43299bce79ddbddd0bc364d/fonts/webfonts/JetBrainsMono-Regular.woff2"
           as="font"
           type="font/woff2"
           crossOrigin=""
@@ -138,7 +136,8 @@ export default function Home(): ReactNode {
                 </Link>
               </div>
               <p className="fine" style={{ marginTop: "1.1rem" }}>
-                desktop &amp; web coming soon · Android planned
+                <Link to="/start/self-hosting/">self-hosted web available</Link> · desktop coming
+                soon
               </p>
             </div>
             <figure className="hero-fig">
@@ -399,21 +398,19 @@ export default function Home(): ReactNode {
               </li>
               <li>
                 <div className="app-name">
-                  Self-hosted web <span className="status soon">coming soon</span>
+                  Self-hosted web <span className="status">available</span>
                 </div>
                 <div>
                   <p>
                     Served from your container to any browser, for people whose shelf lives on their
                     NAS.
                   </p>
-                </div>
-              </li>
-              <li>
-                <div className="app-name">
-                  Android <span className="status planned">planned</span>
-                </div>
-                <div>
-                  <p>An Android app is planned.</p>
+                  <p>
+                    <Link to="/start/self-hosting/">Run with Docker →</Link>
+                  </p>
+                  <p>
+                    <a href="https://github.com/mudkipme/kizunashelf">View on GitHub →</a>
+                  </p>
                 </div>
               </li>
             </ul>
@@ -452,20 +449,6 @@ export default function Home(): ReactNode {
                 </ul>
                 <Link to="/features/import/">How importing works →</Link>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="closer-look">
-          <div className="wrap">
-            <div className="section-head">
-              <h2>A closer look on iPhone.</h2>
-            </div>
-            <div className="ios-gallery">
-              {/* Add ios image paths and matching iosAlt descriptions when captures are ready. */}
-              <Screenshot platforms="ios" caption="Your library, ready to browse." />
-              <Screenshot platforms="ios" caption="Episode tracking and your notes." />
-              <Screenshot platforms="ios" caption="Your activity history." />
             </div>
           </div>
         </section>

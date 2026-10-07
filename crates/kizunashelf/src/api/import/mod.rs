@@ -5,7 +5,7 @@
 //! creates the approved ones. Executing jobs live in memory; in-process hosts
 //! can save and restore uncommitted reviews through opaque snapshots. Replanning
 //! after an interrupted run uses the dedup gate to skip already-created entities.
-//! See `docs/batch-import-plan.md`.
+//! See `manual/content/reference/external.md`.
 
 mod csv_util;
 mod job;

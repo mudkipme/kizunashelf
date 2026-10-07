@@ -553,11 +553,6 @@ body.home-page {
 .home-page .status.soon {
   border-color: var(--amber);
 }
-.home-page .status.planned {
-  border-style: dashed;
-  border-color: var(--wood);
-  color: var(--ink-soft);
-}
 .home-page .app-list p {
   margin-bottom: 0.4em;
 }
@@ -673,18 +668,8 @@ body.home-page {
 .home-page .filecard figcaption {
   padding: 0 1.5rem 1rem;
 }
-.home-page .ios-gallery {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(20px, 4vw, 56px);
-}
-.home-page .ios-gallery figure {
-  justify-content: center;
-  text-align: center;
-}
 @media (max-width: 700px) {
-  .home-page .source-groups,
-  .home-page .ios-gallery {
+  .home-page .source-groups {
     grid-template-columns: 1fr;
   }
 }

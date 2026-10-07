@@ -13,10 +13,10 @@ The self-hosted web server is configured entirely through environment variables 
 | Variable | Description |
 | --- | --- |
 | `KIZUNASHELF_VAULT_ROOT` | Absolute path to the single vault this instance serves. Defaults to `/vault` (the conventional Docker mount). |
-| `HOST` | Bind host. Defaults to `127.0.0.1`. Set `HOST=0.0.0.0` only when you intentionally want to expose it beyond the local machine. |
+| `HOST` | Server bind address. The Docker image sets `0.0.0.0` inside the container; publish its port on loopback or a private network. The standalone binary defaults to `127.0.0.1`. |
 | `PORT` | Bind port. Defaults to `8787`. |
 | `KIZUNASHELF_CONTENT_WRITABLE` | Enables entity create/edit/delete. Defaults to `true` for loopback hosts and `false` otherwise. |
-| `KIZUNASHELF_SETTINGS_WRITABLE` | Enables schema (Settings) writes and path suggestions. Defaults to `true` for loopback hosts and `false` otherwise. |
+| `KIZUNASHELF_SETTINGS_WRITABLE` | Enables schema (Settings) writes and path suggestions. The Docker image sets `false`; enable it explicitly for setup or schema editing. The standalone binary defaults to `true` for loopback hosts and `false` otherwise. |
 | `KIZUNASHELF_CACHE_TTL_MS` | In-memory library cache TTL. Defaults to `10000`. |
 | `KIZUNASHELF_INDEX_CACHE_DIR` | Optional host directory for the persistent, disposable library index cache. Keep it outside the vault; unset means the incremental index lives only in memory and is lost on restart. |
 | `KIZUNASHELF_TOKEN_CACHE` | Path for the provider OAuth token cache. Defaults to `<tmp>/.kizunashelf.tokens.json` (outside the vault). |
@@ -75,13 +75,7 @@ KizunaShelf provides optional single-user password authentication for the web ru
 
 ### Generate the password hash
 
-Generate an Argon2id hash interactively. The command prompts twice without echoing the password, then prints the hash:
-
-```bash
-cargo run -p kizunashelf --bin kizunashelf-api -- hash-password
-```
-
-With the published container image, run the same helper without mounting a vault:
+Run the password helper from the published Docker image; no Rust toolchain or vault mount is needed. The command prompts twice without echoing the password, then prints an Argon2id hash:
 
 ```bash
 docker run --rm -it ghcr.io/mudkipme/kizunashelf:latest kizunashelf-api hash-password
@@ -90,7 +84,7 @@ docker run --rm -it ghcr.io/mudkipme/kizunashelf:latest kizunashelf-api hash-pas
 Pass the printed value to the server. Keep the single quotes: Argon2 hashes contain `$` characters that the shell would otherwise expand.
 
 ```bash
-docker run -p 8787:8787 \
+docker run -p 127.0.0.1:8787:8787 \
   -v /path/to/vault:/vault \
   -e 'KIZUNASHELF_AUTH_PASSWORD_HASH=$argon2id$v=19$m=19456,t=2,p=1$…' \
   ghcr.io/mudkipme/kizunashelf:latest

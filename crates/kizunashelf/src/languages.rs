@@ -12,7 +12,7 @@
 //! in exactly two places: the UI locale and outbound requests to providers that
 //! distinguish them. Everywhere data is stored, keyed, or matched — frontmatter
 //! `titles`, schema `titleLanguage`, candidate title maps, the dedup index —
-//! Chinese is always bare `zh` (see `docs/i18n-plan.md`).
+//! Chinese is always bare `zh` (see the Internationalization section of ARCHITECTURE.md).
 
 use crate::contract::{Language, UserLanguage};
 

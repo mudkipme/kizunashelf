@@ -12,3 +12,13 @@ target/
 .git/
 .antigravitycli/
 /config/kizunashelf.config.json
+config/
+vault/
+.codex/
+.aws/
+.claude/
+.pnpm-store/
+manual/build/
+manual/.docusaurus/
+__screenshots__/
+.vitest-attachments/

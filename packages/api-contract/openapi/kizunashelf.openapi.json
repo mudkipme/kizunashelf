@@ -4621,7 +4621,7 @@
             }
           },
           "enumRole": {
-            "description": "Semantic role of an `enum` field. `status` marks the one field the engine\ntreats as the entity's lifecycle status; behavior keys off this role, never\nthe field name. See [`EnumRole`] and `docs/status-role-plan.md`.",
+            "description": "Semantic role of an `enum` field. `status` marks the one field the engine\ntreats as the entity's lifecycle status; behavior keys off this role, never\nthe field name. See [`EnumRole`].",
             "anyOf": [
               {
                 "$ref": "#/components/schemas/EnumRole"
@@ -8575,7 +8575,7 @@
             ]
           },
           "willFlipStatus": {
-            "description": "The status this log flips the entity to. Present only for an `add` of a\n`started`/`completed` log when the type has a mapped `enumRole: status`\nfield and the flip is a promotion (never a demotion, never from `dropped`).\nAlways `None` on `remove` — a status flip has no safe inverse, so removing a\nlog deliberately leaves status untouched (see `docs/status-role-plan.md`).",
+            "description": "The status this log flips the entity to. Present only for an `add` of a\n`started`/`completed` log when the type has a mapped `enumRole: status`\nfield and the flip is a promotion (never a demotion, never from `dropped`).\nAlways `None` on `remove` — a status flip has no safe inverse, so removing a\nlog deliberately leaves status untouched.",
             "anyOf": [
               {
                 "$ref": "#/components/schemas/FlippedStatus"

@@ -6,13 +6,16 @@ ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
 
 RUN apk add --no-cache build-base ca-certificates nodejs npm \
-  && npm install -g pnpm@11.6.0
+  && npm install -g pnpm@11.24.0
 
 FROM base AS deps
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json Cargo.toml Cargo.lock ./
 COPY crates/kizunashelf/Cargo.toml crates/kizunashelf/Cargo.toml
 COPY apps/web/package.json apps/web/package.json
+COPY apps/desktop/package.json apps/desktop/package.json
+COPY apps/desktop/src-tauri/Cargo.toml apps/desktop/src-tauri/Cargo.toml
+COPY crates/kizunashelf-ffi/Cargo.toml crates/kizunashelf-ffi/Cargo.toml
 COPY packages/api-contract/package.json packages/api-contract/package.json
 # The manual (Docusaurus) is a workspace project too, so its manifest has to be
 # here for the lockfile check — but the filter below keeps its dependencies out
@@ -29,7 +32,7 @@ COPY packages packages
 COPY crates crates
 
 # Build the web bundle from the committed contract. CI enforces that the
-# generated contract stays in sync (see .woodpecker/docker.yml), so there is no
+# generated contract stays in sync (see .github/workflows/ci.yml), so there is no
 # need to regenerate it here — doing so would run a debug `cargo run` of the
 # schema binary and compile the crate a second time.
 RUN pnpm --filter "@kizunashelf/web..." build
@@ -40,10 +43,13 @@ RUN pnpm --filter "@kizunashelf/web..." build
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
   --mount=type=cache,target=/usr/local/cargo/git \
   --mount=type=cache,target=/app/target \
-  cargo build --release -p kizunashelf \
+  cargo build --release --locked -p kizunashelf --bin kizunashelf-api \
   && cp target/release/kizunashelf-api /usr/local/bin/kizunashelf-api
 
 FROM alpine:3.22 AS runner
+
+LABEL org.opencontainers.image.source="https://github.com/mudkipme/kizunashelf" \
+      org.opencontainers.image.licenses="MPL-2.0"
 
 RUN apk add --no-cache ca-certificates
 

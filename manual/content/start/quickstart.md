@@ -21,7 +21,18 @@ Desktop releases are coming soon. The desktop app lets you open or create a fold
 
 ## Self-hosted web
 
-Follow [Self-hosting](./self-hosting.md) to connect the web app to your vault. Open it in a browser and complete the same setup if the vault is new.
+Run the published Docker image with setup and editing enabled:
+
+```bash
+mkdir -p vault
+docker run -p 127.0.0.1:8787:8787 \
+  -v "$PWD/vault:/vault" \
+  -e KIZUNASHELF_CONTENT_WRITABLE=true \
+  -e KIZUNASHELF_SETTINGS_WRITABLE=true \
+  ghcr.io/mudkipme/kizunashelf:latest
+```
+
+Open `http://localhost:8787/` and complete setup. Your library is stored in the local `vault` folder; to use an existing vault, replace `$PWD/vault` with its absolute path. See [Self-hosting](./self-hosting.md) for read-only mode, configuration, and remote access.
 
 ## Add your first entity
 

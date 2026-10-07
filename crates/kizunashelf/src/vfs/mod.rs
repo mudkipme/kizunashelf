@@ -3,8 +3,8 @@
 //! All vault I/O (entities, assets, daily notes, the vault config) goes through
 //! the [`Vfs`] trait using **vault-relative, forward-slash paths**. Desktop and
 //! the web/api server use [`NativeVfs`] (a thin `tokio::fs` wrapper rooted at the
-//! vault). iOS will supply a Swift-backed implementation (security-scoped
-//! bookmarks + `NSFileCoordinator`) — see ../kizunashelf-ios/docs/ios-port-plan.md §5.
+//! vault). The iOS host supplies a Swift-backed implementation (security-scoped
+//! bookmarks + `NSFileCoordinator`) through `kizunashelf-ffi`.
 //!
 //! App-private I/O (desktop vault lists, web token-cache files, keychain-backed
 //! secrets, iOS host state) is *not* part of this abstraction. It lives outside

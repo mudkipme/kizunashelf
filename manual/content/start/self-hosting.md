@@ -4,7 +4,7 @@ description: "Connect the web app to a vault on your own server."
 sidebar_position: 2
 ---
 
-The web app serves one vault to a browser. Docker releases are coming soon; the commands below describe the planned published image. If you are working from source, use the development commands in the repository README.
+The web app serves one vault to a browser and is available as `ghcr.io/mudkipme/kizunashelf:latest`. Source code and development instructions are on [GitHub](https://github.com/mudkipme/kizunashelf).
 
 ## Run with Docker
 
@@ -29,6 +29,8 @@ docker run -p 127.0.0.1:8787:8787 \
 ```
 
 The container also needs permission to write to the mounted folder. For a read-only vault, leave the settings disabled and mount it with `/path/to/vault:/vault:ro`.
+
+On Linux, add `--user "$(id -u):$(id -g)"` to run the container with your user and group IDs so newly created vault files belong to you. That user must have access to the mounted folder.
 
 ## Configuration
 

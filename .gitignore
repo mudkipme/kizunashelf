@@ -7,6 +7,8 @@ target/
 .env.*
 !.env.example
 .agents
+.codex/
+.aws/
 /config/kizunashelf.config.json
 /config/kizunashelf.yml
 /config/kizunashelf.yaml
