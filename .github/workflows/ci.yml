@@ -103,8 +103,8 @@ jobs:
           context: .
           load: true
           tags: kizunashelf:ci
-          cache-from: type=gha,scope=container
-          cache-to: type=gha,scope=container,mode=max
+          cache-from: type=gha,scope=container-amd64
+          cache-to: type=gha,scope=container-amd64,mode=max
       - name: Start the image and check the web UI and API
         run: |
           mkdir -p "$RUNNER_TEMP/vault"
@@ -125,28 +125,30 @@ jobs:
             http://127.0.0.1:8787/api/settings/config
           curl --fail http://127.0.0.1:8787/api/health
 
-  publish-image:
-    name: Publish GHCR image
+  build-image:
+    name: Build GHCR image (${{ matrix.arch }})
     needs: [check, desktop-check, docker-check]
     if: >-
       github.repository == 'mudkipme/kizunashelf' &&
       github.event_name != 'pull_request' &&
       (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
-    runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
     permissions:
       contents: read
       packages: write
-    concurrency:
-      group: ghcr-publish
-      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: docker/setup-qemu-action@v4
-        with:
-          platforms: arm64
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
@@ -164,14 +166,84 @@ jobs:
             type=semver,pattern={{version}}
             type=sha,format=long
       - uses: docker/build-push-action@v7
+        id: build
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          platforms: linux/${{ matrix.arch }}
+          outputs: type=image,name=ghcr.io/mudkipme/kizunashelf,push-by-digest=true,name-canonical=true,push=true
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=container
-          cache-to: type=gha,scope=container,mode=max
+          cache-from: type=gha,scope=container-${{ matrix.arch }}
+          cache-to: type=gha,scope=container-${{ matrix.arch }},mode=max
+      - name: Export image digest
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${IMAGE_DIGEST#sha256:}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: image-digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
+
+  publish-image:
+    name: Publish GHCR image
+    needs: [build-image]
+    if: >-
+      github.repository == 'mudkipme/kizunashelf' &&
+      github.event_name != 'pull_request' &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: ghcr-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: image-digest-*
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ghcr.io/mudkipme/kizunashelf
+          flavor: latest=false
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=sha,format=long
+      - name: Combine native images and publish tags
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE_NAME: ghcr.io/mudkipme/kizunashelf
+          IMAGE_TAGS_JSON: ${{ steps.meta.outputs.json }}
+          IMAGE_VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          digests=(*)
+          test "${#digests[@]}" -eq 2
+          sources=()
+          for digest in "${digests[@]}"; do
+            [[ "$digest" =~ ^[0-9a-f]{64}$ ]]
+            sources+=("$IMAGE_NAME@sha256:$digest")
+          done
+          mapfile -t tags < <(jq -r '.tags[]' <<< "$IMAGE_TAGS_JSON")
+          test "${#tags[@]}" -gt 0
+          docker buildx imagetools create "${tags[@]/#/--tag=}" "${sources[@]}"
+          docker buildx imagetools inspect "$IMAGE_NAME:$IMAGE_VERSION"
 
   deploy-pages:
     name: Publish website and manual

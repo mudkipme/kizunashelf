@@ -147,6 +147,9 @@ impl VfsWatch {
 
 /// Vault filesystem. Implementations operate on vault-relative, forward-slash
 /// paths (the empty string denotes the vault root).
+// async_trait adds #[must_use] to methods returning already-must-use futures.
+// Work around Clippy's macro-expansion regression: rust-lang/rust-clippy#17529.
+#[allow(clippy::double_must_use)]
 #[async_trait]
 pub trait Vfs: Send + Sync {
     async fn read(&self, path: &str) -> VfsResult<Vec<u8>>;
