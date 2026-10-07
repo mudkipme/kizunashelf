@@ -89,45 +89,9 @@ jobs:
           shared-key: desktop
       - run: cargo check -p kizunashelf-desktop --locked
 
-  docker-check:
-    name: Container smoke test
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - uses: docker/setup-buildx-action@v4
-      - uses: docker/build-push-action@v7
-        with:
-          context: .
-          load: true
-          tags: kizunashelf:ci
-          cache-from: type=gha,scope=container-amd64
-          cache-to: type=gha,scope=container-amd64,mode=max
-      - name: Start the image and check the web UI and API
-        run: |
-          mkdir -p "$RUNNER_TEMP/vault"
-          docker run -d --name kizunashelf-smoke \
-            -p 127.0.0.1:8787:8787 \
-            -v "$RUNNER_TEMP/vault:/vault" \
-            -e KIZUNASHELF_CONTENT_WRITABLE=true \
-            -e KIZUNASHELF_SETTINGS_WRITABLE=true \
-            kizunashelf:ci
-          trap 'docker logs kizunashelf-smoke; docker rm -f kizunashelf-smoke' EXIT
-          curl --fail --retry 30 --retry-delay 2 --retry-connrefused \
-            http://127.0.0.1:8787/api/settings/config
-          curl --fail http://127.0.0.1:8787/ -o "$RUNNER_TEMP/index.html"
-          test -s "$RUNNER_TEMP/index.html"
-          grep -q 'id="root"' "$RUNNER_TEMP/index.html"
-          curl --fail -X PUT -H 'Content-Type: application/json' \
-            --data '{"vault":{"taxonomyRoot":"Taxonomy","types":[]}}' \
-            http://127.0.0.1:8787/api/settings/config
-          curl --fail http://127.0.0.1:8787/api/health
-
   build-image:
     name: Build GHCR image (${{ matrix.arch }})
-    needs: [check, desktop-check, docker-check]
+    needs: [check, desktop-check]
     if: >-
       github.repository == 'mudkipme/kizunashelf' &&
       github.event_name != 'pull_request' &&

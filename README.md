@@ -6,6 +6,12 @@ KizunaShelf is a personal library for everything you watch, play, read, listen t
 
 Underneath, every entry is still a Markdown file in a folder you own. KizunaShelf helps you explore those files as a living shelf without turning them into data only one app can understand.
 
+The iPhone and iPad app is available through [TestFlight](https://testflight.apple.com/join/hE7k3sWd).
+
+| Web & desktop Home | iOS Home |
+| --- | --- |
+| <img src="manual/static/images/desktop/home.webp" alt="KizunaShelf Home in the web and desktop interface" width="800" /> | <img src="manual/static/assets/screenshot.webp" alt="KizunaShelf Home on iOS" width="240" /> |
+
 ## A library that remembers with you
 
 KizunaShelf begins with the familiar things waiting on a media shelf: shows, movies, books, games, anime, and albums. But it does not decide what a “thing” must be. You define the types in your library, their titles, covers, statuses, dates, ratings, progress, and relationships. If your world also needs characters, artists, live events, or something nobody else would think to model, KizunaShelf gives you the grammar to describe it.

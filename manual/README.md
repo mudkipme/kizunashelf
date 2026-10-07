@@ -32,53 +32,23 @@ The site is a normal pnpm workspace project, so a plain `pnpm install` at the re
 - Lead feature pages with the task and the controls the reader uses. Keep API fields, runtime architecture, algorithms, and environment variables in `content/reference/`.
 - Give a topic one main home: setup in Quickstart, filtering in Browse, pinning in Home, import requirements in the external reference, and server options in the web-server reference. Other pages should link to it.
 - Use **metadata source/provider** for lookup and matching; use **import source** for bringing an existing collection into the vault. A service can appear in both groups.
-- Preserve the homepage's original examples: the `2026-01-03` Tokyo journal, `BanG Dream! YUME∞MITA` note, and `Steins;Gate Re：Boot` relation. Their dates, wording, and references have personal meaning; do not replace them to standardize examples.
-- Keep existing references such as **Frieren** and **Robotics;Notes**; they fit the same style. Consistency means using a reference coherently within an example, not replacing every example with the same few titles.
-- The following names are useful starting points for new examples in the manual and tests, rather than an exclusive list:
-
-| Entity filename/title | Use |
-| --- | --- |
-| `Steins;Gate 0 (Anime)` | Anime, episode tracking, matching, and personal notes. |
-| `Steins;Gate (Game)` | The game, linked to the same `Steins;Gate` franchise. |
-| `Pokémon Emerald`, `Pokémon Adventures` | Games and manga linked to `Pokémon`. Keep the accented é. |
-| `FIRE BIRD`, `Roselia`, `BanG Dream!` | Music and artist/franchise relations. |
-| `LoveLive! The School Idol Movie`, `LoveLive!` | Film, rewatch, and franchise examples. |
-
-Personal dates, ratings, and notes are illustrative. Unit tests may use synthetic dates, URLs, aliases, and arbitrary field names to exercise specific behavior; they are not release metadata. The API test `manual_example_schema_and_entity_work_together` loads the actual Markdown examples from the concept and configuration pages.
 
 ## Adding screenshots
 
-Desktop captures live in `manual/static/images/desktop/`; their [capture notes](static/images/desktop/README.md) list each view and how to replace it. The original PNGs are preserved. Some show an earlier app version or different examples and can be refreshed later.
-
-Put iOS captures in `manual/static/assets/screenshots/ios/`. Reference them with `/assets/screenshots/ios/<name>.webp`; do not add paths until the corresponding files exist.
+Feature captures live in `static/images/desktop/` and `static/images/ios/`, served as WebP at their native resolution with color profiles preserved. Prefer lossless compression; use high-quality lossy compression for unusually large cover grids.
 
 `Screenshot` is registered globally for MDX. It defaults to one iOS frame, with an honest “preview coming soon” label until a capture is supplied:
 
 ```mdx
 <Screenshot
-  ios="/assets/screenshots/ios/episodes.webp"
+  ios="/images/ios/episodes.webp"
   iosAlt="Steins;Gate 0 episode list with the first two episodes checked"
   caption="Check off episodes in Steins;Gate 0 (Anime)."
 />
 ```
 
-Use `desktop` and `desktopAlt` for a desktop capture, or `platforms="both"` to reserve both frames. Existing feature captures keep this setting so their iOS spaces remain visible. Images link to the original at full size. Alt text describes the actual image; the caption explains why it is useful. Decorative brand icons use an empty alt attribute.
-
-Priority iOS captures:
-
-| Capture | Placement |
-| --- | --- |
-| Updated Home with pinned smart lists | Replace `/assets/screenshot.webp` in the homepage hero; also use on `features/home.mdx`. |
-| Library browsing | `features/browse.mdx`. |
-| Entity detail and episodes | `features/episodes.mdx`. |
-| Activity history | `features/calendar.mdx`. |
-| Quick Capture and import review | Their feature pages; keep lookup and collection-import captures distinct. |
-| Widget, Spotlight, sharing, and Shortcuts | The reserved frames on `features/ios.mdx`. |
-
-Reuse a capture when it illustrates the same task. Other feature pages already have captioned iOS spaces. The existing hero is an earlier beta capture; update its alt text when replacing it.
+Use `desktop` and `desktopAlt` for a desktop capture, or `platforms="both"` to reserve both frames. Images link to the original at full size. Alt text describes the actual image; the caption explains why it is useful. Decorative brand icons use an empty alt attribute.
 
 ## Deployment
 
 The [GitHub workflow](../.github/workflows/ci.yml) builds the site with the app's checks and publishes `manual/build/` to GitHub Pages after a successful run on `main`. Pull requests build and check the site without deploying it.
-
-In the GitHub repository's **Settings → Pages**, select **GitHub Actions** as the source and set the custom domain to `kizunashelf.app`. Configure the domain's DNS for GitHub Pages and enable **Enforce HTTPS** once the certificate is ready. The Docusaurus configuration already uses `https://kizunashelf.app` with root-relative routes. With an Actions deployment, the custom domain is configured in repository settings rather than a `CNAME` file. See [GitHub's custom-domain instructions](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
