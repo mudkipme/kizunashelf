@@ -10,7 +10,7 @@ The iPhone and iPad app is available through [TestFlight](https://testflight.app
 
 | Web & desktop Home | iOS Home |
 | --- | --- |
-| <img src="manual/static/images/desktop/home.png" alt="KizunaShelf Home in the web and desktop interface" width="800" /> | <img src="manual/static/assets/screenshot.webp" alt="KizunaShelf Home on iOS" width="240" /> |
+| <img src="manual/static/images/desktop/home.webp" alt="KizunaShelf Home in the web and desktop interface" width="800" /> | <img src="manual/static/assets/screenshot.webp" alt="KizunaShelf Home on iOS" width="240" /> |
 
 ## A library that remembers with you
 
