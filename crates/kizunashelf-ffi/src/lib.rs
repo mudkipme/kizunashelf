@@ -54,6 +54,8 @@ pub struct VaultOptions {
     /// `std::fs` (NOT the security-scoped vault), so it needs no bookmark. `None`
     /// disables the cache; entries are keyed per vault inside the dir.
     pub index_cache_dir: Option<String>,
+    /// Application Support directory for durable import checkpoints (not the vault).
+    pub import_state_dir: Option<String>,
 }
 
 /// One response from the core: HTTP-like status, body, and content type.
@@ -112,6 +114,7 @@ impl KizunaEngine {
             settings_writable: true,
             content_writable: options.content_writable,
             index_cache_dir: options.index_cache_dir.map(PathBuf::from),
+            import_state_dir: options.import_state_dir.map(PathBuf::from),
             index_cache_identity: Some(options.vault_identity),
             // The in-process host (the Swift app) downloads covers itself and hands
             // the core a sandboxed temp-file path to ingest. This runtime is the

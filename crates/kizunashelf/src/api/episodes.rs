@@ -9,7 +9,7 @@ use super::error::{ApiError, ApiResult};
 use super::external::{
     provider_fetch_episodes, provider_for_external_ref, provider_label, provider_supports_episodes,
 };
-use super::mutations::{edit_entity_document, type_config_or_err};
+use super::mutations::{edit_entity_document, edit_entity_document_locked, type_config_or_err};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     EntityDetailResponse, Episode, EpisodeGroup, EpisodeSource, EpisodeSyncResponse,
@@ -23,6 +23,7 @@ use crate::types::{BodySection, EntityRecord, EntityTypeConfig, FieldType, Libra
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
 use serde_json::{Map, Value};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Checks/unchecks one episode, stamping/clearing its `✅` completion date. Only
 /// the changed item is sent (group + key); the section is otherwise re-rendered
@@ -215,6 +216,36 @@ pub(crate) async fn import_new_entity_episodes_marked(
     watched_count: Option<u32>,
     language: Option<&str>,
 ) -> Option<QuickAddEpisodeResult> {
+    import_new_entity_episodes_with_cancel(state, library, entity_id, watched_count, language, None)
+        .await
+}
+
+pub(crate) async fn import_new_entity_episodes_cancellable(
+    state: &AppState,
+    library: &Library,
+    entity_id: &str,
+    watched_count: Option<u32>,
+    cancel: &AtomicBool,
+) -> Option<QuickAddEpisodeResult> {
+    import_new_entity_episodes_with_cancel(
+        state,
+        library,
+        entity_id,
+        watched_count,
+        None,
+        Some(cancel),
+    )
+    .await
+}
+
+async fn import_new_entity_episodes_with_cancel(
+    state: &AppState,
+    library: &Library,
+    entity_id: &str,
+    watched_count: Option<u32>,
+    language: Option<&str>,
+    cancel: Option<&AtomicBool>,
+) -> Option<QuickAddEpisodeResult> {
     let record = library.record_by_id(entity_id)?;
     let type_config = library.config.type_config(&record.summary.entity_type)?;
     let section = episode_section(type_config)?.clone();
@@ -227,8 +258,11 @@ pub(crate) async fn import_new_entity_episodes_marked(
         record,
         &section,
         chosen,
-        watched_count,
-        language,
+        EpisodeImportOptions {
+            watched_count,
+            language,
+            cancel,
+        },
     )
     .await
     {
@@ -245,6 +279,12 @@ pub(crate) async fn import_new_entity_episodes_marked(
     }
 }
 
+struct EpisodeImportOptions<'a> {
+    watched_count: Option<u32>,
+    language: Option<&'a str>,
+    cancel: Option<&'a AtomicBool>,
+}
+
 /// Fetches a source's episodes and merges them into the entity body (preserving
 /// any existing items; never overwriting), returning how many were imported.
 /// `watched_count` marks the first N items (across groups, in order) watched.
@@ -254,11 +294,22 @@ async fn fetch_and_write_new_episodes(
     record: &EntityRecord,
     section: &BodySection,
     chosen: &ResolvedSource,
-    watched_count: Option<u32>,
-    language: Option<&str>,
+    options: EpisodeImportOptions<'_>,
 ) -> Result<usize, ApiError> {
-    let episodes =
-        provider_fetch_episodes(state, chosen.provider, &chosen.ref_value, language).await?;
+    let EpisodeImportOptions {
+        watched_count,
+        language,
+        cancel,
+    } = options;
+    let fetch = provider_fetch_episodes(state, chosen.provider, &chosen.ref_value, language);
+    let episodes = if let Some(cancel) = cancel {
+        tokio::select! {
+            result = fetch => result?,
+            _ = crate::api::import::import_cancelled(cancel) => return Err(ApiError::conflict("Import paused")),
+        }
+    } else {
+        fetch.await?
+    };
     let imported: usize = episodes.groups.iter().map(|group| group.items.len()).sum();
 
     // A provider group carries no watched/completion state; a fresh entity starts
@@ -290,9 +341,22 @@ async fn fetch_and_write_new_episodes(
         })
         .collect();
 
-    let vfs = state.vault_vfs(&library.config.vault_root);
-    edit_entity_document(
-        state,
+    let mutation = state.content_mutation_lock().await;
+    if cancel.is_some_and(|cancel| cancel.load(Ordering::Relaxed)) {
+        return Err(ApiError::conflict("Import paused"));
+    }
+    state.invalidate_cache().await;
+    let current = require_content_writes(state).await?;
+    if serde_json::to_value(current.config.clone().into_parts().1)?
+        != serde_json::to_value(library.config.clone().into_parts().1)?
+    {
+        return Err(ApiError::conflict(
+            "The vault schema changed during episode import",
+        ));
+    }
+    let vfs = state.vault_vfs(&current.config.vault_root);
+    let (_, changed) = edit_entity_document_locked(
+        &mutation,
         vfs.as_ref(),
         &record.summary.path,
         &record.revision,
@@ -304,6 +368,9 @@ async fn fetch_and_write_new_episodes(
         },
     )
     .await?;
+    if changed {
+        state.invalidate_cache().await;
+    }
     Ok(imported)
 }
 

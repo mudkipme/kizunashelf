@@ -82,6 +82,7 @@ pub(crate) async fn restore_import_plan(
     State(state): State<AppState>,
     Json(request): Json<ImportPlanSnapshot>,
 ) -> ApiResult<ImportJob> {
+    state.import_recovery().check()?;
     let identity = identity(&state)?;
     if request.snapshot.len() > MAX_SNAPSHOT_BYTES {
         return Err(ApiError::bad_request(
@@ -159,11 +160,19 @@ pub(crate) async fn restore_import_plan(
     jobs.insert(
         job.id.clone(),
         ImportJobRecord {
+            input: None,
+            commit: None,
+            outcomes: Vec::new(),
+            creations: Default::default(),
+            running: false,
             job: job.clone(),
             items: snapshot.items,
             schema: Some(snapshot.schema),
             cancel: Arc::new(AtomicBool::new(false)),
         },
     );
+    if let Some(record) = jobs.get(&job.id) {
+        state.import_recovery().save(record).await?;
+    }
     Ok(Json(job))
 }

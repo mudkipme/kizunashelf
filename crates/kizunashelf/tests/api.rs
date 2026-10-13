@@ -86,6 +86,7 @@ fn build_inline_router_with_identity(
             settings_writable,
             content_writable,
             index_cache_dir: None,
+            import_state_dir: None,
             index_cache_identity: identity,
             host_asset_ingest,
         },

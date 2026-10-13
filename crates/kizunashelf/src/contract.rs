@@ -1909,15 +1909,18 @@ pub struct ImportPlanSnapshot {
     pub snapshot: String,
 }
 
-/// An in-memory batch import job. Like the asset-download job it does not survive
-/// a restart; re-running is safe because the dedup gate skips already-created
-/// entities. `plan` is populated once `status` reaches `planned`.
+/// A batch import job. Native hosts can persist execution checkpoints outside
+/// the vault. `plan` is populated once `status` reaches `planned`.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ImportJob {
     pub id: String,
     pub source: String,
     pub status: ImportJobStatus,
+    /// Execution is suspended or was interrupted. Resume explicitly; status keeps
+    /// the phase so a committed import never falls back into review.
+    #[serde(default)]
+    pub paused: bool,
     pub total: u32,
     pub processed: u32,
     pub created: u32,

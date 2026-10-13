@@ -6,6 +6,7 @@
  */
 import * as zod from 'zod';
 
+export const importJobPausedDefault = false;
 export const importJobTotalMin = 0;
 
 export const importJobProcessedMin = 0;
@@ -31,6 +32,7 @@ export const ImportJob = zod.object({
   "id": zod.string(),
   "source": zod.string(),
   "status": zod.enum(['queued', 'fetching', 'planned', 'committing', 'completed', 'cancelled', 'failed']),
+  "paused": zod.boolean().default(importJobPausedDefault).describe('Execution is suspended or was interrupted. Resume explicitly; status keeps\nthe phase so a committed import never falls back into review.'),
   "total": zod.int().min(importJobTotalMin),
   "processed": zod.int().min(importJobProcessedMin),
   "created": zod.int().min(importJobCreatedMin),
@@ -71,7 +73,7 @@ export const ImportJob = zod.object({
 }).describe('The user data resolved for a planned item, summarized for the review UI.')
 }))
 }),zod.null()]).optional()
-}).describe('An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.')
+}).describe('A batch import job. Native hosts can persist execution checkpoints outside\nthe vault. `plan` is populated once `status` reaches `planned`.')
 
 export type ImportJob = zod.input<typeof ImportJob>;
 export type ImportJobOutput = zod.output<typeof ImportJob>;

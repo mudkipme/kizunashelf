@@ -4,7 +4,7 @@
 //! cross-compiled for Apple targets.
 
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use kizunashelf::vfs::{Vfs, VfsError as CoreVfsError};
 use kizunashelf_ffi::{
@@ -16,9 +16,9 @@ use serde_json::Value;
 /// In-memory `VaultFileSystem` standing in for the Swift implementation, so the
 /// iOS engine path (`KizunaEngine::with_vault` → injected VFS → vault config +
 /// entities read through callbacks) can be exercised on the host.
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct FakeVault {
-    files: Mutex<HashMap<String, Vec<u8>>>,
+    files: Arc<Mutex<HashMap<String, Vec<u8>>>>,
     config_read_error: Option<String>,
     batch_read_error: Option<(String, String)>,
 }
@@ -33,7 +33,7 @@ impl FakeVault {
 
     fn with_unavailable_config(message: &str) -> Self {
         Self {
-            files: Mutex::new(HashMap::new()),
+            files: Arc::new(Mutex::new(HashMap::new())),
             config_read_error: Some(message.to_string()),
             batch_read_error: None,
         }
@@ -41,7 +41,7 @@ impl FakeVault {
 
     fn with_unavailable_batch_reads(prefix: &str, message: &str) -> Self {
         Self {
-            files: Mutex::new(HashMap::new()),
+            files: Arc::new(Mutex::new(HashMap::new())),
             config_read_error: None,
             batch_read_error: Some((prefix.to_string(), message.to_string())),
         }
@@ -275,6 +275,7 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
             content_writable: false,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
+            import_state_dir: None,
         },
         Box::new(vault),
         Box::new(FakeSecretStore::default()),
@@ -318,6 +319,7 @@ fn ios_settings_does_not_report_an_unavailable_config_as_missing() {
             content_writable: true,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
+            import_state_dir: None,
         },
         Box::new(FakeVault::with_unavailable_config(
             "file provider is temporarily offline",
@@ -363,6 +365,7 @@ fn ios_library_load_propagates_a_batch_read_failure() {
             content_writable: true,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
+            import_state_dir: None,
         },
         Box::new(vault),
         Box::new(FakeSecretStore::default()),
@@ -404,6 +407,7 @@ fn ios_lists_propagate_a_smart_list_batch_read_failure() {
             content_writable: true,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
+            import_state_dir: None,
         },
         Box::new(vault),
         Box::new(FakeSecretStore::default()),
@@ -443,6 +447,7 @@ fn ios_index_cache_separates_same_named_vaults_by_stable_identity() {
                 vault_identity: vault_identity.to_string(),
                 content_writable: false,
                 cache_ttl_ms: Some(0),
+                import_state_dir: None,
                 index_cache_dir: Some(cache_dir.to_string()),
             },
             Box::new(vault),
@@ -488,6 +493,7 @@ fn ios_engine_writes_and_loads_assets_through_the_swift_filesystem() {
             content_writable: true,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
+            import_state_dir: None,
         },
         Box::new(vault),
         Box::new(FakeSecretStore::default()),
@@ -553,6 +559,7 @@ fn igdb_provider_summary(secrets: FakeSecretStore) -> Value {
             content_writable: false,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
+            import_state_dir: None,
         },
         Box::new(vault),
         Box::new(secrets),
@@ -618,6 +625,7 @@ fn ios_settings_write_vault_config_through_the_vfs() {
             content_writable: true,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
+            import_state_dir: None,
         },
         Box::new(vault),
         Box::new(FakeSecretStore::default()),
@@ -647,4 +655,72 @@ fn ios_settings_write_vault_config_through_the_vfs() {
     .expect("settings read succeeds");
     let body: Value = serde_json::from_str(&loaded.body).unwrap();
     assert_eq!(body["vault"]["taxonomyRoot"], "Library", "settings: {body}");
+}
+
+#[test]
+fn ios_import_review_and_commit_are_recovered_by_a_new_engine() {
+    let directory = tempfile::tempdir().unwrap();
+    let vault = FakeVault::default();
+    vault.seed("KizunaShelf/config.yaml", "taxonomyRoot: Shelf\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    externalFields:\n    - source: myanimelist\n      field: title\n  - field: source\n    fieldType: externalRef\n    externalRef: myanimelist\n    externalTypes: [anime]\n");
+    let make = || {
+        KizunaEngine::with_vault(
+            VaultOptions {
+                vault_root_label: "Vault".into(),
+                vault_identity: "durable-import".into(),
+                content_writable: true,
+                cache_ttl_ms: Some(0),
+                index_cache_dir: None,
+                import_state_dir: Some(directory.path().to_string_lossy().into_owned()),
+            },
+            Box::new(vault.clone()),
+            Box::new(FakeSecretStore::default()),
+        )
+        .unwrap()
+    };
+    let request = |engine: &KizunaEngine, method: &str, path: &str, body: Option<String>| {
+        let response =
+            futures::executor::block_on(engine.request(method.into(), path.into(), body)).unwrap();
+        assert_eq!(response.status, 200, "{}", response.body);
+        serde_json::from_str::<Value>(&response.body).unwrap()
+    };
+    let engine = make();
+    let created = request(&engine, "POST", "/api/import-jobs", Some(serde_json::json!({
+        "source":"yamtrack", "input":{"csvText":"media_id,source,media_type,title,status\n1,mal,anime,Offline title,Planning\n"}
+    }).to_string()));
+    let id = created["id"].as_str().unwrap();
+    let path = format!("/api/import-jobs/{id}");
+    let poll = |engine: &KizunaEngine, expected: &str| {
+        for _ in 0..200 {
+            let job = request(engine, "GET", &path, None);
+            if job["status"] == expected {
+                return job;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        panic!("Import never reached {expected}");
+    };
+    poll(&engine, "planned");
+    drop(engine);
+    let engine = make();
+    assert_eq!(request(&engine, "GET", &path, None)["status"], "planned");
+    request(
+        &engine,
+        "POST",
+        &format!("{path}/commit"),
+        Some(
+            serde_json::json!({
+                "options":{"importUserData":true,"importEpisodes":false,"markProgress":false}
+            })
+            .to_string(),
+        ),
+    );
+    assert_eq!(poll(&engine, "completed")["created"], 1);
+    drop(engine);
+    let engine = make();
+    let recovered = request(&engine, "GET", &path, None);
+    assert_eq!(recovered["status"], "completed");
+    assert_eq!(
+        request(&engine, "GET", "/api/health", None)["entityCount"],
+        1
+    );
 }

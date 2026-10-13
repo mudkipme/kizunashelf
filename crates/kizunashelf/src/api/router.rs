@@ -18,7 +18,8 @@ use super::handlers::{
 };
 use super::import::{
     cancel_import_job, commit_import_job, create_import_job, export_import_plan, get_import_job,
-    list_import_jobs, list_import_sources, restore_import_plan,
+    list_import_jobs, list_import_sources, pause_import_job, restore_import_plan,
+    resume_import_job,
 };
 use super::lists::{
     add_list_item, create_list, delete_list, get_list, get_lists, remove_list_item, update_list,
@@ -588,6 +589,30 @@ fn api_router() -> ApiRouter<AppState> {
             "/api/import-jobs/{id}/commit",
             post_with(commit_import_job, |op| {
                 op.id("commitImportJob")
+                    .response::<200, Json<ImportJob>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/import-jobs/{id}/pause",
+            post_with(pause_import_job, |op| {
+                op.id("pauseImportJob")
+                    .response::<200, Json<ImportJob>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/import-jobs/{id}/resume",
+            post_with(resume_import_job, |op| {
+                op.id("resumeImportJob")
                     .response::<200, Json<ImportJob>>()
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()

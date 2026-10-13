@@ -2482,7 +2482,7 @@
         },
         "responses": {
           "200": {
-            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "description": "A batch import job. Native hosts can persist execution checkpoints outside\nthe vault. `plan` is populated once `status` reaches `planned`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2550,7 +2550,7 @@
         ],
         "responses": {
           "200": {
-            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "description": "A batch import job. Native hosts can persist execution checkpoints outside\nthe vault. `plan` is populated once `status` reaches `planned`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2666,7 +2666,7 @@
         },
         "responses": {
           "200": {
-            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "description": "A batch import job. Native hosts can persist execution checkpoints outside\nthe vault. `plan` is populated once `status` reaches `planned`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2744,7 +2744,163 @@
         },
         "responses": {
           "200": {
-            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "description": "A batch import job. Native hosts can persist execution checkpoints outside\nthe vault. `plan` is populated once `status` reaches `planned`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-jobs/{id}/pause": {
+      "post": {
+        "operationId": "pauseImportJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A batch import job. Native hosts can persist execution checkpoints outside\nthe vault. `plan` is populated once `status` reaches `planned`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-jobs/{id}/resume": {
+      "post": {
+        "operationId": "resumeImportJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A batch import job. Native hosts can persist execution checkpoints outside\nthe vault. `plan` is populated once `status` reaches `planned`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2822,7 +2978,7 @@
         ],
         "responses": {
           "200": {
-            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "description": "A batch import job. Native hosts can persist execution checkpoints outside\nthe vault. `plan` is populated once `status` reaches `planned`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8894,7 +9050,7 @@
         ]
       },
       "ImportJob": {
-        "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+        "description": "A batch import job. Native hosts can persist execution checkpoints outside\nthe vault. `plan` is populated once `status` reaches `planned`.",
         "type": "object",
         "properties": {
           "id": {
@@ -8905,6 +9061,11 @@
           },
           "status": {
             "$ref": "#/components/schemas/ImportJobStatus"
+          },
+          "paused": {
+            "description": "Execution is suspended or was interrupted. Resume explicitly; status keeps\nthe phase so a committed import never falls back into review.",
+            "type": "boolean",
+            "default": false
           },
           "total": {
             "type": "integer",

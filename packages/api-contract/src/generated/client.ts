@@ -2051,6 +2051,64 @@ const res = await (fetchFn ?? fetch)(getCommitImportJobUrl(id),
 
 
 
+export const getPauseImportJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/import-jobs/${encodeURIComponent(String(id))}/pause`
+}
+
+export const pauseImportJob = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportJob> => {
+
+  const res = await (fetchFn ?? fetch)(getPauseImportJobUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getResumeImportJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/import-jobs/${encodeURIComponent(String(id))}/resume`
+}
+
+export const resumeImportJob = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportJob> => {
+
+  const res = await (fetchFn ?? fetch)(getResumeImportJobUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
 export const getCancelImportJobUrl = (id: string,) => {
 
 

@@ -589,7 +589,7 @@ fn is_reserved_windows_name(basename: &str) -> bool {
 }
 
 /// Vault-relative path for a new entity file under its type directory.
-fn entity_create_path(
+pub(super) fn entity_create_path(
     taxonomy_root: &str,
     type_config: &EntityTypeConfig,
     basename: &str,

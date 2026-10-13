@@ -79,6 +79,7 @@ async fn main() -> Result<()> {
         settings_writable,
         content_writable,
         index_cache_dir,
+        import_state_dir: None,
         index_cache_identity: None,
         // The network server never does host-path ingest; the web client uses the
         // reqwest-based download path. Keep this off so the `source_path`

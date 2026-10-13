@@ -5,20 +5,24 @@
 use super::model::{
     apply_user_data, candidate_types_for, needs_detail_fetch, ImportItem, ProviderRef,
 };
-use super::now_iso;
 use super::sources::SourceFetchFn;
-use crate::api::episodes::import_new_entity_episodes_marked;
+use super::{now_iso, CreationCheckpoint, ItemOutcome};
+use crate::api::episodes::import_new_entity_episodes_cancellable;
+use crate::api::error::ApiError;
 use crate::api::external::{
     build_existing_index, build_mapped_document, candidate_basename_base, candidate_year,
     lookup_existing, resolve_candidate,
 };
-use crate::api::mutations::{resolve_free_basename, write_new_entity_file};
+use crate::api::mutations::{
+    entity_create_path, resolve_free_basename, write_entity_raw, write_new_entity_file,
+};
 use crate::api::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CommitImportJobRequest, ExistingEntityRef, ImportDecisionAction, ImportInput, ImportJob,
     ImportJobStatus, ImportPlan, ImportPlanBucket, ImportPlanItem, ImportPlanItemState,
     ImportReviewReason,
 };
+use crate::library::{serialize_markdown_document, split_markdown_document};
 use crate::types::KizunaConfig;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -52,7 +56,14 @@ pub(super) async fn run_plan_job(
         .update_import_job(&job_id, |job| job.status = ImportJobStatus::Fetching)
         .await;
 
-    let items = match fetch(&state, &input).await {
+    let fetched = tokio::select! {
+        result = fetch(&state, &input) => result,
+        _ = super::import_cancelled(&cancel) => {
+            finish_cancelled(&state, &job_id).await;
+            return;
+        }
+    };
+    let items = match fetched {
         Ok(items) => {
             let mut items = dedup_items(items);
             for item in &mut items {
@@ -139,6 +150,14 @@ pub(super) async fn run_plan_job(
             buckets,
             items: plan_items,
         });
+        if let Err(error) = state.import_recovery().save(record).await {
+            record.job.paused = true;
+            record.cancel.store(true, Ordering::Relaxed);
+            push_error(
+                &mut record.job,
+                format!("Couldn't save import review: {}", error.message()),
+            );
+        }
     }
 }
 
@@ -246,16 +265,6 @@ pub(super) async fn run_commit_job(
     request: CommitImportJobRequest,
     cancel: Arc<AtomicBool>,
 ) {
-    state
-        .update_import_job(&job_id, |job| {
-            job.created = 0;
-            job.skipped = 0;
-            job.failed = 0;
-            job.processed = 0;
-            job.errors.clear();
-        })
-        .await;
-
     let library = match get_library(&state).await {
         Ok(library) => library,
         Err(error) => {
@@ -305,13 +314,34 @@ pub(super) async fn run_commit_job(
 
     // Retain in-batch dedup even when a custom mapping does not index the
     // external reference on the created file.
-    let mut created_refs: HashSet<(String, String)> = HashSet::new();
-    // (path, watched_count) for episode enrichment after the create pass.
-    let mut created: Vec<(String, Option<u32>)> = Vec::new();
+    let saved = state.import_jobs().lock().await.get(&job_id).cloned();
+    let mut created_refs: HashSet<(String, String)> = saved
+        .as_ref()
+        .into_iter()
+        .flat_map(|record| record.creations.values())
+        .filter(|intent| intent.created)
+        .map(|intent| intent.provider_key.clone())
+        .collect();
 
     for (position, planned_item) in planned.iter().enumerate() {
         if cancel.load(Ordering::Relaxed) {
             break;
+        }
+        let checkpoint = state.import_jobs().lock().await.get(&job_id).map(|record| {
+            (
+                record.outcomes.get(position).copied().flatten(),
+                record.creations.get(&position).cloned(),
+            )
+        });
+        if let Some((Some(_), _)) = checkpoint {
+            continue;
+        }
+        if let Some((_, Some(intent))) = checkpoint {
+            if !recover_creation(&state, &job_id, position, &intent, &reviewed_schema).await {
+                return;
+            }
+            created_refs.insert(intent.provider_key);
+            continue;
         }
         let decision = request
             .decisions
@@ -325,7 +355,7 @@ pub(super) async fn run_commit_job(
             }
         });
         if action == ImportDecisionAction::Skip {
-            mark_skipped(&state, &job_id).await;
+            checkpoint_outcome(&state, &job_id, position, ItemOutcome::Skipped, None).await;
             continue;
         }
 
@@ -336,10 +366,14 @@ pub(super) async fn run_commit_job(
         } else if let Some(reference) = planned_item.resolved_ref.as_ref() {
             (reference.provider.clone(), reference.url.clone())
         } else {
-            mark_failed(
+            checkpoint_outcome(
                 &state,
                 &job_id,
-                format!("{title}: no resolvable source; provide a candidate"),
+                position,
+                ItemOutcome::Failed,
+                Some(format!(
+                    "{title}: no resolvable source; provide a candidate"
+                )),
             )
             .await;
             continue;
@@ -355,19 +389,23 @@ pub(super) async fn run_commit_job(
             })
             .or_else(|| request.types.get(&planned_item.item.bucket).cloned());
         let Some(target) = target else {
-            mark_failed(
+            checkpoint_outcome(
                 &state,
                 &job_id,
-                format!("{title}: no entity type selected for this item"),
+                position,
+                ItemOutcome::Failed,
+                Some(format!("{title}: no entity type selected for this item")),
             )
             .await;
             continue;
         };
         let Some(type_config) = library.config.type_config(&target).cloned() else {
-            mark_failed(
+            checkpoint_outcome(
                 &state,
                 &job_id,
-                format!("{title}: unknown entity type '{target}'"),
+                position,
+                ItemOutcome::Failed,
+                Some(format!("{title}: unknown entity type '{target}'")),
             )
             .await;
             continue;
@@ -385,30 +423,35 @@ pub(super) async fn run_commit_job(
                 .filter(|candidate| candidate.provider.eq_ignore_ascii_case(&provider))
         });
         if needs_detail_fetch(candidate.as_ref(), &type_config, &provider) {
-            match resolve_candidate(
-                &state,
-                &provider,
-                &ref_url,
-                std::slice::from_ref(&planned_item.item.bucket),
-                None,
-            )
-            .await
-            {
+            let resolved = tokio::select! {
+                result = resolve_candidate(&state, &provider, &ref_url, std::slice::from_ref(&planned_item.item.bucket), None) => result,
+                _ = super::import_cancelled(&cancel) => { finish_cancelled(&state, &job_id).await; return; }
+            };
+            match resolved {
                 Ok(Some(fetched)) => candidate = Some(fetched),
                 Ok(None) => {}
                 Err(error) => {
                     if candidate.is_none() {
-                        mark_failed(&state, &job_id, format!("{title}: {}", error.message())).await;
+                        checkpoint_outcome(
+                            &state,
+                            &job_id,
+                            position,
+                            ItemOutcome::Failed,
+                            Some(format!("{title}: {}", error.message())),
+                        )
+                        .await;
                         continue;
                     }
                 }
             }
         }
         let Some(candidate) = candidate else {
-            mark_failed(
+            checkpoint_outcome(
                 &state,
                 &job_id,
-                format!("{title}: could not resolve a candidate"),
+                position,
+                ItemOutcome::Failed,
+                Some(format!("{title}: could not resolve a candidate")),
             )
             .await;
             continue;
@@ -428,7 +471,14 @@ pub(super) async fn run_commit_job(
         let base = match candidate_basename_base(&candidate, &type_config) {
             Ok(base) => base,
             Err(error) => {
-                mark_failed(&state, &job_id, format!("{title}: {}", error.message())).await;
+                checkpoint_outcome(
+                    &state,
+                    &job_id,
+                    position,
+                    ItemOutcome::Failed,
+                    Some(format!("{title}: {}", error.message())),
+                )
+                .await;
                 continue;
             }
         };
@@ -469,7 +519,7 @@ pub(super) async fn run_commit_job(
         if lookup_existing(&build_existing_index(&current), &candidate, &type_config.id).is_some()
             || created_refs.contains(&created_key)
         {
-            mark_skipped(&state, &job_id).await;
+            checkpoint_outcome(&state, &job_id, position, ItemOutcome::Skipped, None).await;
             continue;
         }
         let basename = match resolve_free_basename(
@@ -485,13 +535,38 @@ pub(super) async fn run_commit_job(
         {
             Ok((basename, _)) => basename,
             Err(error) => {
-                mark_failed(&state, &job_id, format!("{title}: {}", error.message())).await;
+                checkpoint_outcome(
+                    &state,
+                    &job_id,
+                    position,
+                    ItemOutcome::Failed,
+                    Some(format!("{title}: {}", error.message())),
+                )
+                .await;
                 continue;
             }
         };
 
         if cancel.load(Ordering::Relaxed) {
             break;
+        }
+        let watched = request
+            .options
+            .mark_progress
+            .then_some(planned_item.item.user.watched_count)
+            .flatten();
+        let intent = CreationCheckpoint {
+            candidate: Some(candidate.clone()),
+            entity_type: type_config.id.clone(),
+            path: entity_create_path(&taxonomy_root, &type_config, &basename),
+            raw: serialize_markdown_document(&frontmatter, &body),
+            provider_key: created_key.clone(),
+            watched,
+            created: false,
+            episodes_done: !request.options.import_episodes,
+        };
+        if !save_creation_intent(&state, &job_id, position, intent).await {
+            return;
         }
         let written = write_new_entity_file(
             &mutation,
@@ -506,66 +581,136 @@ pub(super) async fn run_commit_job(
         // Publish each item before releasing the shared gate so another host
         // engine cannot retain an index from before this creation.
         state.invalidate_cache().await;
-        drop(mutation);
         match written {
-            Ok(path) => {
+            Ok(_) => {
                 created_refs.insert(created_key);
-                let watched = request
-                    .options
-                    .mark_progress
-                    .then_some(planned_item.item.user.watched_count)
-                    .flatten();
-                created.push((path, watched));
-                mark_created(&state, &job_id).await;
+                if !checkpoint_outcome(&state, &job_id, position, ItemOutcome::Created, None).await
+                {
+                    return;
+                }
             }
             Err(error) => {
-                mark_failed(&state, &job_id, format!("{title}: {}", error.message())).await;
+                pause_with_error(&state, &job_id, error.message().to_owned()).await;
+                return;
             }
         }
+        drop(mutation);
     }
 
-    // Episode enrichment for the created entities (fail-safe): reload once so the
-    // new files are indexed, then import each source's episodes. One provider
-    // fetch per entity means this phase can dwarf the create phase on big
-    // imports, so it reports its own `episodes_*` progress — without it, clients
-    // sit on a full `processed`/`total` bar while the job is still `committing`.
+    // Rebuild enrichment from durable creation checkpoints, not just entities
+    // created during this particular run. Episode merging preserves existing
+    // items and watched state, making a lost acknowledgement safe to replay.
+    let created = state
+        .import_jobs()
+        .lock()
+        .await
+        .get(&job_id)
+        .map(|record| {
+            record
+                .creations
+                .iter()
+                .filter(|(_, intent)| intent.created)
+                .map(|(&position, intent)| (position, intent.clone()))
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
     if request.options.import_episodes && !created.is_empty() && !cancel.load(Ordering::Relaxed) {
         state
             .update_import_job(&job_id, |job| {
                 job.episodes_total = Some(created.len() as u32);
-                job.episodes_processed = Some(0);
+                job.episodes_processed = Some(
+                    created
+                        .iter()
+                        .filter(|(_, intent)| intent.episodes_done)
+                        .count() as u32,
+                );
             })
             .await;
-        state.invalidate_cache().await;
-        if let Ok(reloaded) = get_library(&state).await {
-            for (path, watched) in &created {
-                if cancel.load(Ordering::Relaxed) {
-                    break;
+        for (position, intent) in &created {
+            if cancel.load(Ordering::Relaxed) {
+                break;
+            }
+            if intent.episodes_done {
+                continue;
+            }
+            state.invalidate_cache().await;
+            let current = match require_content_writes(&state).await {
+                Ok(current) => current,
+                Err(error) => {
+                    pause_with_error(&state, &job_id, error.message().to_owned()).await;
+                    return;
                 }
-                let entity_id = reloaded
-                    .record_by_path(path)
-                    .map(|record| record.summary.id.clone());
-                if let Some(entity_id) = entity_id {
-                    if let Some(result) = import_new_entity_episodes_marked(
-                        &state, &reloaded, &entity_id, *watched, None,
-                    )
-                    .await
-                    {
-                        if let Some(error) = result.error {
-                            state
-                                .update_import_job(&job_id, |job| {
-                                    push_error(job, format!("episodes: {error}"));
-                                })
-                                .await;
+            };
+            if serde_json::to_value(current.config.clone().into_parts().1).ok() != reviewed_schema {
+                fail_commit(
+                    &state,
+                    &job_id,
+                    "The vault schema changed during episode import.",
+                    false,
+                )
+                .await;
+                return;
+            }
+            if let Some(record) = current.record_by_path(&intent.path) {
+                let original = split_markdown_document(&intent.raw);
+                let source_changed = current
+                    .config
+                    .type_config(&record.summary.entity_type)
+                    .is_none_or(|config| {
+                        config
+                            .fields
+                            .iter()
+                            .filter(|field| {
+                                field.field_type == crate::types::FieldType::ExternalRef
+                            })
+                            .any(|field| {
+                                original.frontmatter.get(&field.field)
+                                    != record.frontmatter.get(&field.field)
+                            })
+                    });
+                if source_changed {
+                    pause_with_error(&state, &job_id, "The imported entity's source changed. Resolve it before resuming episode enrichment.".into()).await;
+                    return;
+                }
+                if let Some(result) = import_new_entity_episodes_cancellable(
+                    &state,
+                    &current,
+                    &record.summary.id,
+                    intent.watched,
+                    &cancel,
+                )
+                .await
+                {
+                    if let Some(error) = result.error {
+                        if !record_episode_error(&state, &job_id, format!("episodes: {error}"))
+                            .await
+                        {
+                            return;
                         }
                     }
                 }
-                state
-                    .update_import_job(&job_id, |job| {
-                        job.episodes_processed =
-                            Some(job.episodes_processed.unwrap_or(0).saturating_add(1));
-                    })
-                    .await;
+            }
+            let mut jobs = state.import_jobs().lock().await;
+            if let Some(record) = jobs.get_mut(&job_id) {
+                if let Some(intent) = record.creations.get_mut(position) {
+                    intent.episodes_done = true;
+                }
+                record.job.episodes_processed = Some(
+                    record
+                        .creations
+                        .values()
+                        .filter(|intent| intent.created && intent.episodes_done)
+                        .count() as u32,
+                );
+                if let Err(error) = state.import_recovery().save(record).await {
+                    record.job.paused = true;
+                    record.cancel.store(true, Ordering::Relaxed);
+                    push_error(
+                        &mut record.job,
+                        format!("Couldn't save episode checkpoint: {}", error.message()),
+                    );
+                    return;
+                }
             }
         }
     }
@@ -574,6 +719,9 @@ pub(super) async fn run_commit_job(
     let cancelled = cancel.load(Ordering::Relaxed);
     state
         .update_import_job(&job_id, |job| {
+            if job.paused {
+                return;
+            }
             job.status = if cancelled {
                 ImportJobStatus::Cancelled
             } else {
@@ -586,38 +734,184 @@ pub(super) async fn run_commit_job(
 
 // ---- Job-status helpers ----------------------------------------------------
 
-async fn mark_skipped(state: &AppState, job_id: &str) {
-    state
-        .update_import_job(job_id, |job| {
-            job.skipped += 1;
-            job.processed += 1;
-        })
-        .await;
+/// Outcomes and tallies are saved together; replay never increments them twice.
+async fn checkpoint_outcome(
+    state: &AppState,
+    id: &str,
+    position: usize,
+    outcome: ItemOutcome,
+    message: Option<String>,
+) -> bool {
+    let mut jobs = state.import_jobs().lock().await;
+    let Some(record) = jobs.get_mut(id) else {
+        return false;
+    };
+    if record.outcomes.len() < record.items.len() {
+        record.outcomes.resize(record.items.len(), None);
+    }
+    if record.outcomes[position].is_none() {
+        record.outcomes[position] = Some(outcome);
+        record.job.processed += 1;
+        match outcome {
+            ItemOutcome::Created => {
+                record.job.created += 1;
+                if let Some(intent) = record.creations.get_mut(&position) {
+                    intent.created = true;
+                }
+            }
+            ItemOutcome::Skipped => record.job.skipped += 1,
+            ItemOutcome::Failed => record.job.failed += 1,
+        }
+        if let Some(message) = message {
+            push_error(&mut record.job, message);
+        }
+    }
+    if let Err(error) = state.import_recovery().save(record).await {
+        record.job.paused = true;
+        record.cancel.store(true, Ordering::Relaxed);
+        push_error(
+            &mut record.job,
+            format!("Couldn't save import checkpoint: {}", error.message()),
+        );
+        return false;
+    }
+    true
 }
 
-async fn mark_created(state: &AppState, job_id: &str) {
-    state
-        .update_import_job(job_id, |job| {
-            job.created += 1;
-            job.processed += 1;
-        })
-        .await;
+async fn save_creation_intent(
+    state: &AppState,
+    id: &str,
+    position: usize,
+    intent: CreationCheckpoint,
+) -> bool {
+    let mut jobs = state.import_jobs().lock().await;
+    let Some(record) = jobs.get_mut(id) else {
+        return false;
+    };
+    record.creations.insert(position, intent);
+    if let Err(error) = state.import_recovery().save(record).await {
+        record.job.paused = true;
+        record.cancel.store(true, Ordering::Relaxed);
+        push_error(
+            &mut record.job,
+            format!("Couldn't save import checkpoint: {}", error.message()),
+        );
+        return false;
+    }
+    true
 }
 
-async fn mark_failed(state: &AppState, job_id: &str, message: String) {
-    state
-        .update_import_job(job_id, |job| {
-            push_error(job, message);
-            job.failed += 1;
-            job.processed += 1;
-        })
+/// Native hosts can resume pending enrichment. The web/desktop job registry
+/// cannot, so retain its fail-safe episode behavior: report the error and finish
+/// the remaining items instead of leaving an unresumable committing job.
+async fn record_episode_error(state: &AppState, id: &str, message: String) -> bool {
+    if state.options.host_asset_ingest {
+        pause_with_error(state, id, message).await;
+        false
+    } else {
+        state
+            .update_import_job(id, |job| push_error(job, message))
+            .await;
+        true
+    }
+}
+
+async fn pause_with_error(state: &AppState, id: &str, message: String) {
+    let mut jobs = state.import_jobs().lock().await;
+    if let Some(record) = jobs.get_mut(id) {
+        if record.job.status == ImportJobStatus::Cancelled || record.job.paused {
+            return;
+        }
+        if state.options.host_asset_ingest {
+            record.job.paused = true;
+        } else {
+            record.job.status = ImportJobStatus::Failed;
+            record.job.finished_at = Some(now_iso());
+        }
+        record.cancel.store(true, Ordering::Relaxed);
+        push_error(&mut record.job, message);
+        let _ = state.import_recovery().save(record).await;
+    }
+}
+
+/// A write may have finished immediately before process termination. Adopt only
+/// the exact document this job intended to create; don't clobber an occupied path.
+async fn recover_creation(
+    state: &AppState,
+    id: &str,
+    position: usize,
+    intent: &CreationCheckpoint,
+    reviewed_schema: &Option<serde_json::Value>,
+) -> bool {
+    let mutation = state.content_mutation_lock().await;
+    if state
+        .import_jobs()
+        .lock()
+        .await
+        .get(id)
+        .is_none_or(|record| record.cancel.load(Ordering::Relaxed))
+    {
+        return false;
+    }
+    state.invalidate_cache().await;
+    let library = match require_content_writes(state).await {
+        Ok(library) => library,
+        Err(error) => {
+            pause_with_error(state, id, error.message().to_owned()).await;
+            return false;
+        }
+    };
+    if serde_json::to_value(library.config.clone().into_parts().1).ok() != *reviewed_schema {
+        fail_commit(
+            state,
+            id,
+            "The vault schema changed. Review a new import plan.",
+            false,
+        )
         .await;
+        return false;
+    }
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let written = match vfs.exists(&intent.path).await {
+        Ok(true) => match vfs.read_to_string(&intent.path).await {
+            Ok(raw) if raw == intent.raw => Ok(()),
+            Ok(_) => Err(ApiError::conflict(
+                "An interrupted import's target file changed. Resolve it before resuming.",
+            )),
+            Err(error) => Err(anyhow::anyhow!(error).into()),
+        },
+        Ok(false) => {
+            if intent.candidate.as_ref().is_some_and(|candidate| {
+                lookup_existing(
+                    &build_existing_index(&library),
+                    candidate,
+                    &intent.entity_type,
+                )
+                .is_some()
+            }) {
+                return checkpoint_outcome(state, id, position, ItemOutcome::Skipped, None).await;
+            }
+            write_entity_raw(&mutation, vfs.as_ref(), &intent.path, &intent.raw)
+                .await
+                .map_err(ApiError::from)
+        }
+        Err(error) => Err(anyhow::anyhow!(error).into()),
+    };
+    if let Err(error) = written {
+        pause_with_error(state, id, error.message().to_owned()).await;
+        return false;
+    }
+    state.invalidate_cache().await;
+    checkpoint_outcome(state, id, position, ItemOutcome::Created, None).await
 }
 
 async fn fail_plan(state: &AppState, job_id: &str, message: &str) {
     let message = message.to_string();
     state
         .update_import_job(job_id, |job| {
+            if job.paused {
+                return;
+            }
             push_error(job, message);
             job.status = ImportJobStatus::Failed;
             job.finished_at = Some(now_iso());
@@ -629,6 +923,9 @@ async fn fail_commit(state: &AppState, job_id: &str, message: &str, cancelled: b
     let message = message.to_string();
     state
         .update_import_job(job_id, |job| {
+            if job.paused {
+                return;
+            }
             push_error(job, message);
             job.status = if cancelled {
                 ImportJobStatus::Cancelled
@@ -643,6 +940,9 @@ async fn fail_commit(state: &AppState, job_id: &str, message: &str, cancelled: b
 async fn finish_cancelled(state: &AppState, job_id: &str) {
     state
         .update_import_job(job_id, |job| {
+            if job.paused {
+                return;
+            }
             job.status = ImportJobStatus::Cancelled;
             job.finished_at = Some(now_iso());
         })
@@ -687,6 +987,7 @@ mod tests {
                 content_writable: true,
                 host_asset_ingest: false,
                 index_cache_dir: None,
+                import_state_dir: None,
                 index_cache_identity: None,
             },
             fs.clone(),
@@ -791,5 +1092,290 @@ mod tests {
         assert_eq!(job.status, ImportJobStatus::Cancelled);
         assert_eq!(job.created, 0);
         assert!(files.is_empty());
+    }
+    fn durable_state(
+        fs: Arc<InMemoryVfs>,
+        directory: &std::path::Path,
+        identity: &str,
+    ) -> AppState {
+        AppState::with_vault(
+            ApiOptions {
+                cache_ttl: Duration::ZERO,
+                web_dist_path: None,
+                settings_writable: true,
+                content_writable: true,
+                host_asset_ingest: true,
+                index_cache_dir: None,
+                import_state_dir: Some(directory.to_path_buf()),
+                index_cache_identity: Some(identity.into()),
+            },
+            fs,
+            AppConfig {
+                vault_root: "test".into(),
+                content_writable: Some(true),
+            },
+            Arc::new(NativeSecretStore::with_token_path(directory.join("tokens"))),
+        )
+    }
+
+    async fn interrupted_fixture(
+        written: bool,
+        acknowledged: bool,
+    ) -> (tempfile::TempDir, Arc<InMemoryVfs>, String) {
+        let (state, fs, id, _, _) = fixture().await;
+        let dir = tempfile::tempdir().unwrap();
+        let durable = durable_state(fs.clone(), dir.path(), "recovery-vault");
+        let mut record = state.import_jobs().lock().await[&id].clone();
+        let request: CommitImportJobRequest = serde_json::from_value(
+            json!({"options":{"importUserData":true,"importEpisodes":true,"markProgress":true}}),
+        )
+        .unwrap();
+        record.commit = Some(request);
+        record.running = true;
+        record.job.paused = false;
+        record.job.processed = u32::from(acknowledged);
+        record.job.created = u32::from(acknowledged);
+        record.outcomes = vec![acknowledged.then_some(ItemOutcome::Created)];
+        let raw =
+            "---\ntitle: Imported title\nsource: https://myanimelist.net/anime/1\n---\n".to_owned();
+        let intent = CreationCheckpoint {
+            candidate: record.items[0].item.candidate.clone(),
+            entity_type: "anime".into(),
+            path: "Shelf/Anime/Imported title.md".into(),
+            raw: raw.clone(),
+            provider_key: ("myanimelist".into(), "1".into()),
+            watched: Some(5),
+            created: acknowledged,
+            episodes_done: false,
+        };
+        record.creations.insert(0, intent);
+        if written {
+            fs.insert_file("Shelf/Anime/Imported title.md", &raw);
+        }
+        durable
+            .import_recovery()
+            .save(&record)
+            .await
+            .unwrap_or_else(|e| panic!("{}", e.message()));
+        drop(durable);
+        (dir, fs, id)
+    }
+
+    async fn resume_and_wait(state: &AppState, id: &str) -> ImportJob {
+        use crate::api::import::{resume_import_job, ImportJobPath};
+        let resumed = resume_import_job(
+            State(state.clone()),
+            axum::extract::Path(ImportJobPath { id: id.into() }),
+        )
+        .await
+        .unwrap_or_else(|e| panic!("{}", e.message()))
+        .0;
+        assert!(!resumed.paused);
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                let jobs = state.import_jobs().lock().await;
+                let record = &jobs[id];
+                if !record.running {
+                    break record.job.clone();
+                }
+                drop(jobs);
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap()
+    }
+
+    #[tokio::test]
+    async fn resumes_creation_intent_before_or_after_vault_write_without_duplicates() {
+        for written in [false, true] {
+            let (dir, fs, id) = interrupted_fixture(written, false).await;
+            let state = durable_state(fs.clone(), dir.path(), "recovery-vault");
+            assert!(state.import_jobs().lock().await[&id].job.paused);
+            let job = resume_and_wait(&state, &id).await;
+            assert_eq!(job.status, ImportJobStatus::Completed);
+            assert_eq!(job.created, 1);
+            assert_eq!(job.processed, 1);
+            assert_eq!(job.episodes_processed, Some(1));
+            assert_eq!(fs.read_dir("Shelf/Anime").await.unwrap().len(), 1);
+        }
+    }
+
+    #[tokio::test]
+    async fn resumes_episode_enrichment_for_previously_created_entities() {
+        let (dir, fs, id) = interrupted_fixture(true, true).await;
+        let state = durable_state(fs.clone(), dir.path(), "recovery-vault");
+        assert!(!state.import_jobs().lock().await[&id].creations[&0].episodes_done);
+        let job = resume_and_wait(&state, &id).await;
+        assert_eq!(job.created, 1);
+        assert_eq!(job.skipped, 0);
+        assert_eq!(job.episodes_total, Some(1));
+        assert_eq!(job.episodes_processed, Some(1));
+        assert!(state.import_jobs().lock().await[&id].creations[&0].episodes_done);
+        // A new engine sees the acknowledged terminal job, not another import.
+        drop(state);
+        let reloaded = durable_state(fs, dir.path(), "recovery-vault");
+        assert_eq!(
+            reloaded.import_jobs().lock().await[&id].job.status,
+            ImportJobStatus::Completed
+        );
+    }
+
+    #[tokio::test]
+    async fn interrupted_creation_never_overwrites_an_occupied_target() {
+        let (dir, fs, id) = interrupted_fixture(true, false).await;
+        fs.insert_file(
+            "Shelf/Anime/Imported title.md",
+            "Keep this user's document\n",
+        );
+        let state = durable_state(fs.clone(), dir.path(), "recovery-vault");
+        let job = resume_and_wait(&state, &id).await;
+        assert!(job.paused);
+        assert_eq!(job.created, 0);
+        assert_eq!(
+            fs.read_to_string("Shelf/Anime/Imported title.md")
+                .await
+                .unwrap(),
+            "Keep this user's document\n"
+        );
+    }
+
+    #[tokio::test]
+    async fn saved_imports_are_isolated_by_vault_identity() {
+        let (dir, fs, id) = interrupted_fixture(true, true).await;
+        let other = durable_state(fs, dir.path(), "another-vault");
+        assert!(!other.import_jobs().lock().await.contains_key(&id));
+    }
+
+    #[tokio::test]
+    async fn an_unwritable_journal_prevents_new_vault_mutations() {
+        let (state, fs, id, _, _) = fixture().await;
+        let dir = tempfile::tempdir().unwrap();
+        let blocked = dir.path().join("not-a-directory");
+        std::fs::write(&blocked, "occupied").unwrap();
+        let durable = durable_state(fs.clone(), &blocked, "recovery-vault");
+        let mut record = state.import_jobs().lock().await[&id].clone();
+        record.running = false;
+        durable
+            .import_jobs()
+            .lock()
+            .await
+            .insert(id.clone(), record);
+        let request: CommitImportJobRequest = serde_json::from_value(
+            json!({"options":{"importUserData":true,"importEpisodes":false,"markProgress":false}}),
+        )
+        .unwrap();
+        let result = crate::api::import::commit_import_job(
+            State(durable.clone()),
+            axum::extract::Path(super::super::ImportJobPath { id }),
+            Json(request),
+        )
+        .await;
+        assert!(result.is_err());
+        assert!(fs
+            .read_dir("Shelf/Anime")
+            .await
+            .unwrap_or_default()
+            .is_empty());
+    }
+    #[tokio::test]
+    async fn resumed_intent_rechecks_duplicates_created_during_suspension() {
+        let (dir, fs, id) = interrupted_fixture(false, false).await;
+        fs.insert_file(
+            "Shelf/Anime/Elsewhere.md",
+            "---\ntitle: Another title\nsource: https://myanimelist.net/anime/1\n---\n",
+        );
+        let state = durable_state(fs.clone(), dir.path(), "recovery-vault");
+        let job = resume_and_wait(&state, &id).await;
+        assert_eq!(job.created, 0);
+        assert_eq!(job.skipped, 1);
+        assert_eq!(fs.read_dir("Shelf/Anime").await.unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn recovered_episode_enrichment_does_not_follow_a_repointed_source() {
+        let (dir, fs, id) = interrupted_fixture(true, true).await;
+        fs.insert_file(
+            "Shelf/Anime/Imported title.md",
+            "---\ntitle: Imported title\nsource: https://myanimelist.net/anime/2\n---\n",
+        );
+        let state = durable_state(fs.clone(), dir.path(), "recovery-vault");
+        let job = resume_and_wait(&state, &id).await;
+        assert!(job.paused);
+        assert!(!state.import_jobs().lock().await[&id].creations[&0].episodes_done);
+    }
+
+    #[tokio::test]
+    async fn unreadable_recovery_fails_closed_and_can_be_retried_after_repair() {
+        let (dir, fs, id) = interrupted_fixture(true, true).await;
+        let file = dir
+            .path()
+            .join(crate::library::file_revision("recovery-vault"))
+            .join(format!("{}.json", crate::library::file_revision(&id)));
+        let original = std::fs::read(&file).unwrap();
+        std::fs::write(&file, "unreadable journal").unwrap();
+        let state = durable_state(fs, dir.path(), "recovery-vault");
+        assert!(state.import_recovery().check().is_err());
+        assert!(state.import_jobs().lock().await.is_empty());
+        std::fs::write(&file, original).unwrap();
+        assert!(state.import_recovery().check().is_ok());
+        assert!(state.import_jobs().lock().await[&id].job.paused);
+    }
+    #[tokio::test]
+    async fn a_late_worker_error_does_not_resurrect_a_cancelled_import() {
+        let (state, _, id, _, _) = fixture().await;
+        state
+            .import_jobs()
+            .lock()
+            .await
+            .get_mut(&id)
+            .unwrap()
+            .job
+            .status = ImportJobStatus::Cancelled;
+        pause_with_error(&state, &id, "A provider request stopped".into()).await;
+        let jobs = state.import_jobs().lock().await;
+        assert_eq!(jobs[&id].job.status, ImportJobStatus::Cancelled);
+        assert!(!jobs[&id].job.paused);
+        assert!(jobs[&id].job.errors.is_empty());
+    }
+    #[tokio::test]
+    async fn web_import_errors_become_terminal_instead_of_unresumable_pauses() {
+        let (state, _, id, _, _) = fixture().await;
+        pause_with_error(&state, &id, "The vault could not be written".into()).await;
+        let jobs = state.import_jobs().lock().await;
+        assert_eq!(jobs[&id].job.status, ImportJobStatus::Failed);
+        assert!(!jobs[&id].job.paused);
+        assert!(jobs[&id].job.finished_at.is_some());
+        assert_eq!(jobs[&id].job.errors, vec!["The vault could not be written"]);
+    }
+
+    #[tokio::test]
+    async fn web_episode_errors_are_reported_without_stalling_the_create_job() {
+        let (state, _, id, _, _) = fixture().await;
+        assert!(record_episode_error(&state, &id, "episodes: provider unavailable".into()).await);
+        let jobs = state.import_jobs().lock().await;
+        assert_eq!(jobs[&id].job.status, ImportJobStatus::Committing);
+        assert!(!jobs[&id].job.paused);
+        assert!(!jobs[&id].cancel.load(Ordering::Relaxed));
+        assert_eq!(jobs[&id].job.errors, vec!["episodes: provider unavailable"]);
+    }
+
+    #[tokio::test]
+    async fn native_episode_errors_keep_enrichment_pending_for_resume() {
+        let (dir, fs, id) = interrupted_fixture(true, true).await;
+        let state = durable_state(fs, dir.path(), "recovery-vault");
+        state
+            .import_jobs()
+            .lock()
+            .await
+            .get_mut(&id)
+            .unwrap()
+            .job
+            .paused = false;
+        assert!(!record_episode_error(&state, &id, "episodes: provider unavailable".into()).await);
+        let jobs = state.import_jobs().lock().await;
+        assert!(jobs[&id].job.paused);
+        assert_eq!(jobs[&id].job.status, ImportJobStatus::Committing);
+        assert!(!jobs[&id].creations[&0].episodes_done);
     }
 }

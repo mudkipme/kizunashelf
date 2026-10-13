@@ -203,6 +203,9 @@ pub struct ApiOptions {
     /// start re-parses the whole vault. A pure optimization; see
     /// [`crate::library`]'s index cache.
     pub index_cache_dir: Option<PathBuf>,
+    /// Durable host-private import journals, outside the vault and cache.
+    /// Honored only for in-process hosts with a stable vault identity.
+    pub import_state_dir: Option<PathBuf>,
     /// Stable host-provided identity for the active vault. Native hosts that use
     /// a display label in `AppConfig::vault_root` (notably iOS) set this to the
     /// remembered vault UUID so two same-named vaults never share an index cache.
@@ -289,7 +292,7 @@ pub(crate) struct AppState {
     http_client: reqwest::Client,
     asset_jobs: Arc<Mutex<HashMap<String, AssetJobRecord>>>,
     asset_job_counter: Arc<AtomicU64>,
-    import_jobs: Arc<Mutex<HashMap<String, ImportJobRecord>>>,
+    import_recovery: Arc<super::import::recovery::ImportRecovery>,
     import_job_counter: Arc<AtomicU64>,
 }
 
@@ -375,6 +378,7 @@ impl AppState {
             .unwrap_or_else(|_| reqwest::Client::new());
         let (vault_changes, _) = tokio::sync::watch::channel(0);
         let coordination = content_mutation_for_identity(options.index_cache_identity.as_deref());
+        let import_recovery = super::import::recovery::ImportRecovery::open(&options);
         Self {
             options,
             vault_fs,
@@ -400,7 +404,7 @@ impl AppState {
             http_client,
             asset_jobs: Arc::new(Mutex::new(HashMap::new())),
             asset_job_counter: Arc::new(AtomicU64::new(0)),
-            import_jobs: Arc::new(Mutex::new(HashMap::new())),
+            import_recovery,
             import_job_counter: Arc::new(AtomicU64::new(0)),
         }
     }
@@ -537,7 +541,7 @@ impl AppState {
     }
 
     pub(crate) fn import_jobs(&self) -> &Arc<Mutex<HashMap<String, ImportJobRecord>>> {
-        &self.import_jobs
+        &self.import_recovery.jobs
     }
 
     pub(crate) fn next_import_job_id(&self) -> String {
@@ -558,20 +562,16 @@ impl AppState {
     /// a stale plan is safe because the dedup gate skips already-created entities.
     /// The check-and-insert is atomic (one lock). Returns `false` (and inserts
     /// nothing) when a job is already in flight.
-    pub(crate) async fn insert_import_job_if_idle(&self, record: ImportJobRecord) -> bool {
-        let mut jobs = self.import_jobs.lock().await;
-        if jobs.contains_key(&record.job.id)
-            || jobs.values().any(|existing| {
-                matches!(
-                    existing.job.status,
-                    ImportJobStatus::Queued
-                        | ImportJobStatus::Fetching
-                        | ImportJobStatus::Committing
-                )
-            })
-        {
-            return false;
+    pub(crate) async fn insert_import_job_if_idle(
+        &self,
+        record: ImportJobRecord,
+    ) -> Result<bool, ApiError> {
+        self.import_recovery.check()?;
+        let mut jobs = self.import_jobs().lock().await;
+        if jobs.contains_key(&record.job.id) || jobs.values().any(|existing| existing.running) {
+            return Ok(false);
         }
+        self.import_recovery.save(&record).await?;
         jobs.insert(record.job.id.clone(), record);
         if jobs.len() > MAX_RETAINED_JOBS {
             let mut finished: Vec<(String, String)> = jobs
@@ -590,9 +590,22 @@ impl AppState {
             let remove = jobs.len().saturating_sub(MAX_RETAINED_JOBS);
             for (id, _) in finished.into_iter().take(remove) {
                 jobs.remove(&id);
+                self.import_recovery.remove(&id).await;
             }
         }
-        true
+        Ok(true)
+    }
+
+    pub(crate) fn import_recovery(&self) -> &super::import::recovery::ImportRecovery {
+        &self.import_recovery
+    }
+
+    pub(crate) async fn finish_import_worker(&self, id: &str) {
+        let mut jobs = self.import_jobs().lock().await;
+        if let Some(record) = jobs.get_mut(id) {
+            record.running = false;
+            let _ = self.import_recovery.save(record).await;
+        }
     }
 
     /// Applies `update` to the stored import job, if it still exists.
@@ -601,9 +614,19 @@ impl AppState {
         job_id: &str,
         update: impl FnOnce(&mut ImportJob),
     ) {
-        let mut jobs = self.import_jobs.lock().await;
+        let mut jobs = self.import_jobs().lock().await;
         if let Some(record) = jobs.get_mut(job_id) {
+            let previous = record.job.clone();
             update(&mut record.job);
+            if let Err(error) = self.import_recovery.save(record).await {
+                record.job = previous;
+                record.cancel.store(true, Ordering::Relaxed);
+                record.job.paused = true;
+                record.job.errors.push(format!(
+                    "Could not save import progress: {}",
+                    error.message()
+                ));
+            }
         }
     }
 
@@ -1012,6 +1035,7 @@ mod tests {
                 content_writable: true,
                 host_asset_ingest: false,
                 index_cache_dir: None,
+                import_state_dir: None,
                 index_cache_identity: identity,
             },
             vfs as Arc<dyn Vfs>,
@@ -1144,6 +1168,7 @@ types:
                 content_writable: true,
                 host_asset_ingest: false,
                 index_cache_dir: None,
+                import_state_dir: None,
                 index_cache_identity: None,
             },
             AppConfig {

@@ -208,6 +208,7 @@ fn build_router(
             // speed up cold starts on large vaults. A disposable cache; per-vault
             // entries are keyed by vault identity inside the dir, so one dir is
             // shared across vaults.
+            import_state_dir: None,
             index_cache_dir: Some(index_cache_dir),
             index_cache_identity: None,
             // The desktop frontend uses the reqwest-based download path; it never
