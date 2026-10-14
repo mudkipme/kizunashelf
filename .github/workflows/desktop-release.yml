@@ -1,0 +1,291 @@
+name: Desktop release
+
+on:
+  workflow_call:
+    inputs:
+      publish:
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      sign:
+        description: Sign and notarize a test build (requires configured credentials)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  prepare:
+    name: Validate release configuration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.prepare.outputs.version }}
+      sign: ${{ steps.prepare.outputs.sign }}
+      signpath: ${{ steps.prepare.outputs.signpath }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Validate versions and signing credentials
+        id: prepare
+        env:
+          PUBLISH: ${{ inputs.publish || false }}
+          SIGN: ${{ inputs.sign || false }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          WINDOWS_SIGNING_REQUIRED: ${{ vars.WINDOWS_SIGNING_REQUIRED }}
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          SIGNPATH_APP_CONFIGURATION_SLUG: ${{ vars.SIGNPATH_APP_CONFIGURATION_SLUG }}
+          SIGNPATH_INSTALLER_CONFIGURATION_SLUG: ${{ vars.SIGNPATH_INSTALLER_CONFIGURATION_SLUG }}
+        run: node scripts/desktop-release.mjs prepare
+
+  build:
+    name: Build ${{ matrix.platform }} ${{ matrix.arch }}
+    needs: [prepare]
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            arch: amd64
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+            bundle: dmg
+          - platform: macos
+            arch: arm64
+            runner: macos-15
+            target: aarch64-apple-darwin
+            bundle: dmg
+          - platform: linux
+            arch: amd64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundle: appimage
+          - platform: linux
+            arch: arm64
+            runner: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            bundle: appimage
+          - platform: windows
+            arch: amd64
+            runner: windows-2025
+            target: x86_64-pc-windows-msvc
+            bundle: nsis
+          - platform: windows
+            arch: arm64
+            runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            bundle: nsis
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v6
+        with:
+          cache: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: desktop-release-${{ matrix.target }}
+      - name: Install Linux build and packaging libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev \
+            patchelf xdg-utils file
+      - run: pnpm install --frozen-lockfile
+      - name: Build desktop package (or Windows binary before signing)
+        uses: tauri-apps/tauri-action@v1
+        env:
+          # Tauri imports the p12 into a temporary macOS keychain.
+          APPLE_CERTIFICATE: ${{ runner.os == 'macOS' && needs.prepare.outputs.sign == 'true' && secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ runner.os == 'macOS' && needs.prepare.outputs.sign == 'true' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && needs.prepare.outputs.sign == 'true' && secrets.APPLE_SIGNING_IDENTITY || '-' }}
+          APPLE_ID: ${{ runner.os == 'macOS' && needs.prepare.outputs.sign == 'true' && secrets.APPLE_ID || '' }}
+          APPLE_PASSWORD: ${{ runner.os == 'macOS' && needs.prepare.outputs.sign == 'true' && secrets.APPLE_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ runner.os == 'macOS' && needs.prepare.outputs.sign == 'true' && secrets.APPLE_TEAM_ID || '' }}
+          # Extract AppImage tooling instead of requiring a FUSE mount in CI.
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        with:
+          projectPath: apps/desktop
+          args: >-
+            --target ${{ matrix.target }}
+            ${{ runner.os == 'Windows' && needs.prepare.outputs.signpath == 'true' && '--no-bundle' || format('--bundles {0}', matrix.bundle) }}
+            --ci -- --locked
+          uploadUpdaterJson: false
+
+      - name: Upload Windows app for signing
+        if: runner.os == 'Windows' && needs.prepare.outputs.signpath == 'true'
+        id: unsigned-app
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-windows-app-${{ matrix.arch }}
+          path: target/${{ matrix.target }}/release/kizunashelf-desktop.exe
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+      - name: Sign Windows app
+        if: runner.os == 'Windows' && needs.prepare.outputs.signpath == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_APP_CONFIGURATION_SLUG }}
+          parameters: |
+            version: ${{ toJSON(needs.prepare.outputs.version) }}
+          github-artifact-id: ${{ steps.unsigned-app.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: ${{ runner.temp }}/signed-app
+      - name: Verify signed app and build Windows installer
+        if: runner.os == 'Windows' && needs.prepare.outputs.signpath == 'true'
+        shell: pwsh
+        env:
+          BUILD_TARGET: ${{ matrix.target }}
+        run: |
+          $app = Join-Path $env:RUNNER_TEMP 'signed-app/kizunashelf-desktop.exe'
+          if ((Get-AuthenticodeSignature $app).Status -ne 'Valid') {
+            throw 'Windows app has no valid Authenticode signature'
+          }
+          Copy-Item $app "target/$env:BUILD_TARGET/release/kizunashelf-desktop.exe" -Force
+          pnpm --filter @kizunashelf/desktop tauri bundle --target $env:BUILD_TARGET --bundles nsis --ci
+          if ($LASTEXITCODE -ne 0) { throw 'Windows installer bundling failed' }
+
+      - name: Collect package with an unambiguous platform and architecture name
+        env:
+          BUILD_TARGET: ${{ matrix.target }}
+          BUILD_PLATFORM: ${{ matrix.platform }}
+          BUILD_ARCH: ${{ matrix.arch }}
+          BUILD_BUNDLE: ${{ matrix.bundle }}
+          RELEASE_DIR: ${{ runner.temp }}/desktop-package
+        run: node scripts/desktop-release.mjs collect
+      - name: Upload Windows installer for signing
+        if: runner.os == 'Windows' && needs.prepare.outputs.signpath == 'true'
+        id: unsigned-installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-windows-installer-${{ matrix.arch }}
+          path: ${{ runner.temp }}/desktop-package/*
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+      - name: Sign Windows installer
+        if: runner.os == 'Windows' && needs.prepare.outputs.signpath == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_INSTALLER_CONFIGURATION_SLUG }}
+          parameters: |
+            version: ${{ toJSON(needs.prepare.outputs.version) }}
+          github-artifact-id: ${{ steps.unsigned-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: ${{ runner.temp }}/signed-installer
+      - name: Verify and collect signed Windows installer
+        if: runner.os == 'Windows' && needs.prepare.outputs.signpath == 'true'
+        shell: pwsh
+        run: |
+          $installers = @(Get-ChildItem "$env:RUNNER_TEMP/signed-installer" -Filter '*.exe')
+          if ($installers.Count -ne 1) { throw 'Expected exactly one signed installer' }
+          if ((Get-AuthenticodeSignature $installers[0].FullName).Status -ne 'Valid') {
+            throw 'Windows installer has no valid Authenticode signature'
+          }
+          Copy-Item $installers[0].FullName "$env:RUNNER_TEMP/desktop-package" -Force
+      - uses: actions/upload-artifact@v7
+        with:
+          name: desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/desktop-package/*
+          if-no-files-found: error
+          retention-days: 14
+          overwrite: true
+
+  publish:
+    name: Publish all six desktop packages
+    if: inputs.publish
+    needs: [prepare, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: desktop-*
+          path: ${{ runner.temp }}/desktop-release
+          merge-multiple: true
+      - name: Create checksums and publish the release
+        working-directory: ${{ runner.temp }}/desktop-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          WINDOWS_SIGNED: ${{ needs.prepare.outputs.signpath }}
+        run: |
+          packages=(KizunaShelf_*)
+          test "${#packages[@]}" -eq 6
+          for platform in macos linux windows; do
+            case "$platform" in
+              macos) suffix='.dmg' ;;
+              linux) suffix='.AppImage' ;;
+              windows) suffix='-setup.exe' ;;
+            esac
+            for arch in amd64 arm64; do
+              test -f "KizunaShelf_${RELEASE_VERSION}_${platform}_${arch}${suffix}"
+            done
+          done
+          sha256sum "${packages[@]}" > SHA256SUMS.txt
+          notes="$RUNNER_TEMP/desktop-release-notes.md"
+          cat > "$notes" <<'EOF'
+          Desktop downloads are available for macOS, Linux, and Windows, each in amd64 and arm64.
+          macOS packages are Developer ID signed and notarized. Linux AppImages target Ubuntu 22.04 / glibc 2.35 or newer; make the file executable before running it.
+          EOF
+          if [[ "$WINDOWS_SIGNED" == 'true' ]]; then
+            cat >> "$notes" <<'EOF'
+
+          Windows applications and installers are signed. Code signing policy and release setup: https://github.com/mudkipme/kizunashelf/blob/main/docs/desktop-release.md
+          Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+          EOF
+          else
+            printf '\nWindows installers are unsigned in this release and may show an unknown-publisher or SmartScreen warning.\n' >> "$notes"
+          fi
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            test "$(gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft')" = true
+          else
+            prerelease=()
+            if [[ "$RELEASE_VERSION" == *-* ]]; then prerelease+=(--prerelease); fi
+            gh release create "$RELEASE_TAG" --verify-tag --draft \
+              --title "KizunaShelf $RELEASE_VERSION" --notes-file "$notes" \
+              --generate-notes "${prerelease[@]}"
+          fi
+          gh release upload "$RELEASE_TAG" "${packages[@]}" SHA256SUMS.txt --clobber
+          gh release edit "$RELEASE_TAG" --draft=false

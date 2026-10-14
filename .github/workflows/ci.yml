@@ -153,6 +153,21 @@ jobs:
           retention-days: 1
           overwrite: true
 
+  desktop-release:
+    name: Release desktop apps
+    needs: [check, desktop-check]
+    if: >-
+      github.repository == 'mudkipme/kizunashelf' &&
+      github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      actions: read
+      contents: write
+    uses: ./.github/workflows/desktop-release.yml
+    with:
+      publish: true
+    secrets: inherit
+
   publish-image:
     name: Publish GHCR image
     needs: [build-image]
