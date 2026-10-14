@@ -43,7 +43,7 @@ msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, other {失敗 # 件}}"
 
 #. placeholder {0}: type.fields.length
-#: src/components/settings/settings-dialogs.tsx:234
+#: src/components/settings/settings-dialogs.tsx:248
 msgid "{0, plural, one {# field} other {# fields}}"
 msgstr "{0, plural, other {# 個欄位}}"
 
@@ -87,7 +87,7 @@ msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, other {# 條路徑}}"
 
 #. placeholder {0}: typeProviderCount(type)
-#: src/components/settings/settings-dialogs.tsx:235
+#: src/components/settings/settings-dialogs.tsx:249
 msgid "{0, plural, one {# provider} other {# providers}}"
 msgstr "{0, plural, other {# 個資料來源}}"
 
@@ -132,7 +132,7 @@ msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, other {已觀看 # 件}}"
 
 #. placeholder {0}: pending.types.length
-#: src/components/settings/preset-picker.tsx:189
+#: src/components/settings/preset-picker.tsx:200
 msgid "{0, plural, one {Add # type} other {Add # types}}"
 msgstr "{0, plural, other {新增 # 種類型}}"
 
@@ -270,7 +270,7 @@ msgstr "≥"
 msgid "✅ Completed"
 msgstr "✅ 已完成"
 
-#: src/components/settings/preset-picker.tsx:281
+#: src/components/settings/preset-picker.tsx:295
 msgid "✨ Pairs well with your picks"
 msgstr "✨ 與你的選擇很搭"
 
@@ -287,7 +287,7 @@ msgstr "已存在以此標題命名的檔案，因此改儲存為「{0}」。"
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名清單已存在，或檔案已在磁碟上被修改。"
 
-#: src/components/settings/preset-picker.tsx:371
+#: src/components/settings/preset-picker.tsx:386
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "已存在同名類型，因此改用 {assignedIds}。新增後可再重新命名。"
 
@@ -311,6 +311,7 @@ msgstr "活動操作"
 #: src/components/layout/command-palette.tsx:145
 #: src/components/lists/add-items-dialog.tsx:109
 #: src/components/settings/settings-controls.tsx:65
+#: src/components/settings/settings-dialogs.tsx:409
 #: src/components/settings/settings-external-mappings.tsx:51
 #: src/pages/home-page.tsx:36
 #: src/pages/home-page.tsx:42
@@ -334,7 +335,7 @@ msgstr "新增 {0}"
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
-#: src/components/settings/preset-picker.tsx:399
+#: src/components/settings/preset-picker.tsx:414
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
 msgstr "為 <1>{1}</1> 新增一個 <0>{0}</0> 連結"
 
@@ -342,7 +343,11 @@ msgstr "為 <1>{1}</1> 新增一個 <0>{0}</0> 連結"
 msgid "Add an External ref field with a provider to configure priority."
 msgstr "加入已設定資料來源的「外部參照」欄位，即可設定優先順序。"
 
-#: src/components/settings/settings-dialogs.tsx:216
+#: src/components/settings/preset-picker.tsx:353
+msgid "Add another"
+msgstr "再新增一個"
+
+#: src/components/settings/settings-dialogs.tsx:230
 msgid "Add built-in type"
 msgstr "新增內建類型"
 
@@ -350,7 +355,7 @@ msgstr "新增內建類型"
 msgid "Add built-in types"
 msgstr "新增內建類型"
 
-#: src/components/settings/settings-dialogs.tsx:219
+#: src/components/settings/settings-dialogs.tsx:233
 msgid "Add custom type"
 msgstr "新增自訂類型"
 
@@ -421,7 +426,7 @@ msgid "Add year"
 msgstr "新增年份"
 
 #: src/components/lists/add-items-dialog.tsx:98
-#: src/components/settings/preset-picker.tsx:337
+#: src/components/settings/preset-picker.tsx:353
 msgid "Added"
 msgstr "已新增"
 
@@ -434,7 +439,8 @@ msgstr "已新增 {added} — {renamed}"
 msgid "Added, but episode import failed: {0}"
 msgstr "已新增，但劇集匯入失敗：{0}"
 
-#: src/components/settings/preset-picker.tsx:201
+#: src/components/settings/preset-picker.tsx:212
+#: src/components/settings/settings-dialogs.tsx:409
 #: src/components/smart-lists/suggested-lists-dialog.tsx:127
 #: src/pages/quick-capture-page.tsx:386
 msgid "Adding…"
@@ -517,7 +523,7 @@ msgid "Anything worth remembering"
 msgstr "任何值得記錄的內容"
 
 #: src/components/entities/metadata-scalar-inputs.tsx:108
-#: src/components/settings/settings-dialogs.tsx:389
+#: src/components/settings/settings-dialogs.tsx:578
 msgid "Apply"
 msgstr "套用"
 
@@ -543,8 +549,8 @@ msgid "assets: {0}"
 msgstr "資產：{0}"
 
 #: src/components/layout/app-frame.tsx:211
-#: src/components/settings/preset-picker.tsx:186
-#: src/components/settings/settings-dialogs.tsx:72
+#: src/components/settings/preset-picker.tsx:197
+#: src/components/settings/settings-dialogs.tsx:75
 #: src/components/settings/settings-editor.tsx:202
 msgid "Back"
 msgstr "返回"
@@ -577,7 +583,7 @@ msgstr "瀏覽庫"
 msgid "Browse lists"
 msgstr "瀏覽清單"
 
-#: src/components/settings/preset-picker.tsx:459
+#: src/components/settings/preset-picker.tsx:474
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "內建標籤將使用英文，標題仍使用該語言。"
 
@@ -590,7 +596,8 @@ msgstr "日曆"
 #: src/components/assets/quick-log-dialog.tsx:255
 #: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
-#: src/components/settings/settings-dialogs.tsx:386
+#: src/components/settings/settings-dialogs.tsx:396
+#: src/components/settings/settings-dialogs.tsx:575
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:209
@@ -617,7 +624,7 @@ msgstr "變更完成日期"
 msgid "Changes are validated before saving. Comments and formatting are preserved."
 msgstr "儲存前會驗證變更，並保留註解和格式。"
 
-#: src/components/settings/settings-dialogs.tsx:382
+#: src/components/settings/settings-dialogs.tsx:571
 msgid "Changes save with the rest of the schema."
 msgstr "變更將隨整個結構設定一起儲存。"
 
@@ -703,7 +710,7 @@ msgstr "完成日期"
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml 已在磁碟上變更。你未儲存的編輯仍保留在這裡。"
 
-#: src/components/settings/settings-dialogs.tsx:316
+#: src/components/settings/settings-dialogs.tsx:505
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "設定新欄位，然後選擇「完成」以新增。返回將捨棄它。"
 
@@ -746,14 +753,18 @@ msgstr "包含以下全部"
 msgid "contains any of"
 msgstr "包含以下任一"
 
-#: src/components/settings/preset-picker.tsx:204
+#: src/components/settings/preset-picker.tsx:215
 msgid "Continue"
 msgstr "繼續"
 
 #. placeholder {0}: selected.size
-#: src/components/settings/preset-picker.tsx:203
+#: src/components/settings/preset-picker.tsx:214
 msgid "Continue ({0})"
 msgstr "繼續（{0}）"
+
+#: src/components/settings/settings-dialogs.tsx:392
+msgid "Copy this type's fields and metadata mappings into a new type with its own folder. Existing items stay in this type. Changes save with the rest of the schema."
+msgstr "將此類型的欄位和中繼資料對應複製到擁有獨立資料夾的新類型。現有項目仍保留在原類型中。變更將與其餘結構描述一起儲存。"
 
 #: src/components/import/configure-step.tsx:149
 msgid "Could not read this CSV file."
@@ -946,8 +957,8 @@ msgid "does not link to"
 msgstr "未連結到"
 
 #: src/components/lists/add-items-dialog.tsx:120
-#: src/components/settings/settings-dialogs.tsx:325
-#: src/components/settings/settings-dialogs.tsx:361
+#: src/components/settings/settings-dialogs.tsx:514
+#: src/components/settings/settings-dialogs.tsx:550
 #: src/pages/entity-page.tsx:680
 msgid "Done"
 msgstr "完成"
@@ -985,9 +996,19 @@ msgstr "拖入圖片或從裝置選擇"
 msgid "Dropped"
 msgstr "已棄坑"
 
+#. placeholder {0}: type.label || type.id
+#: src/components/settings/settings-dialogs.tsx:261
+msgid "Duplicate {0}"
+msgstr "複製 {0}"
+
 #: src/pages/review-page.tsx:57
 msgid "Duplicate Filenames"
 msgstr "重複的檔名"
+
+#: src/components/settings/settings-dialogs.tsx:262
+#: src/components/settings/settings-dialogs.tsx:391
+msgid "Duplicate type"
+msgstr "複製類型"
 
 #: src/pages/entity-page.tsx:384
 #: src/pages/list-detail-page.tsx:593
@@ -1072,8 +1093,8 @@ msgstr "項目名稱"
 msgid "Entity not found"
 msgstr "找不到項目"
 
-#: src/components/settings/settings-dialogs.tsx:232
-#: src/components/settings/settings-dialogs.tsx:381
+#: src/components/settings/settings-dialogs.tsx:246
+#: src/components/settings/settings-dialogs.tsx:570
 msgid "Entity type"
 msgstr "項目類型"
 
@@ -1158,15 +1179,15 @@ msgstr "正在取得劇集…"
 msgid "Fetching your library from {0}…"
 msgstr "正在從 {0} 擷取你的庫…"
 
-#: src/components/settings/settings-dialogs.tsx:345
-#: src/components/settings/settings-dialogs.tsx:407
-#: src/components/settings/settings-dialogs.tsx:419
+#: src/components/settings/settings-dialogs.tsx:534
+#: src/components/settings/settings-dialogs.tsx:596
+#: src/components/settings/settings-dialogs.tsx:608
 #: src/components/settings/settings-field-form.tsx:50
 #: src/components/smart-lists/rule-row.tsx:66
 msgid "Field"
 msgstr "欄位"
 
-#: src/components/settings/settings-dialogs.tsx:405
+#: src/components/settings/settings-dialogs.tsx:594
 msgid "Fields"
 msgstr "欄位"
 
@@ -1299,6 +1320,7 @@ msgstr "首頁"
 msgid "Icon"
 msgstr "圖示"
 
+#: src/components/settings/settings-dialogs.tsx:434
 #: src/components/settings/settings-entity-type.tsx:61
 #: src/lib/type-config.ts:185
 msgid "ID"
@@ -1486,6 +1508,7 @@ msgstr "保留群組"
 msgid "Kind"
 msgstr "種類"
 
+#: src/components/settings/settings-dialogs.tsx:429
 #: src/components/settings/settings-entity-type.tsx:66
 msgid "Label"
 msgstr "標籤"
@@ -1497,7 +1520,7 @@ msgstr "語言 {0}"
 
 #: src/components/layout/language-select.tsx:52
 #: src/components/layout/language-select.tsx:53
-#: src/components/settings/preset-picker.tsx:447
+#: src/components/settings/preset-picker.tsx:462
 msgid "Language"
 msgstr "語言"
 
@@ -1611,13 +1634,17 @@ msgstr "載入中"
 msgid "Loading activity…"
 msgstr "正在載入活動…"
 
-#: src/components/settings/preset-picker.tsx:168
+#: src/components/settings/preset-picker.tsx:178
 msgid "Loading built-in types…"
 msgstr "正在載入內建類型…"
 
 #: src/components/layout/app-frame.tsx:587
 msgid "Loading taxonomy"
 msgstr "正在載入分類"
+
+#: src/components/settings/settings-dialogs.tsx:455
+msgid "Loading type…"
+msgstr "正在載入類型…"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/entities/entity-ratings.tsx:184
@@ -1773,7 +1800,7 @@ msgstr "導覽"
 msgid "Needs review"
 msgstr "待檢查"
 
-#: src/components/settings/settings-dialogs.tsx:315
+#: src/components/settings/settings-dialogs.tsx:504
 msgid "New field"
 msgstr "新欄位"
 
@@ -1844,7 +1871,7 @@ msgstr "尚無有日期的項目。"
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "沒有項目類型對應 {unmatchedLabels}。請在設定中為其新增外部參照欄位以匯入這些內容。"
 
-#: src/components/settings/settings-dialogs.tsx:225
+#: src/components/settings/settings-dialogs.tsx:239
 msgid "No entity types configured."
 msgstr "未設定任何項目類型。"
 
@@ -1866,7 +1893,7 @@ msgstr "無外部對應。"
 msgid "No external matches"
 msgstr "無外部比對"
 
-#: src/components/settings/settings-dialogs.tsx:412
+#: src/components/settings/settings-dialogs.tsx:601
 msgid "No fields configured."
 msgstr "未設定任何欄位。"
 
@@ -2139,6 +2166,7 @@ msgid "Parent folder"
 msgstr "上層資料夾"
 
 #: src/components/settings/settings-controls.tsx:177
+#: src/components/settings/settings-dialogs.tsx:440
 #: src/components/settings/settings-entity-type.tsx:76
 msgid "Path"
 msgstr "路徑"
@@ -2309,8 +2337,8 @@ msgstr "移除內文版塊"
 msgid "Remove external field mapping"
 msgstr "移除外部欄位對應"
 
-#: src/components/settings/settings-dialogs.tsx:358
-#: src/components/settings/settings-dialogs.tsx:423
+#: src/components/settings/settings-dialogs.tsx:547
+#: src/components/settings/settings-dialogs.tsx:612
 msgid "Remove field"
 msgstr "移除欄位"
 
@@ -2344,7 +2372,7 @@ msgstr "移除規則"
 msgid "Remove selected images before changing the type."
 msgstr "變更類型前，請先移除已選圖片。"
 
-#: src/components/settings/settings-dialogs.tsx:240
+#: src/components/settings/settings-dialogs.tsx:254
 msgid "Remove type"
 msgstr "移除類型"
 
@@ -2415,6 +2443,7 @@ msgid "Results"
 msgstr ""
 
 #: src/components/entities/entity-ratings.tsx:180
+#: src/components/settings/settings-dialogs.tsx:451
 #: src/components/vault-change-sync.tsx:36
 msgid "Retry"
 msgstr "重試"
@@ -2873,6 +2902,10 @@ msgstr "匯入失敗。"
 msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "頁面發生非預期的錯誤。你可以再試一次，或重新載入 app。"
 
+#: src/components/settings/settings-dialogs.tsx:299
+msgid "The schema draft changed. Close this dialog and duplicate the type again."
+msgstr "結構描述草稿已變更。請關閉此對話框，然後重新複製該類型。"
+
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
 #: src/components/settings/settings-editor.tsx:229
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
@@ -2985,7 +3018,7 @@ msgstr "至少輸入 {MIN_QUERY_LENGTH} 個字元以搜尋。"
 msgid "Type Distribution"
 msgstr "類型分布"
 
-#: src/components/settings/settings-dialogs.tsx:211
+#: src/components/settings/settings-dialogs.tsx:225
 #: src/components/settings/settings-editor.tsx:119
 #: src/components/settings/settings-editor.tsx:358
 msgid "Types"
@@ -3202,6 +3235,10 @@ msgstr "是"
 #: src/lib/type-config.ts:193
 msgid "Yes/No"
 msgstr "是/否"
+
+#: src/components/settings/preset-picker.tsx:154
+msgid "You can add a built-in type more than once. Each copy gets its own ID and folder."
+msgstr "可以多次新增同一個內建類型。每個副本都有獨立的 ID 和資料夾。"
 
 #: src/pages/quick-capture-page.tsx:240
 msgid "You can still open entities already in your library."

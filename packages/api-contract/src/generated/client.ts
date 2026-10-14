@@ -112,6 +112,14 @@ import {
   DeleteListResponse
 } from './deleteListResponse.zod';
 
+import type {
+  DuplicateEntityTypeRequest
+} from './duplicateEntityTypeRequest.zod';
+
+import {
+  DuplicateEntityTypeResponse
+} from './duplicateEntityTypeResponse.zod';
+
 import {
   EntityDatesResponse
 } from './entityDatesResponse.zod';
@@ -758,6 +766,41 @@ const res = await (fetchFn ?? fetch)(getResolveTypePresetsUrl(),
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? ResolveTypePresetsResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getDuplicateEntityTypeUrl = () => {
+
+
+
+
+  return `/api/settings/entity-types/duplicate`
+}
+
+export const duplicateEntityType = async (duplicateEntityTypeRequest: DuplicateEntityTypeRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<DuplicateEntityTypeResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+const res = await (fetchFn ?? fetch)(getDuplicateEntityTypeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(duplicateEntityTypeRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? DuplicateEntityTypeResponse.parse(parsedBody) : parsedBody
   return data
 }
 

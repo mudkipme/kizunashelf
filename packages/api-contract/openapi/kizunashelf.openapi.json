@@ -416,6 +416,44 @@
         }
       }
     },
+    "/api/settings/entity-types/duplicate": {
+      "post": {
+        "operationId": "duplicateEntityType",
+        "requestBody": {
+          "description": "Duplicate the caller's current draft type without reading or writing a vault.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DuplicateEntityTypeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateEntityTypeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/languages": {
       "get": {
         "operationId": "getLanguages",
@@ -5491,6 +5529,55 @@
           "assignedId",
           "requestedPath",
           "assignedPath"
+        ]
+      },
+      "DuplicateEntityTypeRequest": {
+        "description": "Duplicate the caller's current draft type without reading or writing a vault.",
+        "type": "object",
+        "properties": {
+          "currentTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityTypeConfig"
+            }
+          },
+          "sourceTypeId": {
+            "type": "string"
+          },
+          "newId": {
+            "description": "Optional identity chosen by the user. Omitted values receive unique defaults.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "newLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "newPath": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "currentTypes",
+          "sourceTypeId"
+        ]
+      },
+      "DuplicateEntityTypeResponse": {
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "$ref": "#/components/schemas/EntityTypeConfig"
+          }
+        },
+        "required": [
+          "entityType"
         ]
       },
       "LanguagesResponse": {

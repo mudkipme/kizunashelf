@@ -43,7 +43,7 @@ msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, other {# 件失敗}}"
 
 #. placeholder {0}: type.fields.length
-#: src/components/settings/settings-dialogs.tsx:234
+#: src/components/settings/settings-dialogs.tsx:248
 msgid "{0, plural, one {# field} other {# fields}}"
 msgstr "{0, plural, other {# 件のフィールド}}"
 
@@ -87,7 +87,7 @@ msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, other {# 件のパス}}"
 
 #. placeholder {0}: typeProviderCount(type)
-#: src/components/settings/settings-dialogs.tsx:235
+#: src/components/settings/settings-dialogs.tsx:249
 msgid "{0, plural, one {# provider} other {# providers}}"
 msgstr "{0, plural, other {# 件のプロバイダー}}"
 
@@ -132,7 +132,7 @@ msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, other {# 件視聴済み}}"
 
 #. placeholder {0}: pending.types.length
-#: src/components/settings/preset-picker.tsx:189
+#: src/components/settings/preset-picker.tsx:200
 msgid "{0, plural, one {Add # type} other {Add # types}}"
 msgstr "{0, plural, other {# 件のタイプを追加}}"
 
@@ -270,7 +270,7 @@ msgstr "≥"
 msgid "✅ Completed"
 msgstr "✅ 完了"
 
-#: src/components/settings/preset-picker.tsx:281
+#: src/components/settings/preset-picker.tsx:295
 msgid "✨ Pairs well with your picks"
 msgstr "✨ お気に入りとの相性が良い作品"
 
@@ -287,7 +287,7 @@ msgstr "このタイトルと同名のファイルがすでに存在したため
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名のリストが既に存在するか、ファイルがディスク上で変更されています。"
 
-#: src/components/settings/preset-picker.tsx:371
+#: src/components/settings/preset-picker.tsx:386
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "同名のタイプがすでに存在するため、代わりに {assignedIds} を使用しました。追加後に名前を変更できます。"
 
@@ -311,6 +311,7 @@ msgstr "アクティビティの操作"
 #: src/components/layout/command-palette.tsx:145
 #: src/components/lists/add-items-dialog.tsx:109
 #: src/components/settings/settings-controls.tsx:65
+#: src/components/settings/settings-dialogs.tsx:409
 #: src/components/settings/settings-external-mappings.tsx:51
 #: src/pages/home-page.tsx:36
 #: src/pages/home-page.tsx:42
@@ -334,7 +335,7 @@ msgstr "{0}を追加"
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
-#: src/components/settings/preset-picker.tsx:399
+#: src/components/settings/preset-picker.tsx:414
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
 msgstr "<1>{1}</1> に <0>{0}</0> のリンクを追加"
 
@@ -342,7 +343,11 @@ msgstr "<1>{1}</1> に <0>{0}</0> のリンクを追加"
 msgid "Add an External ref field with a provider to configure priority."
 msgstr "プロバイダーを設定した「外部参照」フィールドを追加すると、優先順位を設定できます。"
 
-#: src/components/settings/settings-dialogs.tsx:216
+#: src/components/settings/preset-picker.tsx:353
+msgid "Add another"
+msgstr "もう一つ追加"
+
+#: src/components/settings/settings-dialogs.tsx:230
 msgid "Add built-in type"
 msgstr "組み込みタイプを追加"
 
@@ -350,7 +355,7 @@ msgstr "組み込みタイプを追加"
 msgid "Add built-in types"
 msgstr "組み込みタイプを追加"
 
-#: src/components/settings/settings-dialogs.tsx:219
+#: src/components/settings/settings-dialogs.tsx:233
 msgid "Add custom type"
 msgstr "カスタムタイプを追加"
 
@@ -421,7 +426,7 @@ msgid "Add year"
 msgstr "年を追加"
 
 #: src/components/lists/add-items-dialog.tsx:98
-#: src/components/settings/preset-picker.tsx:337
+#: src/components/settings/preset-picker.tsx:353
 msgid "Added"
 msgstr "追加済み"
 
@@ -434,7 +439,8 @@ msgstr "追加 {added} — {renamed}"
 msgid "Added, but episode import failed: {0}"
 msgstr "追加しましたが、エピソードのインポートに失敗しました: {0}"
 
-#: src/components/settings/preset-picker.tsx:201
+#: src/components/settings/preset-picker.tsx:212
+#: src/components/settings/settings-dialogs.tsx:409
 #: src/components/smart-lists/suggested-lists-dialog.tsx:127
 #: src/pages/quick-capture-page.tsx:386
 msgid "Adding…"
@@ -517,7 +523,7 @@ msgid "Anything worth remembering"
 msgstr "覚えておきたいこと"
 
 #: src/components/entities/metadata-scalar-inputs.tsx:108
-#: src/components/settings/settings-dialogs.tsx:389
+#: src/components/settings/settings-dialogs.tsx:578
 msgid "Apply"
 msgstr "適用"
 
@@ -543,8 +549,8 @@ msgid "assets: {0}"
 msgstr "アセット: {0}"
 
 #: src/components/layout/app-frame.tsx:211
-#: src/components/settings/preset-picker.tsx:186
-#: src/components/settings/settings-dialogs.tsx:72
+#: src/components/settings/preset-picker.tsx:197
+#: src/components/settings/settings-dialogs.tsx:75
 #: src/components/settings/settings-editor.tsx:202
 msgid "Back"
 msgstr "戻る"
@@ -577,7 +583,7 @@ msgstr "ライブラリを閲覧"
 msgid "Browse lists"
 msgstr "リストを見る"
 
-#: src/components/settings/preset-picker.tsx:459
+#: src/components/settings/preset-picker.tsx:474
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "組み込みラベルは英語になりますが、タイトルはこの言語になります。"
 
@@ -590,7 +596,8 @@ msgstr "カレンダー"
 #: src/components/assets/quick-log-dialog.tsx:255
 #: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
-#: src/components/settings/settings-dialogs.tsx:386
+#: src/components/settings/settings-dialogs.tsx:396
+#: src/components/settings/settings-dialogs.tsx:575
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:209
@@ -617,7 +624,7 @@ msgstr "完了日を変更"
 msgid "Changes are validated before saving. Comments and formatting are preserved."
 msgstr "保存前に変更内容を検証します。コメントと書式は保持されます。"
 
-#: src/components/settings/settings-dialogs.tsx:382
+#: src/components/settings/settings-dialogs.tsx:571
 msgid "Changes save with the rest of the schema."
 msgstr "変更はスキーマ全体と一緒に保存されます。"
 
@@ -703,7 +710,7 @@ msgstr "完了日"
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml がディスク上で変更されました。未保存の編集内容はそのまま残っています。"
 
-#: src/components/settings/settings-dialogs.tsx:316
+#: src/components/settings/settings-dialogs.tsx:505
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "新しいフィールドを設定し、「完了」を選択して追加します。戻ると破棄されます。"
 
@@ -746,14 +753,18 @@ msgstr "が次をすべて含む"
 msgid "contains any of"
 msgstr "が次のいずれかを含む"
 
-#: src/components/settings/preset-picker.tsx:204
+#: src/components/settings/preset-picker.tsx:215
 msgid "Continue"
 msgstr "続行"
 
 #. placeholder {0}: selected.size
-#: src/components/settings/preset-picker.tsx:203
+#: src/components/settings/preset-picker.tsx:214
 msgid "Continue ({0})"
 msgstr "続行（{0}）"
+
+#: src/components/settings/settings-dialogs.tsx:392
+msgid "Copy this type's fields and metadata mappings into a new type with its own folder. Existing items stay in this type. Changes save with the rest of the schema."
+msgstr "このタイプのフィールドとメタデータのマッピングを、専用フォルダを持つ新しいタイプにコピーします。既存のアイテムは元のタイプに残ります。変更はスキーマ全体と一緒に保存されます。"
 
 #: src/components/import/configure-step.tsx:149
 msgid "Could not read this CSV file."
@@ -946,8 +957,8 @@ msgid "does not link to"
 msgstr "にリンクしていない"
 
 #: src/components/lists/add-items-dialog.tsx:120
-#: src/components/settings/settings-dialogs.tsx:325
-#: src/components/settings/settings-dialogs.tsx:361
+#: src/components/settings/settings-dialogs.tsx:514
+#: src/components/settings/settings-dialogs.tsx:550
 #: src/pages/entity-page.tsx:680
 msgid "Done"
 msgstr "完了"
@@ -985,9 +996,19 @@ msgstr "画像をドロップするか、デバイスから選択"
 msgid "Dropped"
 msgstr "中止"
 
+#. placeholder {0}: type.label || type.id
+#: src/components/settings/settings-dialogs.tsx:261
+msgid "Duplicate {0}"
+msgstr "{0}を複製"
+
 #: src/pages/review-page.tsx:57
 msgid "Duplicate Filenames"
 msgstr "重複したファイル名"
+
+#: src/components/settings/settings-dialogs.tsx:262
+#: src/components/settings/settings-dialogs.tsx:391
+msgid "Duplicate type"
+msgstr "タイプを複製"
 
 #: src/pages/entity-page.tsx:384
 #: src/pages/list-detail-page.tsx:593
@@ -1072,8 +1093,8 @@ msgstr "アイテム名"
 msgid "Entity not found"
 msgstr "アイテムが見つかりません"
 
-#: src/components/settings/settings-dialogs.tsx:232
-#: src/components/settings/settings-dialogs.tsx:381
+#: src/components/settings/settings-dialogs.tsx:246
+#: src/components/settings/settings-dialogs.tsx:570
 msgid "Entity type"
 msgstr "アイテムのタイプ"
 
@@ -1158,15 +1179,15 @@ msgstr "エピソードを取得中…"
 msgid "Fetching your library from {0}…"
 msgstr "{0} からライブラリを取得しています…"
 
-#: src/components/settings/settings-dialogs.tsx:345
-#: src/components/settings/settings-dialogs.tsx:407
-#: src/components/settings/settings-dialogs.tsx:419
+#: src/components/settings/settings-dialogs.tsx:534
+#: src/components/settings/settings-dialogs.tsx:596
+#: src/components/settings/settings-dialogs.tsx:608
 #: src/components/settings/settings-field-form.tsx:50
 #: src/components/smart-lists/rule-row.tsx:66
 msgid "Field"
 msgstr "フィールド"
 
-#: src/components/settings/settings-dialogs.tsx:405
+#: src/components/settings/settings-dialogs.tsx:594
 msgid "Fields"
 msgstr "フィールド"
 
@@ -1299,6 +1320,7 @@ msgstr "ホーム"
 msgid "Icon"
 msgstr "アイコン"
 
+#: src/components/settings/settings-dialogs.tsx:434
 #: src/components/settings/settings-entity-type.tsx:61
 #: src/lib/type-config.ts:185
 msgid "ID"
@@ -1486,6 +1508,7 @@ msgstr "グループを保持"
 msgid "Kind"
 msgstr "種類"
 
+#: src/components/settings/settings-dialogs.tsx:429
 #: src/components/settings/settings-entity-type.tsx:66
 msgid "Label"
 msgstr "ラベル"
@@ -1497,7 +1520,7 @@ msgstr "言語 {0}"
 
 #: src/components/layout/language-select.tsx:52
 #: src/components/layout/language-select.tsx:53
-#: src/components/settings/preset-picker.tsx:447
+#: src/components/settings/preset-picker.tsx:462
 msgid "Language"
 msgstr "言語"
 
@@ -1611,13 +1634,17 @@ msgstr "読み込み中"
 msgid "Loading activity…"
 msgstr "アクティビティを読み込み中…"
 
-#: src/components/settings/preset-picker.tsx:168
+#: src/components/settings/preset-picker.tsx:178
 msgid "Loading built-in types…"
 msgstr "組み込みタイプを読み込み中…"
 
 #: src/components/layout/app-frame.tsx:587
 msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
+
+#: src/components/settings/settings-dialogs.tsx:455
+msgid "Loading type…"
+msgstr "タイプを読み込み中…"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/entities/entity-ratings.tsx:184
@@ -1773,7 +1800,7 @@ msgstr "ナビゲーション"
 msgid "Needs review"
 msgstr "要レビュー"
 
-#: src/components/settings/settings-dialogs.tsx:315
+#: src/components/settings/settings-dialogs.tsx:504
 msgid "New field"
 msgstr "新しいフィールド"
 
@@ -1844,7 +1871,7 @@ msgstr "まだ日付付きアイテムはありません。"
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "{unmatchedLabels} に対応するアイテムのタイプがありません。これらをインポートするには、設定で外部参照フィールドを追加してください。"
 
-#: src/components/settings/settings-dialogs.tsx:225
+#: src/components/settings/settings-dialogs.tsx:239
 msgid "No entity types configured."
 msgstr "アイテムのタイプが設定されていません。"
 
@@ -1866,7 +1893,7 @@ msgstr "外部マッピングがありません。"
 msgid "No external matches"
 msgstr "外部マッチがありません"
 
-#: src/components/settings/settings-dialogs.tsx:412
+#: src/components/settings/settings-dialogs.tsx:601
 msgid "No fields configured."
 msgstr "フィールドが設定されていません。"
 
@@ -2139,6 +2166,7 @@ msgid "Parent folder"
 msgstr "親フォルダー"
 
 #: src/components/settings/settings-controls.tsx:177
+#: src/components/settings/settings-dialogs.tsx:440
 #: src/components/settings/settings-entity-type.tsx:76
 msgid "Path"
 msgstr "パス"
@@ -2309,8 +2337,8 @@ msgstr "本文セクションを削除"
 msgid "Remove external field mapping"
 msgstr "外部フィールドのマッピングを削除"
 
-#: src/components/settings/settings-dialogs.tsx:358
-#: src/components/settings/settings-dialogs.tsx:423
+#: src/components/settings/settings-dialogs.tsx:547
+#: src/components/settings/settings-dialogs.tsx:612
 msgid "Remove field"
 msgstr "フィールドを削除"
 
@@ -2344,7 +2372,7 @@ msgstr "ルールを削除"
 msgid "Remove selected images before changing the type."
 msgstr "種類を変更するには、選択した画像を削除してください。"
 
-#: src/components/settings/settings-dialogs.tsx:240
+#: src/components/settings/settings-dialogs.tsx:254
 msgid "Remove type"
 msgstr "タイプを削除"
 
@@ -2415,6 +2443,7 @@ msgid "Results"
 msgstr ""
 
 #: src/components/entities/entity-ratings.tsx:180
+#: src/components/settings/settings-dialogs.tsx:451
 #: src/components/vault-change-sync.tsx:36
 msgid "Retry"
 msgstr "再試行"
@@ -2873,6 +2902,10 @@ msgstr "インポートに失敗しました。"
 msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "ページで予期しないエラーが発生しました。もう一度試すか、アプリを再読み込みしてください。"
 
+#: src/components/settings/settings-dialogs.tsx:299
+msgid "The schema draft changed. Close this dialog and duplicate the type again."
+msgstr "スキーマの下書きが変更されました。このダイアログを閉じて、もう一度タイプを複製してください。"
+
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
 #: src/components/settings/settings-editor.tsx:229
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
@@ -2985,7 +3018,7 @@ msgstr "検索するには {MIN_QUERY_LENGTH} 文字以上入力してくださ�
 msgid "Type Distribution"
 msgstr "タイプの分布"
 
-#: src/components/settings/settings-dialogs.tsx:211
+#: src/components/settings/settings-dialogs.tsx:225
 #: src/components/settings/settings-editor.tsx:119
 #: src/components/settings/settings-editor.tsx:358
 msgid "Types"
@@ -3202,6 +3235,10 @@ msgstr "はい"
 #: src/lib/type-config.ts:193
 msgid "Yes/No"
 msgstr "はい／いいえ"
+
+#: src/components/settings/preset-picker.tsx:154
+msgid "You can add a built-in type more than once. Each copy gets its own ID and folder."
+msgstr "組み込みタイプは何度でも追加できます。それぞれに固有のIDとフォルダが割り当てられます。"
 
 #: src/pages/quick-capture-page.tsx:240
 msgid "You can still open entities already in your library."

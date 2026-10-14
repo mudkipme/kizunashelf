@@ -6425,3 +6425,44 @@ async fn activity_actions_share_the_log_effect_policy_without_requiring_a_journa
     );
     assert!(finished["line"].is_null());
 }
+
+#[tokio::test]
+async fn duplicate_type_endpoint_uses_draft_and_does_not_save_it() {
+    let server = TestServer::new();
+    let before = server.ok_json("/api/settings/config").await;
+    let source = json!({
+        "id": "children_tv", "label": "Children’s TV", "path": "Children’s TV",
+        "fields": [{"field": "name", "fieldType": "title", "titleLanguage": "ja"}],
+        "bodySections": [{"heading": "Episodes", "kind": "episodes", "tracking": "checklist"}]
+    });
+    let (status, result) = request_json(
+        &server.app,
+        Method::POST,
+        "/api/settings/entity-types/duplicate",
+        Some(json!({
+            "currentTypes": [source], "sourceTypeId": "children_tv"
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert_eq!(result["entityType"]["id"], "children_tv-2");
+    assert_eq!(result["entityType"]["path"], "Children’s TV 2");
+    assert_eq!(result["entityType"]["fields"], source["fields"]);
+    assert_eq!(result["entityType"]["bodySections"], source["bodySections"]);
+    assert_eq!(server.ok_json("/api/settings/config").await, before);
+
+    let (status, error) = request_json(
+        &server.app,
+        Method::POST,
+        "/api/settings/entity-types/duplicate",
+        Some(json!({
+            "currentTypes": [], "sourceTypeId": "missing"
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST, "{error}");
+    assert!(error["error"]
+        .as_str()
+        .unwrap()
+        .contains("no longer exists"));
+}

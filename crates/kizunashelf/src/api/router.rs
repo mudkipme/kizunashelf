@@ -12,9 +12,9 @@ use super::external::{
     review_external_candidate,
 };
 use super::handlers::{
-    activity, calendar, capabilities, config, health, home, languages, raw_settings_config,
-    refresh, resolve_type_presets, save_raw_settings_config, save_settings_config, settings_config,
-    type_presets, upcoming, vault_changes,
+    activity, calendar, capabilities, config, duplicate_entity_type, health, home, languages,
+    raw_settings_config, refresh, resolve_type_presets, save_raw_settings_config,
+    save_settings_config, settings_config, type_presets, upcoming, vault_changes,
 };
 use super::import::{
     cancel_import_job, commit_import_job, create_import_job, export_import_plan, get_import_job,
@@ -42,9 +42,9 @@ use crate::contract::{
     AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
     AssetDownloadResponse, AssetIngestResponse, AssetUploadResponse, CalendarResponse,
     CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse, CreateSuggestedSmartListsResponse,
-    DeleteEntityResponse, DeleteListResponse, EntityDetailResponse, EntityEditReviewResponse,
-    EntityListResponse, EntityMutationResponse, EpisodeSyncResponse, ErrorResponse,
-    ExternalProviderCatalogResponse, ExternalReviewResponse, ExternalSearchResponse,
+    DeleteEntityResponse, DeleteListResponse, DuplicateEntityTypeResponse, EntityDetailResponse,
+    EntityEditReviewResponse, EntityListResponse, EntityMutationResponse, EpisodeSyncResponse,
+    ErrorResponse, ExternalProviderCatalogResponse, ExternalReviewResponse, ExternalSearchResponse,
     HealthResponse, HomeResponse, ImportJob, ImportJobListResponse, ImportSourceCatalogResponse,
     LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse, PathSuggestionsResponse,
     QuickAddResponse, RawConfigResponse, ResolveTypePresetsResponse, SettingsConfigResponse,
@@ -236,6 +236,14 @@ fn api_router() -> ApiRouter<AppState> {
             post_with(resolve_type_presets, |op| {
                 op.id("resolveTypePresets")
                     .response::<200, Json<ResolveTypePresetsResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/settings/entity-types/duplicate",
+            post_with(duplicate_entity_type, |op| {
+                op.id("duplicateEntityType")
+                    .response::<200, Json<DuplicateEntityTypeResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
             }),
         )
         .api_route(

@@ -326,6 +326,27 @@ pub struct ResolveTypePresetsResponse {
     pub collisions: Vec<TypePresetCollision>,
 }
 
+/// Duplicate the caller's current draft type without reading or writing a vault.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct DuplicateEntityTypeRequest {
+    pub current_types: Vec<EntityTypeConfig>,
+    pub source_type_id: String,
+    /// Optional identity chosen by the user. Omitted values receive unique defaults.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub new_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub new_label: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub new_path: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct DuplicateEntityTypeResponse {
+    pub entity_type: EntityTypeConfig,
+}
+
 /// A proposed relation field to add to an existing type.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]

@@ -225,6 +225,119 @@ pub fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePreset
     }
 }
 
+/// Copy a configured type, including all metadata wiring and body sections.
+/// Only its identity changes. Self-relations follow the new identity; relations
+/// to other types retain their targets. Existing types and files are untouched.
+pub fn duplicate_entity_type(
+    request: &crate::contract::DuplicateEntityTypeRequest,
+) -> Result<EntityTypeConfig, String> {
+    let mut sources = request
+        .current_types
+        .iter()
+        .filter(|config| config.id == request.source_type_id);
+    let source = sources
+        .next()
+        .ok_or("The source entity type no longer exists.")?;
+    if sources.next().is_some() {
+        return Err("The source entity type ID is ambiguous.".to_string());
+    }
+    if source.id.trim().is_empty() {
+        return Err("The source entity type must have an ID.".to_string());
+    }
+    let path = duplicate_type_path(&source.path)?;
+    let ids = request.current_types.iter().map(|t| t.id.clone()).collect();
+    let labels = request
+        .current_types
+        .iter()
+        .map(|t| t.label.clone())
+        .collect();
+    let paths = request
+        .current_types
+        .iter()
+        .map(|t| duplicate_type_path(&t.path))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut copy = source.clone();
+    copy.id = unique_key(&source.id, &ids, |base, n| format!("{base}-{n}"));
+    copy.label = unique_key(&source.label, &labels, |base, n| format!("{base} {n}"));
+    // Library reads are recursive: a copy must not overlap another type's
+    // folder, including nested folders and case/./ variations.
+    let paths: Vec<String> = paths.iter().map(|p| p.to_lowercase()).collect();
+    let mut n = 2;
+    loop {
+        let candidate = format!("{path} {n}");
+        let lower = candidate.to_lowercase();
+        if paths.iter().all(|taken| {
+            *taken != lower
+                && !lower.starts_with(&format!("{taken}/"))
+                && !taken.starts_with(&format!("{lower}/"))
+        }) {
+            copy.path = candidate;
+            break;
+        }
+        // An ancestor of the source also contains every suffixed sibling.
+        if paths
+            .iter()
+            .any(|taken| path.to_lowercase().starts_with(&format!("{taken}/")))
+        {
+            return Err("The source folder is inside another entity type's folder. Choose separate folders before duplicating.".to_string());
+        }
+        n += 1;
+    }
+    if let Some(id) = &request.new_id {
+        copy.id = id.trim().to_string();
+    }
+    if copy.id.is_empty() || copy.id.contains(['/', '\\']) {
+        return Err("The new type ID must be non-empty and cannot contain a slash.".to_string());
+    }
+    if request
+        .current_types
+        .iter()
+        .any(|t| t.id.to_lowercase() == copy.id.to_lowercase())
+    {
+        return Err("An entity type with this ID already exists.".to_string());
+    }
+    if let Some(label) = &request.new_label {
+        copy.label = label.trim().to_string();
+    }
+    if copy.label.is_empty() {
+        return Err("The new type must have a label.".to_string());
+    }
+    if let Some(path) = &request.new_path {
+        copy.path = duplicate_type_path(path)?;
+    }
+    let lower = copy.path.to_lowercase();
+    if paths.iter().any(|taken| {
+        *taken == lower
+            || lower.starts_with(&format!("{taken}/"))
+            || taken.starts_with(&format!("{lower}/"))
+    }) {
+        return Err(
+            "Choose a separate folder that does not overlap an existing entity type.".to_string(),
+        );
+    }
+    for field in &mut copy.fields {
+        if field.field_type == FieldType::Relation
+            && field.relation_type.as_deref() == Some(source.id.as_str())
+        {
+            field.relation_type = Some(copy.id.clone());
+        }
+    }
+    Ok(copy)
+}
+
+fn duplicate_type_path(path: &str) -> Result<String, String> {
+    let path = path.trim();
+    if path.starts_with(['/', '\\']) {
+        return Err("The type folder must be relative to the taxonomy root.".to_string());
+    }
+    let path = crate::vfs::normalize_relative(path)
+        .map_err(|error| format!("Invalid entity type folder: {error}"))?;
+    if path.is_empty() {
+        return Err("The type must have a folder.".to_string());
+    }
+    Ok(path)
+}
+
 /// A proposed ordinary smart list, derived from the live schema's roles.
 #[derive(Clone, Debug)]
 pub struct SuggestedList {
@@ -2223,6 +2336,143 @@ mod tests {
             preset_ids: ids.iter().map(|s| s.to_string()).collect(),
             language: language.map(str::to_string),
         })
+    }
+
+    #[test]
+    fn duplicate_preserves_custom_schema_and_repoints_only_self_relations() {
+        let mut types = resolve(vec![], &["anime", "franchise"], Some("zh-Hant")).types;
+        let source = &mut types[0];
+        source.label = "Child’s collection".into();
+        source.fields[0].display_name = Some("Custom name".into());
+        let mut self_relation = source
+            .fields
+            .iter()
+            .find(|f| f.field_type == FieldType::Relation)
+            .unwrap()
+            .clone();
+        self_relation.field = "related_items".into();
+        self_relation.relation_type = Some(source.id.clone());
+        source.fields.push(self_relation);
+        let before = serde_json::to_value(&types).unwrap();
+        let copy = duplicate_entity_type(&crate::contract::DuplicateEntityTypeRequest {
+            current_types: types.clone(),
+            source_type_id: "anime".into(),
+            new_id: None,
+            new_label: None,
+            new_path: None,
+        })
+        .unwrap();
+        assert_eq!(copy.id, "anime-2");
+        assert_eq!(copy.label, "Child’s collection 2");
+        assert_eq!(copy.path, format!("{} 2", types[0].path));
+        let mut expected = types[0].clone();
+        expected.id = copy.id.clone();
+        expected.label = copy.label.clone();
+        expected.path = copy.path.clone();
+        expected.fields.last_mut().unwrap().relation_type = Some(copy.id.clone());
+        assert_eq!(
+            serde_json::to_value(&copy).unwrap(),
+            serde_json::to_value(expected).unwrap()
+        );
+        assert_eq!(serde_json::to_value(&types).unwrap(), before);
+        assert_eq!(
+            copy.fields
+                .iter()
+                .find(|f| f.field == "franchise")
+                .unwrap()
+                .relation_type
+                .as_deref(),
+            Some("franchise")
+        );
+    }
+
+    #[test]
+    fn duplicate_avoids_case_and_normalized_or_nested_folder_collisions() {
+        let mut types = resolve(vec![], &["anime"], None).types;
+        let mut occupied = types[0].clone();
+        occupied.id = "ANIME-2".into();
+        occupied.label = "Anime 2".into();
+        occupied.path = "./ANIME 2/Child".into();
+        types.push(occupied);
+        let copy = duplicate_entity_type(&crate::contract::DuplicateEntityTypeRequest {
+            current_types: types,
+            source_type_id: "anime".into(),
+            new_id: None,
+            new_label: None,
+            new_path: None,
+        })
+        .unwrap();
+        assert_eq!(copy.id, "anime-3");
+        assert_eq!(copy.label, "Anime 3");
+        assert_eq!(copy.path, "Anime 3");
+    }
+
+    #[test]
+    fn duplicate_validates_the_chosen_identity_and_repoints_self_relations() {
+        let mut types = resolve(vec![], &["anime", "franchise"], None).types;
+        let mut field = types[0]
+            .fields
+            .iter()
+            .find(|f| f.field_type == FieldType::Relation)
+            .unwrap()
+            .clone();
+        field.relation_type = Some("anime".into());
+        types[0].fields.push(field);
+        let mut request = crate::contract::DuplicateEntityTypeRequest {
+            current_types: types,
+            source_type_id: "anime".into(),
+            new_id: Some("children_tv".into()),
+            new_label: Some("Children’s TV".into()),
+            new_path: Some("Children/TV".into()),
+        };
+        let copy = duplicate_entity_type(&request).unwrap();
+        assert_eq!(copy.id, "children_tv");
+        assert_eq!(copy.label, "Children’s TV");
+        assert_eq!(copy.path, "Children/TV");
+        assert_eq!(
+            copy.fields.last().unwrap().relation_type.as_deref(),
+            Some("children_tv")
+        );
+        request.new_id = Some("ANIME".into());
+        assert!(duplicate_entity_type(&request)
+            .unwrap_err()
+            .contains("already exists"));
+        request.new_id = Some("children_tv".into());
+        for path in ["Anime", "Anime/Children", ".", "/absolute", "../outside"] {
+            request.new_path = Some(path.into());
+            assert!(duplicate_entity_type(&request).is_err(), "accepted {path}");
+        }
+    }
+
+    #[test]
+    fn duplicate_rejects_missing_ambiguous_or_invalid_source() {
+        let types = resolve(vec![], &["anime"], None).types;
+        let mut request = crate::contract::DuplicateEntityTypeRequest {
+            current_types: types.clone(),
+            source_type_id: "missing".into(),
+            new_id: None,
+            new_label: None,
+            new_path: None,
+        };
+        assert!(duplicate_entity_type(&request)
+            .unwrap_err()
+            .contains("no longer exists"));
+        request.source_type_id = "anime".into();
+        request.current_types.push(types[0].clone());
+        assert!(duplicate_entity_type(&request)
+            .unwrap_err()
+            .contains("ambiguous"));
+        request.current_types.pop();
+        request.current_types[0].path = "../outside".into();
+        assert!(duplicate_entity_type(&request).is_err());
+        request.current_types[0].path = "Parent/Anime".into();
+        let mut parent = types[0].clone();
+        parent.id = "parent".into();
+        parent.path = "Parent".into();
+        request.current_types.push(parent);
+        assert!(duplicate_entity_type(&request)
+            .unwrap_err()
+            .contains("inside another"));
     }
 
     fn find_field<'a>(type_config: &'a EntityTypeConfig, name: &str) -> Option<&'a FieldConfig> {

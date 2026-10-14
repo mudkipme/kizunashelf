@@ -1,4 +1,6 @@
 import {
+  duplicateEntityType as requestDuplicateEntityType,
+  type DuplicateEntityTypeRequest,
   getLanguages as requestLanguages,
   getPathSuggestions as requestPathSuggestions,
   getRawSettingsConfig as requestRawSettingsConfig,
@@ -37,6 +39,11 @@ export function getTypePresets(params?: GetTypePresetsParams, init?: RequestInit
 // currentTypes) and the settings "add built-in type" flow.
 export function resolveTypePresets(request: ResolveTypePresetsRequest) {
   return requestResolveTypePresets(request, undefined, apiFetch);
+}
+
+// The core copies the draft schema and validates the new identity. No vault writes.
+export function duplicateEntityType(request: DuplicateEntityTypeRequest, init?: RequestInit) {
+  return requestDuplicateEntityType(request, init, apiFetch);
 }
 
 export function getLanguages(init?: RequestInit) {

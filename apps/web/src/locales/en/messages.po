@@ -43,7 +43,7 @@ msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# failed} other {# failed}}"
 
 #. placeholder {0}: type.fields.length
-#: src/components/settings/settings-dialogs.tsx:234
+#: src/components/settings/settings-dialogs.tsx:248
 msgid "{0, plural, one {# field} other {# fields}}"
 msgstr "{0, plural, one {# field} other {# fields}}"
 
@@ -87,7 +87,7 @@ msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, one {# path} other {# paths}}"
 
 #. placeholder {0}: typeProviderCount(type)
-#: src/components/settings/settings-dialogs.tsx:235
+#: src/components/settings/settings-dialogs.tsx:249
 msgid "{0, plural, one {# provider} other {# providers}}"
 msgstr "{0, plural, one {# provider} other {# providers}}"
 
@@ -132,7 +132,7 @@ msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, one {# watched} other {# watched}}"
 
 #. placeholder {0}: pending.types.length
-#: src/components/settings/preset-picker.tsx:189
+#: src/components/settings/preset-picker.tsx:200
 msgid "{0, plural, one {Add # type} other {Add # types}}"
 msgstr "{0, plural, one {Add # type} other {Add # types}}"
 
@@ -270,7 +270,7 @@ msgstr "≥"
 msgid "✅ Completed"
 msgstr "✅ Completed"
 
-#: src/components/settings/preset-picker.tsx:281
+#: src/components/settings/preset-picker.tsx:295
 msgid "✨ Pairs well with your picks"
 msgstr "✨ Pairs well with your picks"
 
@@ -287,7 +287,7 @@ msgstr "A file named for this title already existed, so it was saved as “{0}�
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "A list with this name already exists, or the file changed on disk."
 
-#: src/components/settings/preset-picker.tsx:371
+#: src/components/settings/preset-picker.tsx:386
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 
@@ -311,6 +311,7 @@ msgstr "Activity actions"
 #: src/components/layout/command-palette.tsx:145
 #: src/components/lists/add-items-dialog.tsx:109
 #: src/components/settings/settings-controls.tsx:65
+#: src/components/settings/settings-dialogs.tsx:409
 #: src/components/settings/settings-external-mappings.tsx:51
 #: src/pages/home-page.tsx:36
 #: src/pages/home-page.tsx:42
@@ -334,7 +335,7 @@ msgstr "Add {0}"
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
-#: src/components/settings/preset-picker.tsx:399
+#: src/components/settings/preset-picker.tsx:414
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
 msgstr "Add a <0>{0}</0> link to <1>{1}</1>"
 
@@ -342,7 +343,11 @@ msgstr "Add a <0>{0}</0> link to <1>{1}</1>"
 msgid "Add an External ref field with a provider to configure priority."
 msgstr "Add an External ref field with a provider to configure priority."
 
-#: src/components/settings/settings-dialogs.tsx:216
+#: src/components/settings/preset-picker.tsx:353
+msgid "Add another"
+msgstr "Add another"
+
+#: src/components/settings/settings-dialogs.tsx:230
 msgid "Add built-in type"
 msgstr "Add built-in type"
 
@@ -350,7 +355,7 @@ msgstr "Add built-in type"
 msgid "Add built-in types"
 msgstr "Add built-in types"
 
-#: src/components/settings/settings-dialogs.tsx:219
+#: src/components/settings/settings-dialogs.tsx:233
 msgid "Add custom type"
 msgstr "Add custom type"
 
@@ -421,7 +426,7 @@ msgid "Add year"
 msgstr "Add year"
 
 #: src/components/lists/add-items-dialog.tsx:98
-#: src/components/settings/preset-picker.tsx:337
+#: src/components/settings/preset-picker.tsx:353
 msgid "Added"
 msgstr "Added"
 
@@ -434,7 +439,8 @@ msgstr "Added {added} — {renamed}"
 msgid "Added, but episode import failed: {0}"
 msgstr "Added, but episode import failed: {0}"
 
-#: src/components/settings/preset-picker.tsx:201
+#: src/components/settings/preset-picker.tsx:212
+#: src/components/settings/settings-dialogs.tsx:409
 #: src/components/smart-lists/suggested-lists-dialog.tsx:127
 #: src/pages/quick-capture-page.tsx:386
 msgid "Adding…"
@@ -517,7 +523,7 @@ msgid "Anything worth remembering"
 msgstr "Anything worth remembering"
 
 #: src/components/entities/metadata-scalar-inputs.tsx:108
-#: src/components/settings/settings-dialogs.tsx:389
+#: src/components/settings/settings-dialogs.tsx:578
 msgid "Apply"
 msgstr "Apply"
 
@@ -543,8 +549,8 @@ msgid "assets: {0}"
 msgstr "assets: {0}"
 
 #: src/components/layout/app-frame.tsx:211
-#: src/components/settings/preset-picker.tsx:186
-#: src/components/settings/settings-dialogs.tsx:72
+#: src/components/settings/preset-picker.tsx:197
+#: src/components/settings/settings-dialogs.tsx:75
 #: src/components/settings/settings-editor.tsx:202
 msgid "Back"
 msgstr "Back"
@@ -577,7 +583,7 @@ msgstr "Browse library"
 msgid "Browse lists"
 msgstr "Browse lists"
 
-#: src/components/settings/preset-picker.tsx:459
+#: src/components/settings/preset-picker.tsx:474
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "Built-in labels will be in English. Titles still use this language."
 
@@ -590,7 +596,8 @@ msgstr "Calendar"
 #: src/components/assets/quick-log-dialog.tsx:255
 #: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
-#: src/components/settings/settings-dialogs.tsx:386
+#: src/components/settings/settings-dialogs.tsx:396
+#: src/components/settings/settings-dialogs.tsx:575
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:209
@@ -617,7 +624,7 @@ msgstr "Change completion date"
 msgid "Changes are validated before saving. Comments and formatting are preserved."
 msgstr "Changes are validated before saving. Comments and formatting are preserved."
 
-#: src/components/settings/settings-dialogs.tsx:382
+#: src/components/settings/settings-dialogs.tsx:571
 msgid "Changes save with the rest of the schema."
 msgstr "Changes save with the rest of the schema."
 
@@ -703,7 +710,7 @@ msgstr "Completed date"
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml changed on disk. Your unsaved edits are still here."
 
-#: src/components/settings/settings-dialogs.tsx:316
+#: src/components/settings/settings-dialogs.tsx:505
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "Configure the new field, then choose Done to add it. Going back discards it."
 
@@ -746,14 +753,18 @@ msgstr "contains all of"
 msgid "contains any of"
 msgstr "contains any of"
 
-#: src/components/settings/preset-picker.tsx:204
+#: src/components/settings/preset-picker.tsx:215
 msgid "Continue"
 msgstr "Continue"
 
 #. placeholder {0}: selected.size
-#: src/components/settings/preset-picker.tsx:203
+#: src/components/settings/preset-picker.tsx:214
 msgid "Continue ({0})"
 msgstr "Continue ({0})"
+
+#: src/components/settings/settings-dialogs.tsx:392
+msgid "Copy this type's fields and metadata mappings into a new type with its own folder. Existing items stay in this type. Changes save with the rest of the schema."
+msgstr "Copy this type's fields and metadata mappings into a new type with its own folder. Existing items stay in this type. Changes save with the rest of the schema."
 
 #: src/components/import/configure-step.tsx:149
 msgid "Could not read this CSV file."
@@ -946,8 +957,8 @@ msgid "does not link to"
 msgstr "does not link to"
 
 #: src/components/lists/add-items-dialog.tsx:120
-#: src/components/settings/settings-dialogs.tsx:325
-#: src/components/settings/settings-dialogs.tsx:361
+#: src/components/settings/settings-dialogs.tsx:514
+#: src/components/settings/settings-dialogs.tsx:550
 #: src/pages/entity-page.tsx:680
 msgid "Done"
 msgstr "Done"
@@ -985,9 +996,19 @@ msgstr "Drop an image or choose from your device"
 msgid "Dropped"
 msgstr "Dropped"
 
+#. placeholder {0}: type.label || type.id
+#: src/components/settings/settings-dialogs.tsx:261
+msgid "Duplicate {0}"
+msgstr "Duplicate {0}"
+
 #: src/pages/review-page.tsx:57
 msgid "Duplicate Filenames"
 msgstr "Duplicate Filenames"
+
+#: src/components/settings/settings-dialogs.tsx:262
+#: src/components/settings/settings-dialogs.tsx:391
+msgid "Duplicate type"
+msgstr "Duplicate type"
 
 #: src/pages/entity-page.tsx:384
 #: src/pages/list-detail-page.tsx:593
@@ -1072,8 +1093,8 @@ msgstr "Entity name"
 msgid "Entity not found"
 msgstr "Entity not found"
 
-#: src/components/settings/settings-dialogs.tsx:232
-#: src/components/settings/settings-dialogs.tsx:381
+#: src/components/settings/settings-dialogs.tsx:246
+#: src/components/settings/settings-dialogs.tsx:570
 msgid "Entity type"
 msgstr "Entity type"
 
@@ -1158,15 +1179,15 @@ msgstr "Fetching episodes…"
 msgid "Fetching your library from {0}…"
 msgstr "Fetching your library from {0}…"
 
-#: src/components/settings/settings-dialogs.tsx:345
-#: src/components/settings/settings-dialogs.tsx:407
-#: src/components/settings/settings-dialogs.tsx:419
+#: src/components/settings/settings-dialogs.tsx:534
+#: src/components/settings/settings-dialogs.tsx:596
+#: src/components/settings/settings-dialogs.tsx:608
 #: src/components/settings/settings-field-form.tsx:50
 #: src/components/smart-lists/rule-row.tsx:66
 msgid "Field"
 msgstr "Field"
 
-#: src/components/settings/settings-dialogs.tsx:405
+#: src/components/settings/settings-dialogs.tsx:594
 msgid "Fields"
 msgstr "Fields"
 
@@ -1299,6 +1320,7 @@ msgstr "Home"
 msgid "Icon"
 msgstr "Icon"
 
+#: src/components/settings/settings-dialogs.tsx:434
 #: src/components/settings/settings-entity-type.tsx:61
 #: src/lib/type-config.ts:185
 msgid "ID"
@@ -1486,6 +1508,7 @@ msgstr "Keep groups"
 msgid "Kind"
 msgstr "Kind"
 
+#: src/components/settings/settings-dialogs.tsx:429
 #: src/components/settings/settings-entity-type.tsx:66
 msgid "Label"
 msgstr "Label"
@@ -1497,7 +1520,7 @@ msgstr "lang {0}"
 
 #: src/components/layout/language-select.tsx:52
 #: src/components/layout/language-select.tsx:53
-#: src/components/settings/preset-picker.tsx:447
+#: src/components/settings/preset-picker.tsx:462
 msgid "Language"
 msgstr "Language"
 
@@ -1611,13 +1634,17 @@ msgstr "Loading"
 msgid "Loading activity…"
 msgstr "Loading activity…"
 
-#: src/components/settings/preset-picker.tsx:168
+#: src/components/settings/preset-picker.tsx:178
 msgid "Loading built-in types…"
 msgstr "Loading built-in types…"
 
 #: src/components/layout/app-frame.tsx:587
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
+
+#: src/components/settings/settings-dialogs.tsx:455
+msgid "Loading type…"
+msgstr "Loading type…"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/entities/entity-ratings.tsx:184
@@ -1773,7 +1800,7 @@ msgstr "Navigation"
 msgid "Needs review"
 msgstr "Needs review"
 
-#: src/components/settings/settings-dialogs.tsx:315
+#: src/components/settings/settings-dialogs.tsx:504
 msgid "New field"
 msgstr "New field"
 
@@ -1844,7 +1871,7 @@ msgstr "No dated entities yet."
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 
-#: src/components/settings/settings-dialogs.tsx:225
+#: src/components/settings/settings-dialogs.tsx:239
 msgid "No entity types configured."
 msgstr "No entity types configured."
 
@@ -1866,7 +1893,7 @@ msgstr "No external mappings."
 msgid "No external matches"
 msgstr "No external matches"
 
-#: src/components/settings/settings-dialogs.tsx:412
+#: src/components/settings/settings-dialogs.tsx:601
 msgid "No fields configured."
 msgstr "No fields configured."
 
@@ -2139,6 +2166,7 @@ msgid "Parent folder"
 msgstr "Parent folder"
 
 #: src/components/settings/settings-controls.tsx:177
+#: src/components/settings/settings-dialogs.tsx:440
 #: src/components/settings/settings-entity-type.tsx:76
 msgid "Path"
 msgstr "Path"
@@ -2309,8 +2337,8 @@ msgstr "Remove body section"
 msgid "Remove external field mapping"
 msgstr "Remove external field mapping"
 
-#: src/components/settings/settings-dialogs.tsx:358
-#: src/components/settings/settings-dialogs.tsx:423
+#: src/components/settings/settings-dialogs.tsx:547
+#: src/components/settings/settings-dialogs.tsx:612
 msgid "Remove field"
 msgstr "Remove field"
 
@@ -2344,7 +2372,7 @@ msgstr "Remove rule"
 msgid "Remove selected images before changing the type."
 msgstr "Remove selected images before changing the type."
 
-#: src/components/settings/settings-dialogs.tsx:240
+#: src/components/settings/settings-dialogs.tsx:254
 msgid "Remove type"
 msgstr "Remove type"
 
@@ -2415,6 +2443,7 @@ msgid "Results"
 msgstr "Results"
 
 #: src/components/entities/entity-ratings.tsx:180
+#: src/components/settings/settings-dialogs.tsx:451
 #: src/components/vault-change-sync.tsx:36
 msgid "Retry"
 msgstr "Retry"
@@ -2873,6 +2902,10 @@ msgstr "The import failed."
 msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "The page hit an unexpected error. You can try again, or reload the app."
 
+#: src/components/settings/settings-dialogs.tsx:299
+msgid "The schema draft changed. Close this dialog and duplicate the type again."
+msgstr "The schema draft changed. Close this dialog and duplicate the type again."
+
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
 #: src/components/settings/settings-editor.tsx:229
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
@@ -2985,7 +3018,7 @@ msgstr "Type at least {MIN_QUERY_LENGTH} characters to search."
 msgid "Type Distribution"
 msgstr "Type Distribution"
 
-#: src/components/settings/settings-dialogs.tsx:211
+#: src/components/settings/settings-dialogs.tsx:225
 #: src/components/settings/settings-editor.tsx:119
 #: src/components/settings/settings-editor.tsx:358
 msgid "Types"
@@ -3202,6 +3235,10 @@ msgstr "Yes"
 #: src/lib/type-config.ts:193
 msgid "Yes/No"
 msgstr "Yes/No"
+
+#: src/components/settings/preset-picker.tsx:154
+msgid "You can add a built-in type more than once. Each copy gets its own ID and folder."
+msgstr "You can add a built-in type more than once. Each copy gets its own ID and folder."
 
 #: src/pages/quick-capture-page.tsx:240
 msgid "You can still open entities already in your library."

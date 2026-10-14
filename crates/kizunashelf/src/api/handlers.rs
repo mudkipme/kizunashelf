@@ -6,10 +6,10 @@ use crate::calendar::{
     CalendarBuildOptions, UpcomingResponse,
 };
 use crate::contract::{
-    CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
-    LanguagesResponse, RawConfigResponse, ResolveTypePresetsRequest, ResolveTypePresetsResponse,
-    SaveRawConfigRequest, SaveSettingsRequest, SettingsConfigResponse, TypePresetsResponse,
-    VaultChangesResponse,
+    CalendarResponse, CapabilitiesResponse, ConfigResponse, DuplicateEntityTypeRequest,
+    DuplicateEntityTypeResponse, HealthResponse, HomeResponse, LanguagesResponse,
+    RawConfigResponse, ResolveTypePresetsRequest, ResolveTypePresetsResponse, SaveRawConfigRequest,
+    SaveSettingsRequest, SettingsConfigResponse, TypePresetsResponse, VaultChangesResponse,
 };
 use crate::dates::clamp_number;
 use crate::library::file_revision;
@@ -54,6 +54,14 @@ pub(crate) async fn resolve_type_presets(
     Json(request): Json<ResolveTypePresetsRequest>,
 ) -> Json<ResolveTypePresetsResponse> {
     Json(crate::presets::resolve_presets(&request))
+}
+
+pub(crate) async fn duplicate_entity_type(
+    Json(request): Json<DuplicateEntityTypeRequest>,
+) -> ApiResult<DuplicateEntityTypeResponse> {
+    let entity_type = crate::presets::duplicate_entity_type(&request)
+        .map_err(|error| ApiError::bad_request(&error))?;
+    Ok(Json(DuplicateEntityTypeResponse { entity_type }))
 }
 
 /// The title-language options for the schema editor (TheTVDB's supported set)

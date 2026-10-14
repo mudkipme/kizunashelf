@@ -229,3 +229,6 @@ export * from "./generated/setEntityRatingResponse.zod.js";
 export * from "./generated/entityEditReviewRequest.zod.js";
 export * from "./generated/entityEditReviewResponse.zod.js";
 export * from "./generated/entityEditDraft.zod.js";
+
+export * from "./generated/duplicateEntityTypeRequest.zod.js";
+export * from "./generated/duplicateEntityTypeResponse.zod.js";

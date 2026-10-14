@@ -1,8 +1,11 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { ChevronLeftIcon, ChevronRightIcon, CopyIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
+import { errorMessage } from "@/api/client";
+import { duplicateEntityType } from "@/api/settings";
+import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import type { EntityTypeConfig, ExternalProviderCatalog, FieldConfig, Language } from "@/types/api";
 
 import { PresetPickerDialog } from "./preset-picker";
-import { EmptyConfigLine } from "./settings-controls";
+import { EmptyConfigLine, PathField, TextField } from "./settings-controls";
 import { EntityTypeForm } from "./settings-entity-type";
 import { fieldConfigSummary } from "./settings-field-descriptors";
 import { FieldForm } from "./settings-field-form";
@@ -95,12 +98,14 @@ function EditableRow({
   onEdit,
   onRemove,
   removeLabel,
+  action,
 }: {
   title: string;
   badges: string[];
   onEdit: () => void;
   onRemove: () => void;
   removeLabel: string;
+  action?: ReactNode;
 }) {
   return (
     <div className="flex items-center gap-1 rounded-md border pr-1 transition-colors hover:bg-accent">
@@ -123,6 +128,7 @@ function EditableRow({
         </div>
         <ChevronRightIcon className="shrink-0 text-muted-foreground" />
       </button>
+      {action}
       <Button
         type="button"
         variant="ghost"
@@ -200,6 +206,14 @@ export function TypesSection({
   // `null` = closed; `"new"` = adding; a number = editing that index.
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [picking, setPicking] = useState(false);
+  const latestTypes = useRef(types);
+  useLayoutEffect(() => {
+    latestTypes.current = types;
+  }, [types]);
+  const [duplicating, setDuplicating] = useState<{
+    types: EntityTypeConfig[];
+    sourceTypeId: string;
+  } | null>(null);
   const initial =
     editing === "new" ? defaultEntityType() : editing === null ? null : types[editing];
   const typeList = arrayEditor(types, onChange);
@@ -238,6 +252,19 @@ export function TypesSection({
               onEdit={() => setEditing(index)}
               onRemove={() => typeList.remove(index)}
               removeLabel={t`Remove type`}
+              action={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  aria-label={t`Duplicate ${type.label || type.id}`}
+                  title={t`Duplicate type`}
+                  onClick={() => setDuplicating({ types, sourceTypeId: type.id })}
+                >
+                  <CopyIcon />
+                </Button>
+              }
             />
           ))}
         </div>
@@ -259,6 +286,25 @@ export function TypesSection({
         />
       ) : null}
 
+      {duplicating ? (
+        <DuplicateTypeDialog
+          currentTypes={duplicating.types}
+          sourceTypeId={duplicating.sourceTypeId}
+          taxonomyBase={taxonomyBase}
+          taxonomyRoot={taxonomyRoot}
+          onClose={() => setDuplicating(null)}
+          onAdd={(type) => {
+            if (latestTypes.current !== duplicating.types) {
+              throw new Error(
+                t`The schema draft changed. Close this dialog and duplicate the type again.`,
+              );
+            }
+            typeList.append(type);
+            setDuplicating(null);
+          }}
+        />
+      ) : null}
+
       {picking ? (
         <PresetPickerDialog
           currentTypes={types}
@@ -267,6 +313,149 @@ export function TypesSection({
         />
       ) : null}
     </div>
+  );
+}
+
+/// The server provides a preview and validates the chosen identity on Add.
+/// Both calls use the captured schema draft and leave the saved vault untouched.
+function DuplicateTypeDialog({
+  currentTypes,
+  sourceTypeId,
+  taxonomyBase,
+  taxonomyRoot,
+  onClose,
+  onAdd,
+}: {
+  currentTypes: EntityTypeConfig[];
+  sourceTypeId: string;
+  taxonomyBase: string;
+  taxonomyRoot: string;
+  onClose: () => void;
+  onAdd: (type: EntityTypeConfig) => void;
+}) {
+  const { t } = useLingui();
+  const [identity, setIdentity] = useState<Pick<EntityTypeConfig, "id" | "label" | "path"> | null>(
+    null,
+  );
+  const [error, setError] = useState<string>();
+  const [adding, setAdding] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    setError(undefined);
+    void duplicateEntityType({ currentTypes, sourceTypeId }, { signal: controller.signal })
+      .then(({ entityType }) => {
+        if (!controller.signal.aborted) {
+          setIdentity({ id: entityType.id, label: entityType.label, path: entityType.path });
+        }
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) setError(errorMessage(error));
+      });
+    return () => controller.abort();
+  }, [currentTypes, sourceTypeId, attempt]);
+
+  async function add() {
+    const signal = controllerRef.current?.signal;
+    if (!identity || adding || signal?.aborted) return;
+    setAdding(true);
+    setError(undefined);
+    try {
+      const result = await duplicateEntityType(
+        {
+          currentTypes,
+          sourceTypeId,
+          newId: identity.id,
+          newLabel: identity.label,
+          newPath: identity.path,
+        },
+        { signal },
+      );
+      if (!signal?.aborted) onAdd(result.entityType);
+    } catch (error) {
+      if (!signal?.aborted) setError(errorMessage(error));
+    } finally {
+      if (!signal?.aborted) setAdding(false);
+    }
+  }
+
+  return (
+    <DialogShell
+      open
+      onOpenChange={(open) => {
+        if (!open && !adding) onClose();
+      }}
+      title={t`Duplicate type`}
+      description={t`Copy this type's fields and metadata mappings into a new type with its own folder. Existing items stay in this type. Changes save with the rest of the schema.`}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onClose} disabled={adding}>
+            <Trans>Cancel</Trans>
+          </Button>
+          <Button
+            type="submit"
+            form="duplicate-type-form"
+            disabled={
+              !identity ||
+              adding ||
+              !identity.id.trim() ||
+              !identity.label.trim() ||
+              !identity.path.trim()
+            }
+          >
+            {adding ? t`Adding…` : t`Add`}
+          </Button>
+        </>
+      }
+    >
+      {error ? (
+        <Alert role="alert" className="mb-3">
+          {error}
+        </Alert>
+      ) : null}
+      {identity ? (
+        <form
+          id="duplicate-type-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void add();
+          }}
+        >
+          <fieldset disabled={adding} className="grid gap-3 border-0 p-0 sm:grid-cols-2">
+            <TextField
+              label={t`Label`}
+              value={identity.label}
+              onChange={(label) => setIdentity({ ...identity, label })}
+            />
+            <TextField
+              label={t`ID`}
+              value={identity.id}
+              onChange={(id) => setIdentity({ ...identity, id })}
+            />
+            <div className="sm:col-span-2">
+              <PathField
+                label={t`Path`}
+                value={identity.path}
+                base={taxonomyBase}
+                suggestionBase={taxonomyRoot}
+                onChange={(path) => setIdentity({ ...identity, path })}
+              />
+            </div>
+          </fieldset>
+        </form>
+      ) : error ? (
+        <Button type="button" variant="outline" onClick={() => setAttempt((n) => n + 1)}>
+          <Trans>Retry</Trans>
+        </Button>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          <Trans>Loading type…</Trans>
+        </p>
+      )}
+    </DialogShell>
   );
 }
 

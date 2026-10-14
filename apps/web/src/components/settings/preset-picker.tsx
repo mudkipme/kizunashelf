@@ -41,7 +41,7 @@ const SEED_TEXT_LANGUAGES = new Set(["en", "ja", "zh-Hans", "zh-Hant"]);
  * `GET /api/type-presets`; on confirm it resolves the picks against the editor's
  * current types (relations wired/stripped, collisions suffixed, back-fills
  * proposed) and returns the merged `types` array. Presets already present in the
- * schema (matched by id) show as "Added" and can't be re-added.
+ * schema (matched by id) can be added again with a separate ID and folder.
  *
  * Suggested smart lists can be added from Home after the schema is saved.
  */
@@ -146,7 +146,17 @@ export function PresetPickerDialog({
       <DialogContent className="flex flex-col gap-0 overflow-hidden p-0 sm:max-h-[85vh] sm:max-w-3xl">
         <DialogHeader className="space-y-0 border-b px-4 py-3 pr-12 text-left">
           <DialogTitle className="min-w-0 truncate">{title}</DialogTitle>
-          <DialogDescription className="mt-1">{description}</DialogDescription>
+          <DialogDescription className="mt-1">
+            {description}
+            {!pending ? (
+              <>
+                {" "}
+                <Trans>
+                  You can add a built-in type more than once. Each copy gets its own ID and folder.
+                </Trans>
+              </>
+            ) : null}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
@@ -174,6 +184,7 @@ export function PresetPickerDialog({
               catalog={catalog}
               selected={selected}
               existingIds={existingIds}
+              allowsExisting
               onToggle={toggle}
             />
           )}
@@ -225,6 +236,7 @@ export function PresetGallery({
   catalog,
   selected,
   existingIds,
+  allowsExisting = false,
   onToggle,
 }: {
   catalog:
@@ -232,6 +244,7 @@ export function PresetGallery({
     | undefined;
   selected: Set<string>;
   existingIds: Set<string>;
+  allowsExisting?: boolean;
   onToggle: (id: string) => void;
 }) {
   const byCategory = useMemo(() => groupByCategory(catalog?.presets ?? []), [catalog]);
@@ -267,6 +280,7 @@ export function PresetGallery({
                   preset={preset}
                   selected={selected.has(preset.id)}
                   added={existingIds.has(preset.id)}
+                  allowsExisting={allowsExisting}
                   onToggle={() => onToggle(preset.id)}
                 />
               ))}
@@ -305,22 +319,24 @@ function PresetCard({
   preset,
   selected,
   added,
+  allowsExisting,
   onToggle,
 }: {
   preset: TypePresetSummary;
   selected: boolean;
   added: boolean;
+  allowsExisting: boolean;
   onToggle: () => void;
 }) {
   return (
     <button
       type="button"
-      disabled={added}
+      disabled={added && !allowsExisting}
       aria-pressed={selected}
       onClick={onToggle}
       className={[
         "flex h-full flex-col items-start gap-1 rounded-md border p-3 text-left transition-colors",
-        added
+        added && !allowsExisting
           ? "cursor-default border-dashed opacity-60"
           : selected
             ? "border-primary bg-primary/5 ring-1 ring-primary"
@@ -334,11 +350,10 @@ function PresetCard({
         <span className="min-w-0 flex-1 truncate font-medium">{preset.label}</span>
         {added ? (
           <Badge variant="secondary">
-            <Trans>Added</Trans>
+            {allowsExisting ? <Trans>Add another</Trans> : <Trans>Added</Trans>}
           </Badge>
-        ) : selected ? (
-          <CheckIcon className="size-4 text-primary" />
         ) : null}
+        {selected ? <CheckIcon className="size-4 text-primary" /> : null}
       </div>
       <p className="text-xs text-muted-foreground">{preset.description}</p>
       {(preset.providers?.length ?? 0) > 0 ? (
