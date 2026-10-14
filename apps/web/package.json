@@ -30,7 +30,7 @@
     "date-fns": "^4.4.0",
     "emoji-picker-react": "^4.19.1",
     "lucide-react": "^1.37.0",
-    "radix-ui": "^1.6.7",
+    "radix-ui": "^1.7.0",
     "react": "19.3.0",
     "react-day-picker": "^10.0.2",
     "react-dom": "19.3.0",
