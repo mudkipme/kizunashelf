@@ -16,6 +16,8 @@ Your library is a folder of Markdown files. You can open the same files in Obsid
 
 ## Choose an app
 
-The iPhone and iPad app is available through [TestFlight](https://testflight.apple.com/join/hE7k3sWd). The [self-hosted web app](./start/self-hosting.md) is available as a Docker image, with source code on [GitHub](https://github.com/mudkipme/kizunashelf). Desktop releases are coming soon.
+The iPhone and iPad app is available through [TestFlight](https://testflight.apple.com/join/hE7k3sWd). The desktop alpha is available for macOS, Linux, and Windows, with amd64 and arm64 builds on [GitHub Releases](https://github.com/mudkipme/kizunashelf/releases). The [self-hosted web app](./start/self-hosting.md) is available as a Docker image, with source code on [GitHub](https://github.com/mudkipme/kizunashelf).
+
+For richer game, film, and TV metadata on web and desktop, [set up your own IGDB credentials and TMDB or TheTVDB API keys](./start/quickstart.md#set-up-metadata-sources) for the providers you use. iOS includes built-in credentials for these providers.
 
 All three use the same vault format. The iOS app also has [widgets, reminders, Spotlight search, and Shortcuts](./features/ios.mdx).

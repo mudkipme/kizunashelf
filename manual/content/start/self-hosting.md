@@ -36,6 +36,8 @@ On Linux, add `--user "$(id -u):$(id -g)"` to run the container with your user a
 
 The server uses environment variables. See the [server reference](../reference/web-server.md#configuration) for the full list, including provider credentials, caches, and logs.
 
+For richer game, film, and TV searches, [configure your own IGDB credentials and TMDB or TheTVDB API keys](./quickstart.md#set-up-metadata-sources) for the providers you use. The web release currently requires your own credentials for these sources; iOS includes built-in credentials.
+
 The library's types and fields live in the vault and are edited through [Settings](../features/schema.mdx).
 
 ## Remote access {#authentication}

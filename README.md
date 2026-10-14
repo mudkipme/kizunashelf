@@ -6,7 +6,7 @@ KizunaShelf is a personal library for everything you watch, play, read, listen t
 
 Underneath, every entry is still a Markdown file in a folder you own. KizunaShelf helps you explore those files as a living shelf without turning them into data only one app can understand.
 
-The iPhone and iPad app is available through [TestFlight](https://testflight.apple.com/join/hE7k3sWd).
+The iPhone and iPad app is available through [TestFlight](https://testflight.apple.com/join/hE7k3sWd). The desktop alpha is available for macOS, Linux, and Windows, with amd64 and arm64 builds on [GitHub Releases](https://github.com/mudkipme/kizunashelf/releases).
 
 | Web & desktop Home | iOS Home |
 | --- | --- |
@@ -53,12 +53,14 @@ One Rust core interprets the schema and Markdown everywhere. Web and desktop sha
 | App | How it fits |
 | --- | --- |
 | **Self-hosted web** | Available via Docker. Serves one vault per instance through a browser. |
-| **Desktop** | Coming soon. Opens, creates, and switches between local vaults. |
+| **Desktop alpha** | [Download for macOS, Linux, or Windows](https://github.com/mudkipme/kizunashelf/releases). Opens, creates, and switches between local vaults. |
 | **iOS** | Full native mobile app with Liquid Glass design, widgets, notifications, Spotlight and Shortcuts integration. |
 
 Browsing and editing a locally available vault do not depend on a KizunaShelf server. External metadata searches, cover downloads, and cloud or File Provider synchronization use their respective network services when needed.
 
 The vault schema lives at `KizunaShelf/config.yaml`, so it travels with the Markdown files and stays consistent across devices.
+
+For richer metadata searches on web and desktop, configure your own IGDB credentials for games and TMDB or TheTVDB API keys for film and TV, depending on the providers you use. Desktop has *Settings → Provider Credentials*; self-hosted web uses environment variables. iOS version includes built-in credentials for most providers. See [metadata source setup](manual/content/start/quickstart.md#set-up-metadata-sources).
 
 ## Metadata and imports
 

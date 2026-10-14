@@ -131,13 +131,16 @@ export default function Home(): ReactNode {
                 <a className="btn primary" href="https://testflight.apple.com/join/hE7k3sWd">
                   Join the iOS beta
                 </a>
+                <a className="btn ghost" href="https://github.com/mudkipme/kizunashelf/releases">
+                  Download desktop alpha
+                </a>
                 <Link className="btn ghost" to="/introduction/">
                   Read the manual
                 </Link>
               </div>
               <p className="fine" style={{ marginTop: "1.1rem" }}>
-                <Link to="/start/self-hosting/">self-hosted web available</Link> · desktop coming
-                soon
+                <Link to="/start/self-hosting/">self-hosted web available</Link> · desktop alpha for
+                macOS, Linux &amp; Windows
               </p>
             </div>
             <figure className="hero-fig">
@@ -387,12 +390,17 @@ export default function Home(): ReactNode {
               </li>
               <li>
                 <div className="app-name">
-                  Desktop <span className="status soon">coming soon</span>
+                  Desktop <span className="status">alpha available</span>
                 </div>
                 <div>
                   <p>
                     Open or create vaults with an open source desktop app on your Mac, Linux or
                     Windows PC.
+                  </p>
+                  <p>
+                    <a href="https://github.com/mudkipme/kizunashelf/releases">
+                      Download the alpha for amd64 or arm64 →
+                    </a>
                   </p>
                 </div>
               </li>

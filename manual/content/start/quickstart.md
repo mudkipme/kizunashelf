@@ -17,7 +17,11 @@ You can add types and change their fields later in **More → Vault Schema**. An
 
 ## Desktop
 
-Desktop releases are coming soon. The desktop app lets you open or create a folder, then use the same language and type picker. Schema settings are under **Settings**.
+1. Download the desktop alpha for macOS, Linux, or Windows from [GitHub Releases](https://github.com/mudkipme/kizunashelf/releases). Choose the amd64 build for Intel/AMD machines or arm64 for Apple Silicon and other ARM machines.
+2. On macOS, open the DMG and drag KizunaShelf to Applications. On Windows, run the installer. On Linux, make the AppImage executable (`chmod +x KizunaShelf_*.AppImage`), then open it.
+3. Open or create a vault folder. For a new vault, choose your preferred language and the types you want to collect.
+
+Schema settings are under **Settings**. The desktop release is an alpha; feedback and bug reports are welcome on [GitHub Issues](https://github.com/mudkipme/kizunashelf/issues).
 
 ## Self-hosted web
 
@@ -33,6 +37,22 @@ docker run -p 127.0.0.1:8787:8787 \
 ```
 
 Open `http://localhost:8787/` and complete setup. Your library is stored in the local `vault` folder; to use an existing vault, replace `$PWD/vault` with its absolute path. See [Self-hosting](./self-hosting.md) for read-only mode, configuration, and remote access.
+
+## Set up metadata sources
+
+For richer metadata searches on **web and desktop**, configure your own credentials for the providers you use. iOS version includes built-in credentials for most providers.
+
+| What you collect | Provider | Credentials |
+| --- | --- | --- |
+| Games | [IGDB](../reference/providers.md#igdb) | Client ID and client secret |
+| Film and TV | [TMDB](../reference/providers.md#tmdb) | API key |
+| TV and episode details | [TheTVDB](../reference/providers.md#thetvdb) | API key; a PIN may also be needed for your account |
+
+On **desktop**, open **Settings → Provider Credentials**, enter the credentials, and select **Save credentials**. They are stored in your system keychain.
+
+On **self-hosted web**, pass the provider's environment variables to the server or Docker container and restart it: `KIZUNASHELF_IGDB_CLIENT_ID` and `KIZUNASHELF_IGDB_CLIENT_SECRET`, `KIZUNASHELF_TMDB_API_KEY`, or `KIZUNASHELF_TVDB_API_KEY` (plus `KIZUNASHELF_TVDB_PIN` if needed). See the [provider reference](../reference/providers.md) for the exact requirements and the [server configuration](../reference/web-server.md#configuration) for deployment settings.
+
+You can still browse and edit your vault without these credentials. Providers such as Bangumi, AniList, and Open Library work without an API key.
 
 ## Add your first entity
 
