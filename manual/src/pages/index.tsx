@@ -134,9 +134,6 @@ export default function Home(): ReactNode {
                 <a className="btn ghost" href="https://github.com/mudkipme/kizunashelf/releases">
                   Download desktop alpha
                 </a>
-                <Link className="btn ghost" to="/introduction/">
-                  Read the manual
-                </Link>
               </div>
               <p className="fine" style={{ marginTop: "1.1rem" }}>
                 <Link to="/start/self-hosting/">self-hosted web available</Link> · desktop alpha for

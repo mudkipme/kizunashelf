@@ -5,7 +5,11 @@ import { SuggestedListsButton } from "@/components/smart-lists/suggested-lists-d
 import { useLanguageStore } from "@/lib/language";
 import { render } from "@/test/render";
 
-vi.mock("@/api/smart-lists", { spy: true });
+vi.mock(import("@/api/smart-lists"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  fetchSmartListSuggestions: vi.fn(),
+  addSuggestedSmartLists: vi.fn(),
+}));
 
 beforeEach(() => {
   useLanguageStore.setState({ language: "en" });
