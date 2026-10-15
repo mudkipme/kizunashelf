@@ -130,6 +130,9 @@ jobs:
           APPLE_TEAM_ID: ${{ runner.os == 'macOS' && needs.prepare.outputs.sign == 'true' && secrets.APPLE_TEAM_ID || '' }}
           # Extract AppImage tooling instead of requiring a FUSE mount in CI.
           APPIMAGE_EXTRACT_AND_RUN: "1"
+          # Skip linuxdeploy's bundled strip (known issues with newer ELF files).
+          # https://github.com/tauri-apps/tauri/issues/8929
+          NO_STRIP: ${{ runner.os == 'Linux' && 'true' || '' }}
         with:
           projectPath: apps/desktop
           args: >-
