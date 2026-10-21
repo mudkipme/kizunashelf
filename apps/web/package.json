@@ -19,7 +19,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@kizunashelf/api-contract": "workspace:*",
     "@lingui/core": "^6.6.0",
-    "@lingui/react": "^6.6.0",
+    "@lingui/react": "^6.10.0",
     "@radix-ui/react-popover": "^1.1.23",
     "@radix-ui/react-slot": "^1.5.0",
     "@tanstack/react-query": "^5.104.3",
