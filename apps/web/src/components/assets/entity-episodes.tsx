@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { CheckIcon, RefreshCwIcon } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { EpisodeSyncDialog } from "@/components/assets/episode-sync-dialog";
 import { InlineMarkdown } from "@/components/assets/markdown-view";
@@ -70,6 +70,7 @@ export function EntityEpisodesPanel({
 }) {
   const { t } = useLingui();
   const formatDate = useIsoDateFormat();
+  const panelId = useId();
   const checklist = episodes.tracking === "checklist";
   const percent = episodes.total > 0 ? Math.round((episodes.watched / episodes.total) * 100) : 0;
   const interactive = checklist && !disabled && !saving;
@@ -132,11 +133,16 @@ export function EntityEpisodesPanel({
                 // keeps that click from toggling the row. Chrome only opens the
                 // picker from the (invisible) calendar icon, so the click handler
                 // calls `showPicker()` explicitly.
-                const editableDone = checklist && interactive && item.watched && Boolean(item.done);
+                const editableDone =
+                  checklist &&
+                  interactive &&
+                  Boolean(onSetDate) &&
+                  item.watched &&
+                  Boolean(item.done);
                 const doneLabel = item.done ? (
                   editableDone ? (
                     <span
-                      className="relative inline-flex cursor-pointer rounded px-0.5 hover:bg-accent hover:text-accent-foreground"
+                      className="relative inline-flex cursor-pointer rounded px-0.5 focus-within:ring-2 focus-within:ring-ring hover:bg-accent hover:text-accent-foreground"
                       title={t`Change completion date`}
                       onClick={(event) => event.stopPropagation()}
                     >
@@ -182,10 +188,6 @@ export function EntityEpisodesPanel({
                     </span>
                   ) : null;
 
-                // Non-checklist rows are plain, selectable text (no interactive
-                // wrapper) so the list can be copied; checklist rows are a
-                // role="checkbox" div so links inside the title stay valid and
-                // clickable while the row toggles.
                 if (!checklist) {
                   return (
                     <li
@@ -200,39 +202,40 @@ export function EntityEpisodesPanel({
                   );
                 }
 
+                const labelId = `${panelId}-${groupIndex}-${itemIndex}`;
                 return (
-                  <li key={itemIndex}>
-                    <div
+                  <li
+                    key={itemIndex}
+                    onClick={
+                      interactive
+                        ? (event) => {
+                            if ((event.target as Element).closest("a, button, input")) return;
+                            toggle(groupIndex, itemIndex);
+                          }
+                        : undefined
+                    }
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors max-sm:flex-wrap",
+                      interactive ? "cursor-pointer hover:bg-accent" : "cursor-default",
+                    )}
+                  >
+                    <button
+                      type="button"
                       role="checkbox"
                       aria-checked={item.watched}
-                      aria-disabled={interactive ? undefined : true}
-                      tabIndex={interactive ? 0 : -1}
-                      onClick={interactive ? () => toggle(groupIndex, itemIndex) : undefined}
-                      onKeyDown={
-                        interactive
-                          ? (event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                toggle(groupIndex, itemIndex);
-                              }
-                            }
-                          : undefined
-                      }
+                      aria-labelledby={labelId}
+                      disabled={!interactive}
+                      onClick={() => toggle(groupIndex, itemIndex)}
                       className={cn(
-                        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors max-sm:flex-wrap",
-                        interactive ? "cursor-pointer hover:bg-accent" : "cursor-default",
+                        "flex size-4 shrink-0 items-center justify-center rounded border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                        item.watched
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-input",
                       )}
                     >
-                      <span
-                        className={cn(
-                          "flex size-4 shrink-0 items-center justify-center rounded border",
-                          item.watched
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-input",
-                        )}
-                      >
-                        {item.watched ? <CheckIcon className="size-3" /> : null}
-                      </span>
+                      {item.watched ? <CheckIcon className="size-3" aria-hidden /> : null}
+                    </button>
+                    <span id={labelId} className="flex min-w-0 flex-1 items-center gap-2">
                       {keyLabel}
                       <span
                         className={cn(
@@ -242,8 +245,8 @@ export function EntityEpisodesPanel({
                       >
                         {title}
                       </span>
-                      {dateLabel}
-                    </div>
+                    </span>
+                    {dateLabel}
                   </li>
                 );
               })}

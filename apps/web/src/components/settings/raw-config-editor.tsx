@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SaveIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type Ref, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
@@ -12,7 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
 import { Textarea } from "@/components/ui/textarea";
 
+import type { SettingsEditorHandle } from "./settings-shared";
+
 type RawConfigEditorProps = {
+  ref?: Ref<SettingsEditorHandle>;
+  onSavingChange?: (saving: boolean) => void;
   /** When false, the config is read-only (the server enforces it too). */
   settingsWritable?: boolean;
   /** Reports whether the editor holds unsaved edits (differs from the saved file). */
@@ -25,7 +29,12 @@ type RawConfigEditorProps = {
  * server strictly validates the YAML — type errors, missing required fields, and
  * any unknown field are rejected — so the on-disk schema can never be corrupted.
  */
-export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawConfigEditorProps) {
+export function RawConfigEditor({
+  ref,
+  onSavingChange,
+  settingsWritable = true,
+  onDirtyChange,
+}: RawConfigEditorProps) {
   const { t } = useLingui();
   const queryClient = useQueryClient();
   const raw = useQuery(rawSettingsConfigQuery());
@@ -73,6 +82,7 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
   }, [dirty, onDirtyChange]);
 
   async function save() {
+    if (saving || externalChange || !settingsWritable || raw.isPending) return { saved: false };
     setSaving(true);
     setError(undefined);
     try {
@@ -85,13 +95,23 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
       toast.success(t`Settings saved`);
       // The schema every other query derives from just changed.
       void queryClient.invalidateQueries();
+      return { saved: true };
     } catch (saveError) {
       if (isConflictError(saveError)) setExternalChange(true);
       setError(errorMessage(saveError));
+      return { saved: false, error: saveError };
     } finally {
       setSaving(false);
     }
   }
+
+  useImperativeHandle(ref, () => ({
+    save,
+    canSave: !saving && !externalChange && settingsWritable && !raw.isPending,
+  }));
+  useEffect(() => {
+    onSavingChange?.(saving);
+  }, [saving, onSavingChange]);
 
   const path = raw.data?.vaultConfigPath;
 
@@ -152,10 +172,11 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
         </Placeholder>
       ) : (
         <Textarea
+          aria-label={t`Edit config.yaml`}
           className="min-h-[60vh] font-mono text-code"
           value={content}
           onChange={(event) => setContent(event.target.value)}
-          disabled={!settingsWritable || externalChange}
+          disabled={saving || !settingsWritable || externalChange}
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"

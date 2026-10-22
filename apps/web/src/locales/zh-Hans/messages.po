@@ -81,8 +81,8 @@ msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 项待检查}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
-#: src/components/settings/settings-editor.tsx:109
-#: src/components/settings/settings-editor.tsx:286
+#: src/components/settings/settings-editor.tsx:114
+#: src/components/settings/settings-editor.tsx:302
 msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, other {# 个路径}}"
 
@@ -116,8 +116,8 @@ msgstr "{0, plural, other {待创建 # 项}}"
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
 #: src/components/settings/preset-picker.tsx:130
-#: src/components/settings/settings-editor.tsx:120
-#: src/components/settings/settings-editor.tsx:362
+#: src/components/settings/settings-editor.tsx:125
+#: src/components/settings/settings-editor.tsx:378
 msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, other {# 个类型}}"
 
@@ -186,7 +186,7 @@ msgstr "已跳过 {0}"
 msgid "{0} title: {1}"
 msgstr "{0}标题：{1}"
 
-#: src/components/settings/settings-editor.tsx:364
+#: src/components/settings/settings-editor.tsx:380
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 个数据源}}"
 
@@ -224,7 +224,7 @@ msgstr "{total, plural, other {# 条}}"
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 项匹配}}"
 
-#: src/components/settings/settings-editor.tsx:363
+#: src/components/settings/settings-editor.tsx:379
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 个字段}}"
 
@@ -313,9 +313,9 @@ msgstr "活动操作"
 #: src/components/settings/settings-controls.tsx:65
 #: src/components/settings/settings-dialogs.tsx:409
 #: src/components/settings/settings-external-mappings.tsx:51
-#: src/pages/home-page.tsx:36
-#: src/pages/home-page.tsx:42
-#: src/pages/home-page.tsx:47
+#: src/pages/home-page.tsx:39
+#: src/pages/home-page.tsx:45
+#: src/pages/home-page.tsx:50
 #: src/pages/library-page.tsx:351
 #: src/pages/library-page.tsx:357
 #: src/pages/library-page.tsx:362
@@ -403,7 +403,7 @@ msgstr "添加板块"
 msgid "Add suggested lists"
 msgstr "添加推荐列表"
 
-#: src/pages/home-page.tsx:72
+#: src/pages/home-page.tsx:75
 msgid "Add suggested lists, or open a smart list and choose Add to Home."
 msgstr "添加推荐列表，或打开智能列表并选择「添加到首页」。"
 
@@ -539,19 +539,19 @@ msgstr "正在应用…"
 msgid "Ascending"
 msgstr "升序"
 
-#: src/components/settings/settings-editor.tsx:270
+#: src/components/settings/settings-editor.tsx:286
 msgid "Asset root"
 msgstr "资源根目录"
 
 #. placeholder {0}: config.assetRoot || "Assets"
-#: src/components/settings/settings-editor.tsx:260
+#: src/components/settings/settings-editor.tsx:276
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
 #: src/components/layout/app-frame.tsx:211
 #: src/components/settings/preset-picker.tsx:197
 #: src/components/settings/settings-dialogs.tsx:75
-#: src/components/settings/settings-editor.tsx:202
+#: src/components/settings/settings-editor.tsx:218
 msgid "Back"
 msgstr "返回"
 
@@ -575,11 +575,11 @@ msgstr "书籍"
 msgid "Broken Assets"
 msgstr "损坏的资源"
 
-#: src/pages/home-page.tsx:78
+#: src/pages/home-page.tsx:81
 msgid "Browse library"
 msgstr "浏览库"
 
-#: src/pages/home-page.tsx:83
+#: src/pages/home-page.tsx:86
 msgid "Browse lists"
 msgstr "浏览列表"
 
@@ -615,12 +615,12 @@ msgstr "取消"
 msgid "Catch up"
 msgstr "补上进度"
 
-#: src/components/assets/entity-episodes.tsx:140
-#: src/components/assets/entity-episodes.tsx:147
+#: src/components/assets/entity-episodes.tsx:146
+#: src/components/assets/entity-episodes.tsx:153
 msgid "Change completion date"
 msgstr "更改完成日期"
 
-#: src/components/settings/raw-config-editor.tsx:166
+#: src/components/settings/raw-config-editor.tsx:187
 msgid "Changes are validated before saving. Comments and formatting are preserved."
 msgstr "保存前会验证更改，并保留注释和格式。"
 
@@ -661,7 +661,7 @@ msgstr "选择图标"
 msgid "Choose lists to add to Home. Existing lists keep their changes."
 msgstr "选择要添加到首页的列表。已有列表的修改会保留。"
 
-#: src/components/settings/settings-editor.tsx:324
+#: src/components/settings/settings-editor.tsx:340
 msgid "Choose the frontmatter key used for tags."
 msgstr "选择用于存储标签的 frontmatter 键。"
 
@@ -706,7 +706,7 @@ msgid "Completed date"
 msgstr "完成日期"
 
 #. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
-#: src/components/settings/raw-config-editor.tsx:134
+#: src/components/settings/raw-config-editor.tsx:154
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml 已在磁盘上更改。你未保存的编辑仍保留在这里。"
 
@@ -714,7 +714,7 @@ msgstr "config.yaml 已在磁盘上更改。你未保存的编辑仍保留在这
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "配置新字段，然后选择「完成」以添加。返回将丢弃它。"
 
-#: src/components/settings/settings-editor.tsx:196
+#: src/components/settings/settings-editor.tsx:212
 msgid "Configure Vault"
 msgstr "配置保管库"
 
@@ -770,7 +770,7 @@ msgstr "将此类型的字段和元数据映射复制到一个拥有独立文件
 msgid "Could not read this CSV file."
 msgstr "无法读取此 CSV 文件。"
 
-#: src/components/settings/settings-editor.tsx:175
+#: src/components/settings/settings-editor.tsx:181
 #: src/pages/onboarding-page.tsx:200
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "无法添加推荐列表。你可以在首页重试。"
@@ -797,7 +797,7 @@ msgstr "创建并添加"
 msgid "Create new vault"
 msgstr "新建保管库"
 
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/settings-editor.tsx:227
 #: src/components/settings/vault-switcher.tsx:207
 #: src/pages/onboarding-page.tsx:254
 msgid "Create vault"
@@ -832,12 +832,12 @@ msgstr "自定义字段"
 msgid "Custom field name"
 msgstr "自定义字段名"
 
-#: src/components/settings/settings-editor.tsx:316
+#: src/components/settings/settings-editor.tsx:332
 msgid "Daily note indexing is disabled."
 msgstr "每日笔记索引已禁用。"
 
-#: src/components/settings/settings-editor.tsx:107
-#: src/components/settings/settings-editor.tsx:280
+#: src/components/settings/settings-editor.tsx:112
+#: src/components/settings/settings-editor.tsx:296
 #: src/pages/statistics-page.tsx:36
 msgid "Daily Notes"
 msgstr "每日笔记"
@@ -929,7 +929,8 @@ msgstr "禁用"
 
 #: src/pages/entity-create-page.tsx:320
 #: src/pages/entity-edit-page.tsx:321
-#: src/pages/settings-page.tsx:153
+#: src/pages/settings-page.tsx:187
+#: src/pages/settings-page.tsx:232
 msgid "Discard"
 msgstr "丢弃"
 
@@ -938,7 +939,7 @@ msgid "Discard and switch"
 msgstr "放弃并切换"
 
 #: src/components/settings/vault-switcher.tsx:222
-#: src/pages/settings-page.tsx:129
+#: src/pages/settings-page.tsx:208
 msgid "Discard unsaved changes?"
 msgstr "丢弃未保存的更改？"
 
@@ -1024,7 +1025,8 @@ msgstr "编辑 {0}"
 msgid "Edit as JSON to preserve nested values and their types."
 msgstr "以 JSON 格式编辑，保留嵌套值及其类型。"
 
-#: src/components/settings/raw-config-editor.tsx:103
+#: src/components/settings/raw-config-editor.tsx:123
+#: src/components/settings/raw-config-editor.tsx:175
 msgid "Edit config.yaml"
 msgstr "编辑 config.yaml"
 
@@ -1243,7 +1245,7 @@ msgstr "完成"
 msgid "Finish saving"
 msgstr "完成保存"
 
-#: src/pages/settings-page.tsx:88
+#: src/pages/settings-page.tsx:117
 msgid "Form"
 msgstr "表单"
 
@@ -1255,7 +1257,7 @@ msgstr ""
 msgid "Frontmatter"
 msgstr "前置元数据"
 
-#: src/components/settings/settings-editor.tsx:341
+#: src/components/settings/settings-editor.tsx:357
 msgid "Frontmatter key"
 msgstr "前置元数据键"
 
@@ -1313,6 +1315,7 @@ msgid "Hide sidebar"
 msgstr ""
 
 #: src/components/layout/nav-destinations.ts:38
+#: src/pages/home-page.tsx:31
 msgid "Home"
 msgstr "主页"
 
@@ -1496,7 +1499,8 @@ msgstr "JSON 值"
 #: src/components/settings/vault-switcher.tsx:230
 #: src/pages/entity-create-page.tsx:310
 #: src/pages/entity-edit-page.tsx:311
-#: src/pages/settings-page.tsx:145
+#: src/pages/settings-page.tsx:178
+#: src/pages/settings-page.tsx:224
 msgid "Keep editing"
 msgstr "继续编辑"
 
@@ -1649,19 +1653,19 @@ msgstr "正在加载类型…"
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/entities/entity-ratings.tsx:184
 #: src/components/lists/add-items-dialog.tsx:73
-#: src/components/settings/raw-config-editor.tsx:151
+#: src/components/settings/raw-config-editor.tsx:171
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
 #: src/pages/entity-edit-page.tsx:257
 #: src/pages/entity-page.tsx:300
 #: src/pages/entity-page.tsx:616
-#: src/pages/home-page.tsx:55
+#: src/pages/home-page.tsx:58
 #: src/pages/import-wizard-page.tsx:218
 #: src/pages/list-detail-page.tsx:365
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:84
 #: src/pages/review-page.tsx:148
-#: src/pages/settings-page.tsx:104
+#: src/pages/settings-page.tsx:139
 #: src/pages/smart-list-page.tsx:226
 #: src/pages/statistics-page.tsx:45
 msgid "Loading…"
@@ -1906,7 +1910,7 @@ msgid "No further criteria — every entity of this type matches."
 msgstr "没有其他条件 — 匹配此类型的所有条目。"
 
 #. placeholder {0}: episodes.heading
-#: src/components/assets/entity-episodes.tsx:87
+#: src/components/assets/entity-episodes.tsx:88
 msgid "No items yet — sync from a provider or add a list under the <0>{0}</0> heading."
 msgstr "暂无项目 — 从数据源同步，或在 <0>{0}</0> 标题下添加列表。"
 
@@ -1971,7 +1975,7 @@ msgstr "没有队列项目与当前筛选条件匹配"
 msgid "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
 msgstr "此类型没有可用的搜索数据源 — 请在设置中检查数据源凭据，或手动添加条目。"
 
-#: src/pages/home-page.tsx:69
+#: src/pages/home-page.tsx:72
 msgid "No smart lists on Home yet"
 msgstr "首页还没有智能列表"
 
@@ -2008,7 +2012,7 @@ msgstr "不冲突的更改已合并。对于两边都修改过的内容，请选
 #: src/components/settings/settings-field-form.tsx:165
 #: src/components/settings/settings-field-form.tsx:211
 #: src/components/settings/settings-field-form.tsx:258
-#: src/components/settings/settings-shared.tsx:33
+#: src/components/settings/settings-shared.tsx:38
 #: src/components/smart-lists/rule-subgroup.tsx:99
 msgid "None"
 msgstr "无"
@@ -2062,13 +2066,13 @@ msgstr "数字"
 msgid "of the following match:"
 msgstr "满足以下条件:"
 
-#: src/components/settings/settings-editor.tsx:291
-#: src/components/settings/settings-editor.tsx:326
+#: src/components/settings/settings-editor.tsx:307
+#: src/components/settings/settings-editor.tsx:342
 msgid "off"
 msgstr "关"
 
-#: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:115
+#: src/components/settings/settings-editor.tsx:120
 msgid "Off"
 msgstr "关"
 
@@ -2077,11 +2081,11 @@ msgstr "关"
 msgid "older than"
 msgstr "早于过去"
 
-#: src/components/settings/settings-editor.tsx:326
+#: src/components/settings/settings-editor.tsx:342
 msgid "on"
 msgstr "开"
 
-#: src/components/settings/settings-editor.tsx:115
+#: src/components/settings/settings-editor.tsx:120
 msgid "On"
 msgstr "开"
 
@@ -2145,7 +2149,7 @@ msgstr "原始（文件名即标题）"
 msgid "Original title: {0}"
 msgstr "原始标题：{0}"
 
-#: src/components/settings/settings-editor.tsx:392
+#: src/components/settings/settings-editor.tsx:408
 msgid "Overview"
 msgstr "概览"
 
@@ -2311,8 +2315,8 @@ msgstr "相关度"
 msgid "Reload"
 msgstr "重新加载"
 
-#: src/components/settings/raw-config-editor.tsx:144
-#: src/components/settings/settings-editor.tsx:239
+#: src/components/settings/raw-config-editor.tsx:164
+#: src/components/settings/settings-editor.tsx:255
 #: src/pages/list-detail-page.tsx:427
 #: src/pages/smart-list-page.tsx:334
 msgid "Reload latest version"
@@ -2466,8 +2470,8 @@ msgid "Running…"
 msgstr "运行中…"
 
 #: src/components/entities/entity-ratings.tsx:244
-#: src/components/settings/raw-config-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/raw-config-editor.tsx:134
+#: src/components/settings/settings-editor.tsx:227
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
@@ -2476,6 +2480,7 @@ msgstr "保存"
 
 #. Saves the entity draft and then continues the navigation the user requested
 #: src/pages/entity-edit-page.tsx:331
+#: src/pages/settings-page.tsx:193
 msgid "Save and leave"
 msgstr "保存并离开"
 
@@ -2492,6 +2497,7 @@ msgstr "保存凭据"
 #. Explains the options for leaving an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:305
 #: src/pages/entity-edit-page.tsx:303
+#: src/pages/settings-page.tsx:172
 msgid "Save your edits before leaving, or discard them."
 msgstr "离开前保存编辑内容，或放弃这些更改。"
 
@@ -2509,18 +2515,19 @@ msgstr "将当前类型、条件和排序保存为智能列表。搜索内容不
 
 #: src/components/assets/quick-log-dialog.tsx:272
 #: src/components/settings/provider-credentials.tsx:83
-#: src/components/settings/raw-config-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/raw-config-editor.tsx:134
+#: src/components/settings/settings-editor.tsx:227
 #: src/pages/entity-create-page.tsx:164
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/entity-edit-page.tsx:329
 #: src/pages/list-detail-page.tsx:406
+#: src/pages/settings-page.tsx:193
 #: src/pages/smart-list-page.tsx:263
 msgid "Saving…"
 msgstr "正在保存…"
 
-#: src/components/settings/raw-config-editor.tsx:121
-#: src/components/settings/settings-editor.tsx:218
+#: src/components/settings/raw-config-editor.tsx:141
+#: src/components/settings/settings-editor.tsx:234
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "此实例已禁用 schema 编辑（只读）。设置 <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> 以启用。"
 
@@ -2663,12 +2670,12 @@ msgid "Set {0} to {1}"
 msgstr "将{0}设为{1}"
 
 #: src/components/layout/nav-destinations.ts:46
-#: src/components/settings/settings-editor.tsx:196
+#: src/components/settings/settings-editor.tsx:212
 msgid "Settings"
 msgstr "设置"
 
-#: src/components/settings/raw-config-editor.tsx:85
-#: src/components/settings/settings-editor.tsx:179
+#: src/components/settings/raw-config-editor.tsx:95
+#: src/components/settings/settings-editor.tsx:185
 msgid "Settings saved"
 msgstr "设置已保存"
 
@@ -2805,11 +2812,11 @@ msgstr "状态不匹配"
 msgid "Status, score & dates"
 msgstr "状态、评分和日期"
 
-#: src/components/settings/settings-editor.tsx:257
+#: src/components/settings/settings-editor.tsx:273
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "存储在 {vaultPath} 的仓库中。分类、资源、日记和类型随仓库同步。"
 
-#: src/components/settings/settings-editor.tsx:258
+#: src/components/settings/settings-editor.tsx:274
 msgid "Stored in the vault. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "存储在仓库中。分类、资源、日记和类型随仓库同步。"
 
@@ -2851,13 +2858,13 @@ msgstr "跟随系统主题。切换到浅色主题。"
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:85
-#: src/components/settings/settings-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:323
+#: src/components/settings/settings-editor.tsx:119
+#: src/components/settings/settings-editor.tsx:339
 #: src/components/smart-lists/rule-field-meta.ts:64
 msgid "Tags"
 msgstr "标签"
 
-#: src/components/settings/settings-editor.tsx:351
+#: src/components/settings/settings-editor.tsx:367
 msgid "Tags are disabled."
 msgstr "标签已禁用。"
 
@@ -2865,12 +2872,12 @@ msgstr "标签已禁用。"
 msgid "Task"
 msgstr "任务"
 
-#: src/components/settings/settings-editor.tsx:264
+#: src/components/settings/settings-editor.tsx:280
 msgid "Taxonomy root"
 msgstr "分类根目录"
 
 #. placeholder {0}: config.taxonomyRoot || "Taxonomy"
-#: src/components/settings/settings-editor.tsx:103
+#: src/components/settings/settings-editor.tsx:108
 msgid "taxonomy: {0}"
 msgstr "分类：{0}"
 
@@ -2907,7 +2914,7 @@ msgid "The schema draft changed. Close this dialog and duplicate the type again.
 msgstr "架构草稿已更改。请关闭此对话框，然后重新复制该类型。"
 
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
-#: src/components/settings/settings-editor.tsx:229
+#: src/components/settings/settings-editor.tsx:245
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
 msgstr "保管库 schema 已在磁盘上更改。你未保存的编辑仍保留在这里。"
 
@@ -3019,8 +3026,8 @@ msgid "Type Distribution"
 msgstr "类型分布"
 
 #: src/components/settings/settings-dialogs.tsx:225
-#: src/components/settings/settings-editor.tsx:119
-#: src/components/settings/settings-editor.tsx:358
+#: src/components/settings/settings-editor.tsx:124
+#: src/components/settings/settings-editor.tsx:374
 msgid "Types"
 msgstr "类型"
 
@@ -3075,6 +3082,7 @@ msgstr "未解析的关联"
 #. Title of the confirmation dialog when navigating away from an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:302
 #: src/pages/entity-edit-page.tsx:298
+#: src/pages/settings-page.tsx:169
 msgid "Unsaved changes"
 msgstr "未保存的更改"
 
@@ -3140,8 +3148,8 @@ msgstr "值"
 msgid "Values"
 msgstr "值"
 
-#: src/components/settings/settings-editor.tsx:102
-#: src/components/settings/settings-editor.tsx:254
+#: src/components/settings/settings-editor.tsx:107
+#: src/components/settings/settings-editor.tsx:270
 msgid "Vault"
 msgstr "保管库"
 
@@ -3207,7 +3215,7 @@ msgstr "将根据标题创建为“{0}.md”。"
 msgid "within the next"
 msgstr "未来"
 
-#: src/pages/settings-page.tsx:96
+#: src/pages/settings-page.tsx:126
 msgid "YAML"
 msgstr "YAML"
 
@@ -3244,11 +3252,11 @@ msgstr "可以多次添加同一个内置类型。每个副本都有独立的 ID
 msgid "You can still open entities already in your library."
 msgstr "你仍可以打开库中已有的条目。"
 
-#: src/pages/settings-page.tsx:133
+#: src/pages/settings-page.tsx:212
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "表单编辑器中有未保存的更改。切换编辑器将丢弃它们。"
 
-#: src/pages/settings-page.tsx:137
+#: src/pages/settings-page.tsx:216
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "YAML 编辑器中有未保存的更改。切换编辑器将丢弃它们。"
 

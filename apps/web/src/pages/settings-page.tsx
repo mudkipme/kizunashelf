@@ -1,14 +1,17 @@
 import { Trans } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useBlocker } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { languagesQuery, providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
+import { SaveFailure } from "@/components/save-failure";
 import { ProviderCredentials } from "@/components/settings/provider-credentials";
 import { RawConfigEditor } from "@/components/settings/raw-config-editor";
 import { SettingsEditor } from "@/components/settings/settings-editor";
+import type { SettingsEditorHandle } from "@/components/settings/settings-shared";
 import { VaultSwitcher } from "@/components/settings/vault-switcher";
 import {
   AlertDialog,
@@ -38,6 +41,11 @@ export function SettingsPage() {
   // The active editor reports unsaved edits here; `pendingMode` holds a requested
   // switch that's waiting on the discard confirmation.
   const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [saveError, setSaveError] = useState<unknown>();
+  const editor = useRef<SettingsEditorHandle>(null);
+  const busy = saving || leaving;
   const [pendingMode, setPendingMode] = useState<EditorMode | null>(null);
   const loading =
     settings.isPending ||
@@ -48,8 +56,28 @@ export function SettingsPage() {
   const desktop = isDesktopRuntime();
   const settingsWritable = capabilities.settingsWritable;
 
-  // Warn on tab close/reload while edits are unsaved.
-  useUnsavedChangesWarning(dirty);
+  useUnsavedChangesWarning(dirty || busy);
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      (dirty || busy) &&
+      (currentLocation.pathname !== nextLocation.pathname ||
+        currentLocation.search !== nextLocation.search),
+  );
+  const blockerRef = useRef(blocker);
+  blockerRef.current = blocker;
+
+  async function saveAndLeave() {
+    if (busy || !editor.current?.canSave) return;
+    setLeaving(true);
+    setSaveError(undefined);
+    try {
+      const result = await editor.current.save();
+      if (result.saved && blockerRef.current.state === "blocked") blockerRef.current.proceed();
+      else setSaveError(result.error);
+    } finally {
+      setLeaving(false);
+    }
+  }
 
   // Switching editors discards the active draft, so confirm first when dirty.
   function requestMode(next: EditorMode) {
@@ -70,7 +98,7 @@ export function SettingsPage() {
         {desktop ? (
           <>
             <VaultSwitcher
-              hasUnsavedChanges={dirty}
+              hasUnsavedChanges={dirty || busy}
               onChanged={() => void queryClient.invalidateQueries()}
             />
             <ProviderCredentials providers={providerCatalog.data?.providers ?? []} />
@@ -83,6 +111,7 @@ export function SettingsPage() {
             type="button"
             size="sm"
             variant={mode === "form" ? "secondary" : "ghost"}
+            disabled={busy}
             onClick={() => requestMode("form")}
           >
             <Trans>Form</Trans>
@@ -91,6 +120,7 @@ export function SettingsPage() {
             type="button"
             size="sm"
             variant={mode === "yaml" ? "secondary" : "ghost"}
+            disabled={busy}
             onClick={() => requestMode("yaml")}
           >
             <Trans>YAML</Trans>
@@ -98,13 +128,20 @@ export function SettingsPage() {
         </div>
 
         {mode === "yaml" ? (
-          <RawConfigEditor settingsWritable={settingsWritable} onDirtyChange={setDirty} />
+          <RawConfigEditor
+            ref={editor}
+            onSavingChange={setSaving}
+            settingsWritable={settingsWritable}
+            onDirtyChange={setDirty}
+          />
         ) : loading ? (
           <Placeholder>
             <Trans>Loading…</Trans>
           </Placeholder>
         ) : settings.data ? (
           <SettingsEditor
+            ref={editor}
+            onSavingChange={setSaving}
             vaultConfigPath={settings.data.vaultConfigPath ?? undefined}
             initialApp={settings.data.app}
             initialVault={settings.data.vault}
@@ -116,6 +153,48 @@ export function SettingsPage() {
           />
         ) : null}
       </PageContainer>
+
+      <AlertDialog
+        open={blocker.state === "blocked"}
+        onOpenChange={(open) => {
+          if (!open && !busy && blocker.state === "blocked") {
+            blocker.reset();
+            setSaveError(undefined);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              <Trans>Unsaved changes</Trans>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <Trans>Save your edits before leaving, or discard them.</Trans>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {saveError ? <SaveFailure error={saveError} /> : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>
+              <Trans>Keep editing</Trans>
+            </AlertDialogCancel>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => {
+                if (blocker.state === "blocked") blocker.proceed();
+              }}
+            >
+              <Trans>Discard</Trans>
+            </Button>
+            <Button
+              disabled={busy || !settingsWritable || !editor.current?.canSave}
+              onClick={() => void saveAndLeave()}
+            >
+              {busy ? <Trans>Saving…</Trans> : <Trans>Save and leave</Trans>}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={pendingMode !== null}

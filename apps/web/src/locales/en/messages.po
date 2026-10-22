@@ -81,8 +81,8 @@ msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, one {# needs review} other {# need review}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
-#: src/components/settings/settings-editor.tsx:109
-#: src/components/settings/settings-editor.tsx:286
+#: src/components/settings/settings-editor.tsx:114
+#: src/components/settings/settings-editor.tsx:302
 msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, one {# path} other {# paths}}"
 
@@ -116,8 +116,8 @@ msgstr "{0, plural, one {# to create} other {# to create}}"
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
 #: src/components/settings/preset-picker.tsx:130
-#: src/components/settings/settings-editor.tsx:120
-#: src/components/settings/settings-editor.tsx:362
+#: src/components/settings/settings-editor.tsx:125
+#: src/components/settings/settings-editor.tsx:378
 msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, one {# type} other {# types}}"
 
@@ -186,7 +186,7 @@ msgstr "{0} skipped"
 msgid "{0} title: {1}"
 msgstr "{0} title: {1}"
 
-#: src/components/settings/settings-editor.tsx:364
+#: src/components/settings/settings-editor.tsx:380
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 
@@ -224,7 +224,7 @@ msgstr "{total, plural, one {# entry} other {# entries}}"
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, one {# match} other {# matches}}"
 
-#: src/components/settings/settings-editor.tsx:363
+#: src/components/settings/settings-editor.tsx:379
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, one {# field} other {# fields}}"
 
@@ -313,9 +313,9 @@ msgstr "Activity actions"
 #: src/components/settings/settings-controls.tsx:65
 #: src/components/settings/settings-dialogs.tsx:409
 #: src/components/settings/settings-external-mappings.tsx:51
-#: src/pages/home-page.tsx:36
-#: src/pages/home-page.tsx:42
-#: src/pages/home-page.tsx:47
+#: src/pages/home-page.tsx:39
+#: src/pages/home-page.tsx:45
+#: src/pages/home-page.tsx:50
 #: src/pages/library-page.tsx:351
 #: src/pages/library-page.tsx:357
 #: src/pages/library-page.tsx:362
@@ -403,7 +403,7 @@ msgstr "Add section"
 msgid "Add suggested lists"
 msgstr "Add suggested lists"
 
-#: src/pages/home-page.tsx:72
+#: src/pages/home-page.tsx:75
 msgid "Add suggested lists, or open a smart list and choose Add to Home."
 msgstr "Add suggested lists, or open a smart list and choose Add to Home."
 
@@ -539,19 +539,19 @@ msgstr "Applying…"
 msgid "Ascending"
 msgstr "Ascending"
 
-#: src/components/settings/settings-editor.tsx:270
+#: src/components/settings/settings-editor.tsx:286
 msgid "Asset root"
 msgstr "Asset root"
 
 #. placeholder {0}: config.assetRoot || "Assets"
-#: src/components/settings/settings-editor.tsx:260
+#: src/components/settings/settings-editor.tsx:276
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
 #: src/components/layout/app-frame.tsx:211
 #: src/components/settings/preset-picker.tsx:197
 #: src/components/settings/settings-dialogs.tsx:75
-#: src/components/settings/settings-editor.tsx:202
+#: src/components/settings/settings-editor.tsx:218
 msgid "Back"
 msgstr "Back"
 
@@ -575,11 +575,11 @@ msgstr "Book"
 msgid "Broken Assets"
 msgstr "Broken Assets"
 
-#: src/pages/home-page.tsx:78
+#: src/pages/home-page.tsx:81
 msgid "Browse library"
 msgstr "Browse library"
 
-#: src/pages/home-page.tsx:83
+#: src/pages/home-page.tsx:86
 msgid "Browse lists"
 msgstr "Browse lists"
 
@@ -615,12 +615,12 @@ msgstr "Cancel"
 msgid "Catch up"
 msgstr "Catch up"
 
-#: src/components/assets/entity-episodes.tsx:140
-#: src/components/assets/entity-episodes.tsx:147
+#: src/components/assets/entity-episodes.tsx:146
+#: src/components/assets/entity-episodes.tsx:153
 msgid "Change completion date"
 msgstr "Change completion date"
 
-#: src/components/settings/raw-config-editor.tsx:166
+#: src/components/settings/raw-config-editor.tsx:187
 msgid "Changes are validated before saving. Comments and formatting are preserved."
 msgstr "Changes are validated before saving. Comments and formatting are preserved."
 
@@ -661,7 +661,7 @@ msgstr "Choose icon"
 msgid "Choose lists to add to Home. Existing lists keep their changes."
 msgstr "Choose lists to add to Home. Existing lists keep their changes."
 
-#: src/components/settings/settings-editor.tsx:324
+#: src/components/settings/settings-editor.tsx:340
 msgid "Choose the frontmatter key used for tags."
 msgstr "Choose the frontmatter key used for tags."
 
@@ -706,7 +706,7 @@ msgid "Completed date"
 msgstr "Completed date"
 
 #. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
-#: src/components/settings/raw-config-editor.tsx:134
+#: src/components/settings/raw-config-editor.tsx:154
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml changed on disk. Your unsaved edits are still here."
 
@@ -714,7 +714,7 @@ msgstr "config.yaml changed on disk. Your unsaved edits are still here."
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "Configure the new field, then choose Done to add it. Going back discards it."
 
-#: src/components/settings/settings-editor.tsx:196
+#: src/components/settings/settings-editor.tsx:212
 msgid "Configure Vault"
 msgstr "Configure Vault"
 
@@ -770,7 +770,7 @@ msgstr "Copy this type's fields and metadata mappings into a new type with its o
 msgid "Could not read this CSV file."
 msgstr "Could not read this CSV file."
 
-#: src/components/settings/settings-editor.tsx:175
+#: src/components/settings/settings-editor.tsx:181
 #: src/pages/onboarding-page.tsx:200
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "Couldn't add suggested lists. You can retry from Home."
@@ -797,7 +797,7 @@ msgstr "Create & add"
 msgid "Create new vault"
 msgstr "Create new vault"
 
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/settings-editor.tsx:227
 #: src/components/settings/vault-switcher.tsx:207
 #: src/pages/onboarding-page.tsx:254
 msgid "Create vault"
@@ -832,12 +832,12 @@ msgstr "Custom field"
 msgid "Custom field name"
 msgstr "Custom field name"
 
-#: src/components/settings/settings-editor.tsx:316
+#: src/components/settings/settings-editor.tsx:332
 msgid "Daily note indexing is disabled."
 msgstr "Daily note indexing is disabled."
 
-#: src/components/settings/settings-editor.tsx:107
-#: src/components/settings/settings-editor.tsx:280
+#: src/components/settings/settings-editor.tsx:112
+#: src/components/settings/settings-editor.tsx:296
 #: src/pages/statistics-page.tsx:36
 msgid "Daily Notes"
 msgstr "Daily Notes"
@@ -929,7 +929,8 @@ msgstr "Disable"
 
 #: src/pages/entity-create-page.tsx:320
 #: src/pages/entity-edit-page.tsx:321
-#: src/pages/settings-page.tsx:153
+#: src/pages/settings-page.tsx:187
+#: src/pages/settings-page.tsx:232
 msgid "Discard"
 msgstr "Discard"
 
@@ -938,7 +939,7 @@ msgid "Discard and switch"
 msgstr "Discard and switch"
 
 #: src/components/settings/vault-switcher.tsx:222
-#: src/pages/settings-page.tsx:129
+#: src/pages/settings-page.tsx:208
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
@@ -1024,7 +1025,8 @@ msgstr "Edit {0}"
 msgid "Edit as JSON to preserve nested values and their types."
 msgstr "Edit as JSON to preserve nested values and their types."
 
-#: src/components/settings/raw-config-editor.tsx:103
+#: src/components/settings/raw-config-editor.tsx:123
+#: src/components/settings/raw-config-editor.tsx:175
 msgid "Edit config.yaml"
 msgstr "Edit config.yaml"
 
@@ -1243,7 +1245,7 @@ msgstr "Finish"
 msgid "Finish saving"
 msgstr "Finish saving"
 
-#: src/pages/settings-page.tsx:88
+#: src/pages/settings-page.tsx:117
 msgid "Form"
 msgstr "Form"
 
@@ -1255,7 +1257,7 @@ msgstr "Forward"
 msgid "Frontmatter"
 msgstr "Frontmatter"
 
-#: src/components/settings/settings-editor.tsx:341
+#: src/components/settings/settings-editor.tsx:357
 msgid "Frontmatter key"
 msgstr "Frontmatter key"
 
@@ -1313,6 +1315,7 @@ msgid "Hide sidebar"
 msgstr "Hide sidebar"
 
 #: src/components/layout/nav-destinations.ts:38
+#: src/pages/home-page.tsx:31
 msgid "Home"
 msgstr "Home"
 
@@ -1496,7 +1499,8 @@ msgstr "JSON value"
 #: src/components/settings/vault-switcher.tsx:230
 #: src/pages/entity-create-page.tsx:310
 #: src/pages/entity-edit-page.tsx:311
-#: src/pages/settings-page.tsx:145
+#: src/pages/settings-page.tsx:178
+#: src/pages/settings-page.tsx:224
 msgid "Keep editing"
 msgstr "Keep editing"
 
@@ -1649,19 +1653,19 @@ msgstr "Loading type…"
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/entities/entity-ratings.tsx:184
 #: src/components/lists/add-items-dialog.tsx:73
-#: src/components/settings/raw-config-editor.tsx:151
+#: src/components/settings/raw-config-editor.tsx:171
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
 #: src/pages/entity-edit-page.tsx:257
 #: src/pages/entity-page.tsx:300
 #: src/pages/entity-page.tsx:616
-#: src/pages/home-page.tsx:55
+#: src/pages/home-page.tsx:58
 #: src/pages/import-wizard-page.tsx:218
 #: src/pages/list-detail-page.tsx:365
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:84
 #: src/pages/review-page.tsx:148
-#: src/pages/settings-page.tsx:104
+#: src/pages/settings-page.tsx:139
 #: src/pages/smart-list-page.tsx:226
 #: src/pages/statistics-page.tsx:45
 msgid "Loading…"
@@ -1906,7 +1910,7 @@ msgid "No further criteria — every entity of this type matches."
 msgstr "No further criteria — every entity of this type matches."
 
 #. placeholder {0}: episodes.heading
-#: src/components/assets/entity-episodes.tsx:87
+#: src/components/assets/entity-episodes.tsx:88
 msgid "No items yet — sync from a provider or add a list under the <0>{0}</0> heading."
 msgstr "No items yet — sync from a provider or add a list under the <0>{0}</0> heading."
 
@@ -1971,7 +1975,7 @@ msgstr "No queue items match the current filters"
 msgid "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
 msgstr "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
 
-#: src/pages/home-page.tsx:69
+#: src/pages/home-page.tsx:72
 msgid "No smart lists on Home yet"
 msgstr "No smart lists on Home yet"
 
@@ -2008,7 +2012,7 @@ msgstr "Non-conflicting changes are combined. Choose which value to keep where b
 #: src/components/settings/settings-field-form.tsx:165
 #: src/components/settings/settings-field-form.tsx:211
 #: src/components/settings/settings-field-form.tsx:258
-#: src/components/settings/settings-shared.tsx:33
+#: src/components/settings/settings-shared.tsx:38
 #: src/components/smart-lists/rule-subgroup.tsx:99
 msgid "None"
 msgstr "None"
@@ -2062,13 +2066,13 @@ msgstr "Number"
 msgid "of the following match:"
 msgstr "of the following match:"
 
-#: src/components/settings/settings-editor.tsx:291
-#: src/components/settings/settings-editor.tsx:326
+#: src/components/settings/settings-editor.tsx:307
+#: src/components/settings/settings-editor.tsx:342
 msgid "off"
 msgstr "off"
 
-#: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:115
+#: src/components/settings/settings-editor.tsx:120
 msgid "Off"
 msgstr "Off"
 
@@ -2077,11 +2081,11 @@ msgstr "Off"
 msgid "older than"
 msgstr "older than"
 
-#: src/components/settings/settings-editor.tsx:326
+#: src/components/settings/settings-editor.tsx:342
 msgid "on"
 msgstr "on"
 
-#: src/components/settings/settings-editor.tsx:115
+#: src/components/settings/settings-editor.tsx:120
 msgid "On"
 msgstr "On"
 
@@ -2145,7 +2149,7 @@ msgstr "Original (filename is the title)"
 msgid "Original title: {0}"
 msgstr "Original title: {0}"
 
-#: src/components/settings/settings-editor.tsx:392
+#: src/components/settings/settings-editor.tsx:408
 msgid "Overview"
 msgstr "Overview"
 
@@ -2311,8 +2315,8 @@ msgstr "Relevance"
 msgid "Reload"
 msgstr "Reload"
 
-#: src/components/settings/raw-config-editor.tsx:144
-#: src/components/settings/settings-editor.tsx:239
+#: src/components/settings/raw-config-editor.tsx:164
+#: src/components/settings/settings-editor.tsx:255
 #: src/pages/list-detail-page.tsx:427
 #: src/pages/smart-list-page.tsx:334
 msgid "Reload latest version"
@@ -2466,8 +2470,8 @@ msgid "Running…"
 msgstr "Running…"
 
 #: src/components/entities/entity-ratings.tsx:244
-#: src/components/settings/raw-config-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/raw-config-editor.tsx:134
+#: src/components/settings/settings-editor.tsx:227
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
@@ -2476,6 +2480,7 @@ msgstr "Save"
 
 #. Saves the entity draft and then continues the navigation the user requested
 #: src/pages/entity-edit-page.tsx:331
+#: src/pages/settings-page.tsx:193
 msgid "Save and leave"
 msgstr "Save and leave"
 
@@ -2492,6 +2497,7 @@ msgstr "Save credentials"
 #. Explains the options for leaving an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:305
 #: src/pages/entity-edit-page.tsx:303
+#: src/pages/settings-page.tsx:172
 msgid "Save your edits before leaving, or discard them."
 msgstr "Save your edits before leaving, or discard them."
 
@@ -2509,18 +2515,19 @@ msgstr "Saves the current type, criteria, and sort as a smart list. Your search 
 
 #: src/components/assets/quick-log-dialog.tsx:272
 #: src/components/settings/provider-credentials.tsx:83
-#: src/components/settings/raw-config-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/raw-config-editor.tsx:134
+#: src/components/settings/settings-editor.tsx:227
 #: src/pages/entity-create-page.tsx:164
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/entity-edit-page.tsx:329
 #: src/pages/list-detail-page.tsx:406
+#: src/pages/settings-page.tsx:193
 #: src/pages/smart-list-page.tsx:263
 msgid "Saving…"
 msgstr "Saving…"
 
-#: src/components/settings/raw-config-editor.tsx:121
-#: src/components/settings/settings-editor.tsx:218
+#: src/components/settings/raw-config-editor.tsx:141
+#: src/components/settings/settings-editor.tsx:234
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 
@@ -2663,12 +2670,12 @@ msgid "Set {0} to {1}"
 msgstr "Set {0} to {1}"
 
 #: src/components/layout/nav-destinations.ts:46
-#: src/components/settings/settings-editor.tsx:196
+#: src/components/settings/settings-editor.tsx:212
 msgid "Settings"
 msgstr "Settings"
 
-#: src/components/settings/raw-config-editor.tsx:85
-#: src/components/settings/settings-editor.tsx:179
+#: src/components/settings/raw-config-editor.tsx:95
+#: src/components/settings/settings-editor.tsx:185
 msgid "Settings saved"
 msgstr "Settings saved"
 
@@ -2805,11 +2812,11 @@ msgstr "Status Mismatch"
 msgid "Status, score & dates"
 msgstr "Status, score & dates"
 
-#: src/components/settings/settings-editor.tsx:257
+#: src/components/settings/settings-editor.tsx:273
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, and types — synced with the vault."
 
-#: src/components/settings/settings-editor.tsx:258
+#: src/components/settings/settings-editor.tsx:274
 msgid "Stored in the vault. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "Stored in the vault. Taxonomy, assets, daily notes, and types — synced with the vault."
 
@@ -2851,13 +2858,13 @@ msgstr "System theme. Switch to light theme."
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:85
-#: src/components/settings/settings-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:323
+#: src/components/settings/settings-editor.tsx:119
+#: src/components/settings/settings-editor.tsx:339
 #: src/components/smart-lists/rule-field-meta.ts:64
 msgid "Tags"
 msgstr "Tags"
 
-#: src/components/settings/settings-editor.tsx:351
+#: src/components/settings/settings-editor.tsx:367
 msgid "Tags are disabled."
 msgstr "Tags are disabled."
 
@@ -2865,12 +2872,12 @@ msgstr "Tags are disabled."
 msgid "Task"
 msgstr "Task"
 
-#: src/components/settings/settings-editor.tsx:264
+#: src/components/settings/settings-editor.tsx:280
 msgid "Taxonomy root"
 msgstr "Taxonomy root"
 
 #. placeholder {0}: config.taxonomyRoot || "Taxonomy"
-#: src/components/settings/settings-editor.tsx:103
+#: src/components/settings/settings-editor.tsx:108
 msgid "taxonomy: {0}"
 msgstr "taxonomy: {0}"
 
@@ -2907,7 +2914,7 @@ msgid "The schema draft changed. Close this dialog and duplicate the type again.
 msgstr "The schema draft changed. Close this dialog and duplicate the type again."
 
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
-#: src/components/settings/settings-editor.tsx:229
+#: src/components/settings/settings-editor.tsx:245
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
 msgstr "The vault schema changed on disk. Your unsaved edits are still here."
 
@@ -3019,8 +3026,8 @@ msgid "Type Distribution"
 msgstr "Type Distribution"
 
 #: src/components/settings/settings-dialogs.tsx:225
-#: src/components/settings/settings-editor.tsx:119
-#: src/components/settings/settings-editor.tsx:358
+#: src/components/settings/settings-editor.tsx:124
+#: src/components/settings/settings-editor.tsx:374
 msgid "Types"
 msgstr "Types"
 
@@ -3075,6 +3082,7 @@ msgstr "Unresolved Relations"
 #. Title of the confirmation dialog when navigating away from an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:302
 #: src/pages/entity-edit-page.tsx:298
+#: src/pages/settings-page.tsx:169
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -3140,8 +3148,8 @@ msgstr "Value"
 msgid "Values"
 msgstr "Values"
 
-#: src/components/settings/settings-editor.tsx:102
-#: src/components/settings/settings-editor.tsx:254
+#: src/components/settings/settings-editor.tsx:107
+#: src/components/settings/settings-editor.tsx:270
 msgid "Vault"
 msgstr "Vault"
 
@@ -3207,7 +3215,7 @@ msgstr "Will be created as “{0}.md”, from the title."
 msgid "within the next"
 msgstr "within the next"
 
-#: src/pages/settings-page.tsx:96
+#: src/pages/settings-page.tsx:126
 msgid "YAML"
 msgstr "YAML"
 
@@ -3244,11 +3252,11 @@ msgstr "You can add a built-in type more than once. Each copy gets its own ID an
 msgid "You can still open entities already in your library."
 msgstr "You can still open entities already in your library."
 
-#: src/pages/settings-page.tsx:133
+#: src/pages/settings-page.tsx:212
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "You have unsaved changes in the form editor. Switching editors will discard them."
 
-#: src/pages/settings-page.tsx:137
+#: src/pages/settings-page.tsx:216
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "You have unsaved changes in the YAML editor. Switching editors will discard them."
 

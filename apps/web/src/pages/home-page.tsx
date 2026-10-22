@@ -27,6 +27,9 @@ export function HomePage() {
 
   return (
     <AppFrame error={error ? errorMessage(error) : undefined}>
+      <h1 className="sr-only">
+        <Trans>Home</Trans>
+      </h1>
       <div className="flex min-h-full flex-col">
         <header className="flex flex-wrap items-center justify-end gap-2 border-b px-4 py-2">
           <SuggestedListsButton disabled={!capabilities.contentWritable} />

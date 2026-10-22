@@ -81,8 +81,8 @@ msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 件が要レビュー}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
-#: src/components/settings/settings-editor.tsx:109
-#: src/components/settings/settings-editor.tsx:286
+#: src/components/settings/settings-editor.tsx:114
+#: src/components/settings/settings-editor.tsx:302
 msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, other {# 件のパス}}"
 
@@ -116,8 +116,8 @@ msgstr "{0, plural, other {作成予定 # 件}}"
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
 #: src/components/settings/preset-picker.tsx:130
-#: src/components/settings/settings-editor.tsx:120
-#: src/components/settings/settings-editor.tsx:362
+#: src/components/settings/settings-editor.tsx:125
+#: src/components/settings/settings-editor.tsx:378
 msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, other {# 件のタイプ}}"
 
@@ -186,7 +186,7 @@ msgstr "{0} 件スキップ"
 msgid "{0} title: {1}"
 msgstr "{0}のタイトル: {1}"
 
-#: src/components/settings/settings-editor.tsx:364
+#: src/components/settings/settings-editor.tsx:380
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 件のプロバイダー}}"
 
@@ -224,7 +224,7 @@ msgstr "{total, plural, other {# 件}}"
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 件が一致}}"
 
-#: src/components/settings/settings-editor.tsx:363
+#: src/components/settings/settings-editor.tsx:379
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 件のフィールド}}"
 
@@ -313,9 +313,9 @@ msgstr "アクティビティの操作"
 #: src/components/settings/settings-controls.tsx:65
 #: src/components/settings/settings-dialogs.tsx:409
 #: src/components/settings/settings-external-mappings.tsx:51
-#: src/pages/home-page.tsx:36
-#: src/pages/home-page.tsx:42
-#: src/pages/home-page.tsx:47
+#: src/pages/home-page.tsx:39
+#: src/pages/home-page.tsx:45
+#: src/pages/home-page.tsx:50
 #: src/pages/library-page.tsx:351
 #: src/pages/library-page.tsx:357
 #: src/pages/library-page.tsx:362
@@ -403,7 +403,7 @@ msgstr "セクションを追加"
 msgid "Add suggested lists"
 msgstr "おすすめリストを追加"
 
-#: src/pages/home-page.tsx:72
+#: src/pages/home-page.tsx:75
 msgid "Add suggested lists, or open a smart list and choose Add to Home."
 msgstr "おすすめリストを追加するか、スマートリストを開いて「ホームに追加」を選んでください。"
 
@@ -539,19 +539,19 @@ msgstr "適用中…"
 msgid "Ascending"
 msgstr "昇順"
 
-#: src/components/settings/settings-editor.tsx:270
+#: src/components/settings/settings-editor.tsx:286
 msgid "Asset root"
 msgstr "アセットのルート"
 
 #. placeholder {0}: config.assetRoot || "Assets"
-#: src/components/settings/settings-editor.tsx:260
+#: src/components/settings/settings-editor.tsx:276
 msgid "assets: {0}"
 msgstr "アセット: {0}"
 
 #: src/components/layout/app-frame.tsx:211
 #: src/components/settings/preset-picker.tsx:197
 #: src/components/settings/settings-dialogs.tsx:75
-#: src/components/settings/settings-editor.tsx:202
+#: src/components/settings/settings-editor.tsx:218
 msgid "Back"
 msgstr "戻る"
 
@@ -575,11 +575,11 @@ msgstr "書籍"
 msgid "Broken Assets"
 msgstr "壊れたアセット"
 
-#: src/pages/home-page.tsx:78
+#: src/pages/home-page.tsx:81
 msgid "Browse library"
 msgstr "ライブラリを閲覧"
 
-#: src/pages/home-page.tsx:83
+#: src/pages/home-page.tsx:86
 msgid "Browse lists"
 msgstr "リストを見る"
 
@@ -615,12 +615,12 @@ msgstr "キャンセル"
 msgid "Catch up"
 msgstr "追いつく"
 
-#: src/components/assets/entity-episodes.tsx:140
-#: src/components/assets/entity-episodes.tsx:147
+#: src/components/assets/entity-episodes.tsx:146
+#: src/components/assets/entity-episodes.tsx:153
 msgid "Change completion date"
 msgstr "完了日を変更"
 
-#: src/components/settings/raw-config-editor.tsx:166
+#: src/components/settings/raw-config-editor.tsx:187
 msgid "Changes are validated before saving. Comments and formatting are preserved."
 msgstr "保存前に変更内容を検証します。コメントと書式は保持されます。"
 
@@ -661,7 +661,7 @@ msgstr "アイコンを選択"
 msgid "Choose lists to add to Home. Existing lists keep their changes."
 msgstr "ホームに追加するリストを選んでください。既存のリストへの変更は保持されます。"
 
-#: src/components/settings/settings-editor.tsx:324
+#: src/components/settings/settings-editor.tsx:340
 msgid "Choose the frontmatter key used for tags."
 msgstr "タグを保存するフロントマターのキーを指定します。"
 
@@ -706,7 +706,7 @@ msgid "Completed date"
 msgstr "完了日"
 
 #. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
-#: src/components/settings/raw-config-editor.tsx:134
+#: src/components/settings/raw-config-editor.tsx:154
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml がディスク上で変更されました。未保存の編集内容はそのまま残っています。"
 
@@ -714,7 +714,7 @@ msgstr "config.yaml がディスク上で変更されました。未保存の編
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "新しいフィールドを設定し、「完了」を選択して追加します。戻ると破棄されます。"
 
-#: src/components/settings/settings-editor.tsx:196
+#: src/components/settings/settings-editor.tsx:212
 msgid "Configure Vault"
 msgstr "保管庫を設定"
 
@@ -770,7 +770,7 @@ msgstr "このタイプのフィールドとメタデータのマッピングを
 msgid "Could not read this CSV file."
 msgstr "この CSV ファイルを読み込めませんでした。"
 
-#: src/components/settings/settings-editor.tsx:175
+#: src/components/settings/settings-editor.tsx:181
 #: src/pages/onboarding-page.tsx:200
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "おすすめリストを追加できませんでした。ホームから再試行できます。"
@@ -797,7 +797,7 @@ msgstr "作成して追加"
 msgid "Create new vault"
 msgstr "新しい保管庫を作成"
 
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/settings-editor.tsx:227
 #: src/components/settings/vault-switcher.tsx:207
 #: src/pages/onboarding-page.tsx:254
 msgid "Create vault"
@@ -832,12 +832,12 @@ msgstr "カスタムフィールド"
 msgid "Custom field name"
 msgstr "カスタムフィールド名"
 
-#: src/components/settings/settings-editor.tsx:316
+#: src/components/settings/settings-editor.tsx:332
 msgid "Daily note indexing is disabled."
 msgstr "デイリーノートのインデックス作成は無効です。"
 
-#: src/components/settings/settings-editor.tsx:107
-#: src/components/settings/settings-editor.tsx:280
+#: src/components/settings/settings-editor.tsx:112
+#: src/components/settings/settings-editor.tsx:296
 #: src/pages/statistics-page.tsx:36
 msgid "Daily Notes"
 msgstr "デイリーノート"
@@ -929,7 +929,8 @@ msgstr "無効にする"
 
 #: src/pages/entity-create-page.tsx:320
 #: src/pages/entity-edit-page.tsx:321
-#: src/pages/settings-page.tsx:153
+#: src/pages/settings-page.tsx:187
+#: src/pages/settings-page.tsx:232
 msgid "Discard"
 msgstr "破棄"
 
@@ -938,7 +939,7 @@ msgid "Discard and switch"
 msgstr "破棄して切り替え"
 
 #: src/components/settings/vault-switcher.tsx:222
-#: src/pages/settings-page.tsx:129
+#: src/pages/settings-page.tsx:208
 msgid "Discard unsaved changes?"
 msgstr "保存していない変更を破棄しますか？"
 
@@ -1024,7 +1025,8 @@ msgstr "{0} を編集"
 msgid "Edit as JSON to preserve nested values and their types."
 msgstr "入れ子の値と型を保持するため、JSON として編集します。"
 
-#: src/components/settings/raw-config-editor.tsx:103
+#: src/components/settings/raw-config-editor.tsx:123
+#: src/components/settings/raw-config-editor.tsx:175
 msgid "Edit config.yaml"
 msgstr "config.yaml を編集"
 
@@ -1243,7 +1245,7 @@ msgstr "完了"
 msgid "Finish saving"
 msgstr "保存を完了"
 
-#: src/pages/settings-page.tsx:88
+#: src/pages/settings-page.tsx:117
 msgid "Form"
 msgstr "フォーム"
 
@@ -1255,7 +1257,7 @@ msgstr ""
 msgid "Frontmatter"
 msgstr "フロントマター"
 
-#: src/components/settings/settings-editor.tsx:341
+#: src/components/settings/settings-editor.tsx:357
 msgid "Frontmatter key"
 msgstr "フロントマターのキー"
 
@@ -1313,6 +1315,7 @@ msgid "Hide sidebar"
 msgstr ""
 
 #: src/components/layout/nav-destinations.ts:38
+#: src/pages/home-page.tsx:31
 msgid "Home"
 msgstr "ホーム"
 
@@ -1496,7 +1499,8 @@ msgstr "JSON 値"
 #: src/components/settings/vault-switcher.tsx:230
 #: src/pages/entity-create-page.tsx:310
 #: src/pages/entity-edit-page.tsx:311
-#: src/pages/settings-page.tsx:145
+#: src/pages/settings-page.tsx:178
+#: src/pages/settings-page.tsx:224
 msgid "Keep editing"
 msgstr "編集を続ける"
 
@@ -1649,19 +1653,19 @@ msgstr "タイプを読み込み中…"
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/entities/entity-ratings.tsx:184
 #: src/components/lists/add-items-dialog.tsx:73
-#: src/components/settings/raw-config-editor.tsx:151
+#: src/components/settings/raw-config-editor.tsx:171
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
 #: src/pages/entity-edit-page.tsx:257
 #: src/pages/entity-page.tsx:300
 #: src/pages/entity-page.tsx:616
-#: src/pages/home-page.tsx:55
+#: src/pages/home-page.tsx:58
 #: src/pages/import-wizard-page.tsx:218
 #: src/pages/list-detail-page.tsx:365
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:84
 #: src/pages/review-page.tsx:148
-#: src/pages/settings-page.tsx:104
+#: src/pages/settings-page.tsx:139
 #: src/pages/smart-list-page.tsx:226
 #: src/pages/statistics-page.tsx:45
 msgid "Loading…"
@@ -1906,7 +1910,7 @@ msgid "No further criteria — every entity of this type matches."
 msgstr "追加の条件はありません — このタイプのすべてのアイテムが一致します。"
 
 #. placeholder {0}: episodes.heading
-#: src/components/assets/entity-episodes.tsx:87
+#: src/components/assets/entity-episodes.tsx:88
 msgid "No items yet — sync from a provider or add a list under the <0>{0}</0> heading."
 msgstr "まだアイテムがありません — プロバイダーから同期するか、<0>{0}</0> 見出しの下にリストを追加してください。"
 
@@ -1971,7 +1975,7 @@ msgstr "現在のフィルターに一致するキューアイテムがありま
 msgid "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
 msgstr "このタイプで有効な検索プロバイダーがありません — 設定でプロバイダーの認証情報を確認するか、手動で追加してください。"
 
-#: src/pages/home-page.tsx:69
+#: src/pages/home-page.tsx:72
 msgid "No smart lists on Home yet"
 msgstr "ホームにスマートリストはまだありません"
 
@@ -2008,7 +2012,7 @@ msgstr "競合しない変更は統合されます。両方で変更された項
 #: src/components/settings/settings-field-form.tsx:165
 #: src/components/settings/settings-field-form.tsx:211
 #: src/components/settings/settings-field-form.tsx:258
-#: src/components/settings/settings-shared.tsx:33
+#: src/components/settings/settings-shared.tsx:38
 #: src/components/smart-lists/rule-subgroup.tsx:99
 msgid "None"
 msgstr "なし"
@@ -2062,13 +2066,13 @@ msgstr "数値"
 msgid "of the following match:"
 msgstr "以下の条件:"
 
-#: src/components/settings/settings-editor.tsx:291
-#: src/components/settings/settings-editor.tsx:326
+#: src/components/settings/settings-editor.tsx:307
+#: src/components/settings/settings-editor.tsx:342
 msgid "off"
 msgstr "オフ"
 
-#: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:115
+#: src/components/settings/settings-editor.tsx:120
 msgid "Off"
 msgstr "オフ"
 
@@ -2077,11 +2081,11 @@ msgstr "オフ"
 msgid "older than"
 msgstr "が次より古い"
 
-#: src/components/settings/settings-editor.tsx:326
+#: src/components/settings/settings-editor.tsx:342
 msgid "on"
 msgstr "オン"
 
-#: src/components/settings/settings-editor.tsx:115
+#: src/components/settings/settings-editor.tsx:120
 msgid "On"
 msgstr "オン"
 
@@ -2145,7 +2149,7 @@ msgstr "オリジナル（ファイル名がタイトル）"
 msgid "Original title: {0}"
 msgstr "原題: {0}"
 
-#: src/components/settings/settings-editor.tsx:392
+#: src/components/settings/settings-editor.tsx:408
 msgid "Overview"
 msgstr "概要"
 
@@ -2311,8 +2315,8 @@ msgstr "関連度"
 msgid "Reload"
 msgstr "再読み込み"
 
-#: src/components/settings/raw-config-editor.tsx:144
-#: src/components/settings/settings-editor.tsx:239
+#: src/components/settings/raw-config-editor.tsx:164
+#: src/components/settings/settings-editor.tsx:255
 #: src/pages/list-detail-page.tsx:427
 #: src/pages/smart-list-page.tsx:334
 msgid "Reload latest version"
@@ -2466,8 +2470,8 @@ msgid "Running…"
 msgstr "実行中…"
 
 #: src/components/entities/entity-ratings.tsx:244
-#: src/components/settings/raw-config-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/raw-config-editor.tsx:134
+#: src/components/settings/settings-editor.tsx:227
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
@@ -2476,6 +2480,7 @@ msgstr "保存"
 
 #. Saves the entity draft and then continues the navigation the user requested
 #: src/pages/entity-edit-page.tsx:331
+#: src/pages/settings-page.tsx:193
 msgid "Save and leave"
 msgstr "保存して移動"
 
@@ -2492,6 +2497,7 @@ msgstr "認証情報を保存"
 #. Explains the options for leaving an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:305
 #: src/pages/entity-edit-page.tsx:303
+#: src/pages/settings-page.tsx:172
 msgid "Save your edits before leaving, or discard them."
 msgstr "移動する前に編集内容を保存するか、破棄してください。"
 
@@ -2509,18 +2515,19 @@ msgstr "現在のタイプ・条件・並び順をスマートリストとして
 
 #: src/components/assets/quick-log-dialog.tsx:272
 #: src/components/settings/provider-credentials.tsx:83
-#: src/components/settings/raw-config-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/raw-config-editor.tsx:134
+#: src/components/settings/settings-editor.tsx:227
 #: src/pages/entity-create-page.tsx:164
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/entity-edit-page.tsx:329
 #: src/pages/list-detail-page.tsx:406
+#: src/pages/settings-page.tsx:193
 #: src/pages/smart-list-page.tsx:263
 msgid "Saving…"
 msgstr "保存中…"
 
-#: src/components/settings/raw-config-editor.tsx:121
-#: src/components/settings/settings-editor.tsx:218
+#: src/components/settings/raw-config-editor.tsx:141
+#: src/components/settings/settings-editor.tsx:234
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "このインスタンスではスキーマ編集が無効です（読み取り専用）。有効にするには <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> を設定してください。"
 
@@ -2663,12 +2670,12 @@ msgid "Set {0} to {1}"
 msgstr "{0}を{1}に設定"
 
 #: src/components/layout/nav-destinations.ts:46
-#: src/components/settings/settings-editor.tsx:196
+#: src/components/settings/settings-editor.tsx:212
 msgid "Settings"
 msgstr "設定"
 
-#: src/components/settings/raw-config-editor.tsx:85
-#: src/components/settings/settings-editor.tsx:179
+#: src/components/settings/raw-config-editor.tsx:95
+#: src/components/settings/settings-editor.tsx:185
 msgid "Settings saved"
 msgstr "設定を保存しました"
 
@@ -2805,11 +2812,11 @@ msgstr "ステータスの不一致"
 msgid "Status, score & dates"
 msgstr "ステータス、評価、日付"
 
-#: src/components/settings/settings-editor.tsx:257
+#: src/components/settings/settings-editor.tsx:273
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "{vaultPath} の保管庫に保存されます。分類、アセット、デイリーノート、タイプは保管庫と同期されます。"
 
-#: src/components/settings/settings-editor.tsx:258
+#: src/components/settings/settings-editor.tsx:274
 msgid "Stored in the vault. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "保管庫に保存されます。分類、アセット、デイリーノート、タイプは保管庫と同期されます。"
 
@@ -2851,13 +2858,13 @@ msgstr "システムテーマ。ライトテーマに切り替えます。"
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:85
-#: src/components/settings/settings-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:323
+#: src/components/settings/settings-editor.tsx:119
+#: src/components/settings/settings-editor.tsx:339
 #: src/components/smart-lists/rule-field-meta.ts:64
 msgid "Tags"
 msgstr "タグ"
 
-#: src/components/settings/settings-editor.tsx:351
+#: src/components/settings/settings-editor.tsx:367
 msgid "Tags are disabled."
 msgstr "タグは無効です。"
 
@@ -2865,12 +2872,12 @@ msgstr "タグは無効です。"
 msgid "Task"
 msgstr "タスク"
 
-#: src/components/settings/settings-editor.tsx:264
+#: src/components/settings/settings-editor.tsx:280
 msgid "Taxonomy root"
 msgstr "分類のルート"
 
 #. placeholder {0}: config.taxonomyRoot || "Taxonomy"
-#: src/components/settings/settings-editor.tsx:103
+#: src/components/settings/settings-editor.tsx:108
 msgid "taxonomy: {0}"
 msgstr "分類: {0}"
 
@@ -2907,7 +2914,7 @@ msgid "The schema draft changed. Close this dialog and duplicate the type again.
 msgstr "スキーマの下書きが変更されました。このダイアログを閉じて、もう一度タイプを複製してください。"
 
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
-#: src/components/settings/settings-editor.tsx:229
+#: src/components/settings/settings-editor.tsx:245
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
 msgstr "保管庫のスキーマがディスク上で変更されました。未保存の編集内容はそのまま残っています。"
 
@@ -3019,8 +3026,8 @@ msgid "Type Distribution"
 msgstr "タイプの分布"
 
 #: src/components/settings/settings-dialogs.tsx:225
-#: src/components/settings/settings-editor.tsx:119
-#: src/components/settings/settings-editor.tsx:358
+#: src/components/settings/settings-editor.tsx:124
+#: src/components/settings/settings-editor.tsx:374
 msgid "Types"
 msgstr "タイプ"
 
@@ -3075,6 +3082,7 @@ msgstr "未解決の関連"
 #. Title of the confirmation dialog when navigating away from an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:302
 #: src/pages/entity-edit-page.tsx:298
+#: src/pages/settings-page.tsx:169
 msgid "Unsaved changes"
 msgstr "未保存の変更"
 
@@ -3140,8 +3148,8 @@ msgstr "値"
 msgid "Values"
 msgstr "値"
 
-#: src/components/settings/settings-editor.tsx:102
-#: src/components/settings/settings-editor.tsx:254
+#: src/components/settings/settings-editor.tsx:107
+#: src/components/settings/settings-editor.tsx:270
 msgid "Vault"
 msgstr "保管庫"
 
@@ -3207,7 +3215,7 @@ msgstr "タイトルから「{0}.md」として作成されます。"
 msgid "within the next"
 msgstr "今後"
 
-#: src/pages/settings-page.tsx:96
+#: src/pages/settings-page.tsx:126
 msgid "YAML"
 msgstr "YAML"
 
@@ -3244,11 +3252,11 @@ msgstr "組み込みタイプは何度でも追加できます。それぞれに
 msgid "You can still open entities already in your library."
 msgstr "すでにライブラリにあるアイテムは引き続き開けます。"
 
-#: src/pages/settings-page.tsx:133
+#: src/pages/settings-page.tsx:212
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "フォームエディターに保存していない変更があります。エディターを切り替えると破棄されます。"
 
-#: src/pages/settings-page.tsx:137
+#: src/pages/settings-page.tsx:216
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "YAML エディターに保存していない変更があります。エディターを切り替えると破棄されます。"
 

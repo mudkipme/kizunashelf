@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect, useRef } from "react";
+import { Fragment, lazy, Suspense, useEffect, useRef } from "react";
 import {
   createBrowserRouter,
   Navigate,
@@ -154,10 +154,10 @@ function ConfigGate() {
   }
 
   return (
-    <>
-      <VaultChangeSync key={settings.data?.app?.vaultRoot ?? "vault"} />
-      <AppRoutes key={settings.data?.app?.vaultRoot ?? "vault"} />
-    </>
+    <Fragment key={settings.data?.app?.vaultRoot ?? "vault"}>
+      <VaultChangeSync />
+      <AppRoutes />
+    </Fragment>
   );
 }
 

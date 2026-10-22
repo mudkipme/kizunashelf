@@ -49,7 +49,15 @@ export default defineConfig({
         // that only ever shows up in CI. These are the ones no app entry pulls
         // in early enough for the initial scan to find.
         optimizeDeps: {
-          include: ["react-dom/client", "@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
+          include: [
+            "react-dom/client",
+            "@dnd-kit/core",
+            "@dnd-kit/sortable",
+            "@dnd-kit/utilities",
+            "react-markdown",
+            "remark-breaks",
+            "remark-gfm",
+          ],
         },
         test: {
           name: "ui",

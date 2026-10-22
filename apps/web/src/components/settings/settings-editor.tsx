@@ -2,7 +2,7 @@ import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { SaveIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type Ref, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
@@ -30,8 +30,11 @@ import {
   joinPath,
   normalizeVaultConfig,
 } from "./settings-model";
+import type { SettingsEditorHandle } from "./settings-shared";
 
 type SettingsEditorProps = {
+  ref?: Ref<SettingsEditorHandle>;
+  onSavingChange?: (saving: boolean) => void;
   vaultConfigPath?: string;
   initialApp?: AppConfig | null;
   initialVault?: VaultConfig | null;
@@ -49,6 +52,8 @@ type SettingsEditorProps = {
 };
 
 export function SettingsEditor({
+  ref,
+  onSavingChange,
   vaultConfigPath,
   initialApp,
   initialVault,
@@ -160,6 +165,7 @@ export function SettingsEditor({
   }, [dirty, onDirtyChange]);
 
   async function save() {
+    if (saving || externalChange || !settingsWritable) return { saved: false };
     setSaving(true);
     try {
       const request = cleanVaultConfig(config, providerCatalog);
@@ -180,13 +186,23 @@ export function SettingsEditor({
       // The schema every other query derives from just changed.
       void queryClient.invalidateQueries();
       onSaved?.();
+      return { saved: true };
     } catch (error) {
       if (isConflictError(error)) setExternalChange(true);
       toast.error(errorMessage(error));
+      return { saved: false, error };
     } finally {
       setSaving(false);
     }
   }
+
+  useImperativeHandle(ref, () => ({
+    save,
+    canSave: !saving && !externalChange && settingsWritable,
+  }));
+  useEffect(() => {
+    onSavingChange?.(saving);
+  }, [saving, onSavingChange]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -246,7 +262,7 @@ export function SettingsEditor({
 
         {/* A disabled fieldset makes the whole schema form read-only natively. */}
         <fieldset
-          disabled={!settingsWritable || externalChange}
+          disabled={saving || !settingsWritable || externalChange}
           className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0"
         >
           <SettingsSection

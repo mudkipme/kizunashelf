@@ -11,6 +11,11 @@ import type { Language } from "@/types/api";
 
 import { UnknownValueOption } from "./settings-controls";
 
+export type SettingsEditorHandle = {
+  save: () => Promise<{ saved: boolean; error?: unknown }>;
+  canSave: boolean;
+};
+
 // Title-language options (from `GET /api/languages`) made available to the
 // nested field editors without drilling through every intermediate component.
 export const TitleLanguagesContext = createContext<Language[]>([]);
