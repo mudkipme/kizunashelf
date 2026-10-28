@@ -198,8 +198,22 @@ impl Vfs for InMemoryVfs {
             .filter(|key| key.starts_with(&prefix))
             .cloned()
             .collect();
-        if moved.is_empty() && !state.dirs.contains(&from) {
+        let moved_dirs: Vec<String> = state
+            .dirs
+            .iter()
+            .filter(|dir| *dir == &from || dir.starts_with(&prefix))
+            .cloned()
+            .collect();
+        if moved.is_empty() && moved_dirs.is_empty() {
             return Err(VfsError::NotFound);
+        }
+        for dir in &moved_dirs {
+            state.dirs.remove(dir);
+        }
+        for dir in moved_dirs {
+            let new_dir = format!("{to}{}", &dir[from.len()..]);
+            add_parent_dirs(&mut state.dirs, &new_dir);
+            state.dirs.insert(new_dir);
         }
         for key in moved {
             let entry = state.files.remove(&key).unwrap();
@@ -208,9 +222,6 @@ impl Vfs for InMemoryVfs {
             add_parent_dirs(&mut state.dirs, &new_key);
             state.files.insert(new_key, entry);
         }
-        state.dirs.remove(&from);
-        add_parent_dirs(&mut state.dirs, &to);
-        state.dirs.insert(to);
         Ok(())
     }
 
@@ -228,6 +239,46 @@ impl Vfs for InMemoryVfs {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn rename_moves_the_entire_directory_tree() {
+        let vfs = InMemoryVfs::new();
+        vfs.insert_file("source/nested/item.md", "content");
+        vfs.insert_dir("source/empty/nested");
+        vfs.insert_dir("source-other");
+        let before = vfs.metadata("source/nested/item.md").await.unwrap();
+
+        vfs.rename("source", "destination").await.unwrap();
+
+        assert!(!vfs.exists("source").await.unwrap());
+        assert!(!vfs.exists("source/nested").await.unwrap());
+        assert!(!vfs.exists("source/empty/nested").await.unwrap());
+        assert!(vfs.exists("source-other").await.unwrap());
+        assert!(
+            vfs.metadata("destination/empty/nested")
+                .await
+                .unwrap()
+                .is_dir
+        );
+        assert_eq!(
+            vfs.read_to_string("destination/nested/item.md")
+                .await
+                .unwrap(),
+            "content"
+        );
+        assert_eq!(
+            vfs.metadata("destination/nested/item.md")
+                .await
+                .unwrap()
+                .modified_unix_nanos,
+            before.modified_unix_nanos
+        );
+        assert!(vfs
+            .read_dir("destination/empty/nested")
+            .await
+            .unwrap()
+            .is_empty());
+    }
 
     #[test]
     fn watching_is_explicitly_unsupported() {

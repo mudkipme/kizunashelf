@@ -8,9 +8,10 @@ use super::super::csv_util::{field, parse_csv, CsvRow};
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::{send_limited, USER_AGENT};
+use crate::api::external::{provider_error, send_limited, ProviderResponseExt, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
+use crate::dates::normalize_date;
 use crate::types::CanonicalStatus;
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
@@ -132,7 +133,7 @@ async fn resolve_isbn(state: &AppState, isbn: &str) -> Result<Option<(String, St
             .header(reqwest::header::USER_AGENT, USER_AGENT),
     )
     .await
-    .map_err(|_| ApiError::bad_gateway("The Open Library request failed"))?;
+    .map_err(provider_error)?;
     // The shared client doesn't follow redirects; `/isbn` may 3xx to `/books/OLID`.
     if response.status().is_redirection() {
         let location = response
@@ -146,8 +147,8 @@ async fn resolve_isbn(state: &AppState, isbn: &str) -> Result<Option<(String, St
         return Ok(None);
     }
     let value: Value = response
-        .error_for_status()
-        .map_err(|_| ApiError::bad_gateway("The Open Library request failed"))?
+        .error_for_status_body()
+        .await?
         .json()
         .await
         .map_err(|_| ApiError::bad_gateway("Invalid Open Library response"))?;
@@ -190,15 +191,10 @@ fn goodreads_date(value: &str) -> Option<String> {
     let year = parts.next()?;
     let month = parts.next()?;
     let day = parts.next()?;
-    if year.len() == 4 && month.len() <= 2 && day.len() <= 2 {
-        Some(format!(
-            "{year}-{:02}-{:02}",
-            month.parse::<u8>().ok()?,
-            day.parse::<u8>().ok()?
-        ))
-    } else {
-        None
+    if year.len() != 4 || month.len() > 2 || day.len() > 2 || parts.next().is_some() {
+        return None;
     }
+    normalize_date(year.parse().ok()?, month.parse().ok()?, day.parse().ok()?)
 }
 
 #[cfg(test)]

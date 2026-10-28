@@ -8,9 +8,10 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::{send_limited, USER_AGENT};
+use crate::api::external::{provider_error, send_limited, ProviderResponseExt, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
+use crate::dates::iso_date;
 use crate::types::CanonicalStatus;
 use serde_json::{Map, Number, Value};
 use std::collections::BTreeMap;
@@ -54,13 +55,13 @@ impl ImportSource for BangumiSource {
                     .header(reqwest::header::USER_AGENT, USER_AGENT),
             )
             .await
-            .map_err(|_| ApiError::bad_gateway("The Bangumi request failed"))?;
+            .map_err(provider_error)?;
             if response.status() == reqwest::StatusCode::NOT_FOUND {
                 return Err(ApiError::bad_request("Bangumi user not found"));
             }
             let page: Value = response
-                .error_for_status()
-                .map_err(|_| ApiError::bad_gateway("The Bangumi request failed"))?
+                .error_for_status_body()
+                .await?
                 .json()
                 .await
                 .map_err(|_| ApiError::bad_gateway("Invalid Bangumi response"))?;
@@ -228,7 +229,7 @@ fn collection_item(entry: &Value, language: Option<&str>) -> Option<ImportItem> 
             entry
                 .get("updated_at")
                 .and_then(Value::as_str)
-                .and_then(date_part)
+                .and_then(iso_date)
         })
         .flatten();
 
@@ -278,13 +279,6 @@ fn status_from(collection_type: i64) -> Option<CanonicalStatus> {
         5 => Some(CanonicalStatus::Dropped),
         _ => None,
     }
-}
-
-/// The `YYYY-MM-DD` date part of an ISO datetime, or `None` if it doesn't look
-/// like one.
-fn date_part(datetime: &str) -> Option<String> {
-    let date = datetime.split(['T', ' ']).next().unwrap_or_default();
-    (date.len() == 10 && date.as_bytes()[4] == b'-').then(|| date.to_string())
 }
 
 #[cfg(test)]

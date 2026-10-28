@@ -7,9 +7,10 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::{send_limited, USER_AGENT};
+use crate::api::external::{provider_error, send_limited, ProviderResponseExt, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
+use crate::dates::iso_date;
 use crate::types::CanonicalStatus;
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, HashMap};
@@ -83,13 +84,13 @@ async fn kitsu_get(client: &reqwest::Client, url: &str) -> Result<Value, ApiErro
             .header(reqwest::header::ACCEPT, "application/vnd.api+json"),
     )
     .await
-    .map_err(|_| ApiError::bad_gateway("The Kitsu request failed"))?;
+    .map_err(provider_error)?;
     if response.status() == reqwest::StatusCode::NOT_FOUND {
         return Err(ApiError::bad_request("Kitsu user not found"));
     }
     response
-        .error_for_status()
-        .map_err(|_| ApiError::bad_gateway("The Kitsu request failed"))?
+        .error_for_status_body()
+        .await?
         .json()
         .await
         .map_err(|_| ApiError::bad_gateway("Invalid Kitsu response"))
@@ -208,11 +209,11 @@ fn build_item(
         started: attributes
             .and_then(|attributes| attributes.get("startedAt"))
             .and_then(Value::as_str)
-            .and_then(date_part),
+            .and_then(iso_date),
         completed: attributes
             .and_then(|attributes| attributes.get("finishedAt"))
             .and_then(Value::as_str)
-            .and_then(date_part),
+            .and_then(iso_date),
         notes: attributes
             .and_then(|attributes| attributes.get("notes"))
             .and_then(Value::as_str)
@@ -275,11 +276,6 @@ fn status_from(value: &str) -> Option<CanonicalStatus> {
         "dropped" => Some(CanonicalStatus::Dropped),
         _ => None,
     }
-}
-
-fn date_part(value: &str) -> Option<String> {
-    let date = value.split(['T', ' ']).next().unwrap_or_default();
-    (date.len() == 10 && date.as_bytes()[4] == b'-').then(|| date.to_string())
 }
 
 #[cfg(test)]

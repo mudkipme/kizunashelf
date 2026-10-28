@@ -11,6 +11,7 @@ use crate::api::error::ApiError;
 use crate::api::external::tmdb_find_imdb;
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
+use crate::dates::iso_date;
 use crate::types::CanonicalStatus;
 use serde_json::Map;
 use std::collections::BTreeMap;
@@ -167,12 +168,6 @@ fn normalize_imdb_id(value: &str) -> String {
     } else {
         format!("tt{trimmed}")
     }
-}
-
-/// An `YYYY-MM-DD` date from an IMDb date cell (already ISO), or `None`.
-fn iso_date(value: &str) -> Option<String> {
-    let date = value.split(['T', ' ']).next().unwrap_or_default();
-    (date.len() == 10 && date.as_bytes()[4] == b'-').then(|| date.to_string())
 }
 
 #[cfg(test)]

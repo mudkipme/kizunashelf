@@ -211,7 +211,7 @@ where
     send_limited(build(&token)).await.map_err(provider_error)
 }
 
-pub(super) fn provider_error(error: reqwest::Error) -> ApiError {
+pub(in crate::api) fn provider_error(error: reqwest::Error) -> ApiError {
     // The full source chain can include transport/TLS/DNS internals and request
     // URLs (which may carry credentials), so it is logged server-side only and
     // never returned to the client.

@@ -10,7 +10,9 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::{anilist_fuzzy_date, anilist_origin_language, send_limited, USER_AGENT};
+use crate::api::external::{
+    anilist_fuzzy_date, anilist_origin_language, provider_error, send_limited, USER_AGENT,
+};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
 use crate::types::CanonicalStatus;
@@ -65,7 +67,7 @@ impl ImportSource for AniListSource {
                 .json(&body),
         )
         .await
-        .map_err(|_| ApiError::bad_gateway("The AniList request failed"))?
+        .map_err(provider_error)?
         .json()
         .await
         .map_err(|_| ApiError::bad_gateway("Invalid AniList response"))?;

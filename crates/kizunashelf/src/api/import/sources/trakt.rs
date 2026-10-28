@@ -8,9 +8,12 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::{send_limited, CredentialSpec, USER_AGENT};
+use crate::api::external::{
+    provider_error, send_limited, CredentialSpec, ProviderResponseExt, USER_AGENT,
+};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
+use crate::dates::iso_date;
 use crate::secrets::SECRET_TRAKT_CLIENT_ID;
 use crate::types::CanonicalStatus;
 use serde_json::{Map, Value};
@@ -88,7 +91,7 @@ async fn trakt_get(state: &AppState, client_id: &str, path: &str) -> Result<Valu
             .header("trakt-api-key", client_id),
     )
     .await
-    .map_err(|_| ApiError::bad_gateway("The Trakt request failed"))?;
+    .map_err(provider_error)?;
     match response.status().as_u16() {
         404 => return Err(ApiError::bad_request("Trakt user not found")),
         401 => {
@@ -99,8 +102,8 @@ async fn trakt_get(state: &AppState, client_id: &str, path: &str) -> Result<Valu
         _ => {}
     }
     response
-        .error_for_status()
-        .map_err(|_| ApiError::bad_gateway("The Trakt request failed"))?
+        .error_for_status_body()
+        .await?
         .json()
         .await
         .map_err(|_| ApiError::bad_gateway("Invalid Trakt response"))
@@ -122,7 +125,7 @@ fn build_items(
             completed: entry
                 .get("last_watched_at")
                 .and_then(Value::as_str)
-                .and_then(date_part),
+                .and_then(iso_date),
             ..Default::default()
         };
         if let Some(item) = media_item(entry.get("movie"), "movie", user) {
@@ -243,11 +246,6 @@ fn watched_episodes(seasons: Option<&Value>) -> Option<u32> {
         .map(|episodes| episodes.len())
         .sum();
     (total > 0).then_some(total as u32)
-}
-
-fn date_part(datetime: &str) -> Option<String> {
-    let date = datetime.split(['T', ' ']).next().unwrap_or_default();
-    (date.len() == 10 && date.as_bytes()[4] == b'-').then(|| date.to_string())
 }
 
 #[cfg(test)]

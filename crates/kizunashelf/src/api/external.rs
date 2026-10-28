@@ -29,9 +29,8 @@ mod transport;
 pub(crate) use apply::{apply_external_candidate, review_external_candidate};
 use matching::normalize_external_ref;
 pub(super) use matching::{build_existing_index, lookup_existing, ExistingIndex};
-use transport::provider_error;
 pub(super) use transport::{
-    cached_or_fetch_token, external_client, send_limited, send_with_token_retry,
+    cached_or_fetch_token, external_client, provider_error, send_limited, send_with_token_retry,
     ProviderResponseExt,
 };
 
