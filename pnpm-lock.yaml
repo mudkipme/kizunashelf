@@ -48,8 +48,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/api-contract
       '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@8.0.7)(@babel/types@7.29.8)
+        specifier: ^6.10.1
+        version: 6.10.1(@babel/core@8.0.7)
       '@lingui/react':
         specifier: ^6.10.1
         version: 6.10.1(@babel/core@8.0.7)(react@19.3.1)
@@ -11837,14 +11837,6 @@ snapshots:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@babel/types': 7.29.8
 
-  '@lingui/babel-plugin-lingui-macro@6.6.0(@babel/core@8.0.7)(@babel/types@7.29.8)':
-    dependencies:
-      '@lingui/conf': 6.6.0
-      '@lingui/message-utils': 6.6.0
-    optionalDependencies:
-      '@babel/core': 8.0.7
-      '@babel/types': 7.29.8
-
   '@lingui/cli@6.11.0(esbuild@0.28.2)(rolldown@1.2.6)(supports-color@10.2.2)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
@@ -11951,14 +11943,6 @@ snapshots:
   '@lingui/core@6.6.0(@babel/core@7.29.7(supports-color@10.2.2))(@babel/types@7.29.8)':
     dependencies:
       '@lingui/babel-plugin-lingui-macro': 6.6.0(@babel/core@7.29.7(supports-color@10.2.2))(@babel/types@7.29.8)
-      '@lingui/message-utils': 6.6.0
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@babel/types'
-
-  '@lingui/core@6.6.0(@babel/core@8.0.7)(@babel/types@7.29.8)':
-    dependencies:
-      '@lingui/babel-plugin-lingui-macro': 6.6.0(@babel/core@8.0.7)(@babel/types@7.29.8)
       '@lingui/message-utils': 6.6.0
     transitivePeerDependencies:
       - '@babel/core'

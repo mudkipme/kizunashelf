@@ -2,7 +2,7 @@ import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -20,7 +20,7 @@ import type { CalendarDay } from "@/types/api";
 export function CalendarPage() {
   const { t } = useLingui();
   const [searchParams, setSearchParams] = useSearchParams();
-  const now = new Date();
+  const [now] = useState(() => new Date());
   const year = readYear(searchParams.get("year"), now.getFullYear());
   const month = readMonth(searchParams.get("month"), now.getMonth() + 1);
   const selectedDate = searchParams.get("date") ?? todayInMonth(year, month, now);
