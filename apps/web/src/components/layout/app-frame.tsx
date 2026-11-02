@@ -420,7 +420,7 @@ function AppSidebar({
       {/* Matches the header's height so the two columns start level. No border
           of its own: the sidebar reads as one continuous surface, the way a
           native source list does. */}
-      <div className="flex min-h-(--toolbar-height) shrink-0 items-center px-3">
+      <div className="flex min-h-(--toolbar-height) shrink-0 items-center gap-2 px-3">
         <Link to="/" className="flex min-w-0 items-center gap-2" aria-label="KizunaShelf">
           <AppLogo />
           {showWordmark && !isDesktopRuntime() ? (

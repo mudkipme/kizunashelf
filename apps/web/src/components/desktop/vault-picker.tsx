@@ -23,7 +23,7 @@ function manageVaults() {
 
 export function VaultManagerButton() {
   return (
-    <Button type="button" variant="outline" onClick={manageVaults}>
+    <Button type="button" variant="outline" size="lg" className="self-start" onClick={manageVaults}>
       <FolderOpenIcon data-icon="inline-start" />
       <Trans>Manage vaults…</Trans>
     </Button>
