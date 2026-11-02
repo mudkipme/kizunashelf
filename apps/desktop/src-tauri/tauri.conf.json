@@ -12,6 +12,8 @@
   "app": {
     "windows": [
       {
+        "label": "main",
+        "create": false,
         "title": "KizunaShelf",
         "width": 1280,
         "height": 860,
@@ -19,6 +21,17 @@
         "minHeight": 640,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
+        "visible": false
+      },
+      {
+        "label": "vault-manager",
+        "create": false,
+        "url": "/vault-manager",
+        "title": "KizunaShelf",
+        "width": 720,
+        "height": 640,
+        "minWidth": 560,
+        "minHeight": 480,
         "visible": false
       }
     ],

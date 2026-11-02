@@ -7,7 +7,9 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State, WebviewWindowBuilder};
+use tauri_plugin_clipboard_manager::ClipboardExt;
+use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_window_state::StateFlags;
 use tracing_subscriber::EnvFilter;
 
@@ -30,6 +32,7 @@ const ASSET_SCHEME: &str = "kizasset";
 /// are stored in the OS keychain via `secret_store`, shared across vaults.
 struct DesktopState {
     api: Mutex<Option<Router>>,
+    unsaved_changes: Mutex<bool>,
     vaults_path: PathBuf,
     cache_ttl: Duration,
     secret_store: Arc<dyn SecretStore>,
@@ -46,7 +49,7 @@ struct DesktopApiResponse {
     content_type: Option<String>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct VaultInfo {
     name: String,
@@ -100,30 +103,104 @@ fn list_vaults(state: State<DesktopState>) -> Vec<VaultInfo> {
 }
 
 #[tauri::command]
-fn add_vault(state: State<DesktopState>, path: String) -> Result<Vec<VaultInfo>, String> {
-    let name = vaults::name_for(&path);
-    apply(&state, |data| data.add(name, path.clone()))
+async fn open_vault_manager(app: AppHandle) -> Result<(), String> {
+    show_window(&app, "vault-manager")
 }
 
 #[tauri::command]
-fn create_vault(
-    state: State<DesktopState>,
+fn set_unsaved_changes(state: State<DesktopState>, dirty: bool) {
+    *state.unsaved_changes.lock().unwrap() = dirty;
+}
+
+#[tauri::command]
+async fn add_vault(
+    app: AppHandle,
+    state: State<'_, DesktopState>,
+    path: String,
+    discard_changes: bool,
+) -> Result<Vec<VaultInfo>, String> {
+    let name = vaults::name_for(&path);
+    apply(&app, &state, discard_changes, true, |data| {
+        data.add(name, path)
+    })
+}
+
+#[tauri::command]
+async fn create_vault(
+    app: AppHandle,
+    state: State<'_, DesktopState>,
     parent: String,
     name: String,
+    discard_changes: bool,
 ) -> Result<Vec<VaultInfo>, String> {
+    check_unsaved_changes(&state, discard_changes)?;
     let path = vaults::create_vault(&parent, &name).map_err(|error| error.to_string())?;
     let display = name.trim().to_string();
-    apply(&state, |data| data.add(display, path.clone()))
+    apply(&app, &state, discard_changes, true, |data| {
+        data.add(display, path)
+    })
 }
 
 #[tauri::command]
-fn switch_vault(state: State<DesktopState>, path: String) -> Result<Vec<VaultInfo>, String> {
-    apply(&state, |data| data.set_active(&path))
+async fn switch_vault(
+    app: AppHandle,
+    state: State<'_, DesktopState>,
+    path: String,
+    discard_changes: bool,
+) -> Result<Vec<VaultInfo>, String> {
+    apply(&app, &state, discard_changes, true, |data| {
+        data.set_active(&path)
+    })
 }
 
 #[tauri::command]
-fn remove_vault(state: State<DesktopState>, path: String) -> Result<Vec<VaultInfo>, String> {
-    apply(&state, |data| data.remove(&path))
+async fn remove_vault(
+    app: AppHandle,
+    state: State<'_, DesktopState>,
+    path: String,
+    discard_changes: bool,
+) -> Result<Vec<VaultInfo>, String> {
+    apply(&app, &state, discard_changes, false, |data| {
+        data.remove(&path)
+    })
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum EntityFileAction {
+    Reveal,
+    Open,
+    CopyPath,
+}
+
+#[tauri::command]
+fn entity_file_action(
+    app: AppHandle,
+    state: State<DesktopState>,
+    path: String,
+    action: EntityFileAction,
+) -> Result<(), String> {
+    let root = vaults::load(&state.vaults_path)
+        .active
+        .ok_or_else(|| "No vault is open".to_string())?;
+    let relative =
+        kizunashelf::vfs::normalize_relative(&path).map_err(|error| error.to_string())?;
+    let path = PathBuf::from(root).join(relative);
+
+    match action {
+        EntityFileAction::Reveal => app
+            .opener()
+            .reveal_item_in_dir(path)
+            .map_err(|error| error.to_string()),
+        EntityFileAction::Open => app
+            .opener()
+            .open_path(path.to_string_lossy(), None::<&str>)
+            .map_err(|error| error.to_string()),
+        EntityFileAction::CopyPath => app
+            .clipboard()
+            .write_text(path.to_string_lossy())
+            .map_err(|error| error.to_string()),
+    }
 }
 
 // MARK: Credentials commands (stored in the OS keychain)
@@ -154,17 +231,68 @@ fn set_credentials(state: State<DesktopState>, credentials: Credentials) -> Resu
 
 // MARK: Helpers
 
-/// Applies a mutation to the persisted vault list, saves it, rebuilds the active
-/// router, and returns the updated list for the UI.
 fn apply(
+    app: &AppHandle,
     state: &DesktopState,
+    discard_changes: bool,
+    open_main: bool,
     mutate: impl FnOnce(&mut VaultStoreData),
 ) -> Result<Vec<VaultInfo>, String> {
     let mut data = vaults::load(&state.vaults_path);
+    let previous = data.active.clone();
     mutate(&mut data);
+    let changed = previous != data.active;
+    if changed {
+        check_unsaved_changes(state, discard_changes)?;
+    }
     vaults::save(&state.vaults_path, &data).map_err(|error| error.to_string())?;
-    rebuild_active(state, &data);
-    Ok(vault_infos(&data))
+    if changed {
+        rebuild_active(state, &data);
+        *state.unsaved_changes.lock().unwrap() = false;
+    }
+    let infos = vault_infos(&data);
+    app.emit("vaults-changed", &infos)
+        .map_err(|error| error.to_string())?;
+    if data.active.is_none() {
+        show_window(app, "vault-manager")?;
+        if let Some(window) = app.get_webview_window("main") {
+            window.destroy().map_err(|error| error.to_string())?;
+        }
+    } else if open_main {
+        show_window(app, "main")?;
+        if let Some(window) = app.get_webview_window("vault-manager") {
+            window.close().map_err(|error| error.to_string())?;
+        }
+    }
+    Ok(infos)
+}
+
+fn check_unsaved_changes(state: &DesktopState, discard_changes: bool) -> Result<(), String> {
+    if !discard_changes && *state.unsaved_changes.lock().unwrap() {
+        return Err("vault_has_unsaved_changes".to_string());
+    }
+    Ok(())
+}
+
+fn show_window(app: &AppHandle, label: &str) -> Result<(), String> {
+    let window = match app.get_webview_window(label) {
+        Some(window) => window,
+        None => {
+            let config = app
+                .config()
+                .app
+                .windows
+                .iter()
+                .find(|window| window.label == label)
+                .ok_or_else(|| format!("Missing window configuration: {label}"))?;
+            WebviewWindowBuilder::from_config(app, config)
+                .and_then(|builder| builder.build())
+                .map_err(|error| error.to_string())?
+        }
+    };
+    window.unminimize().map_err(|error| error.to_string())?;
+    window.show().map_err(|error| error.to_string())?;
+    window.set_focus().map_err(|error| error.to_string())
 }
 
 fn rebuild_active(state: &DesktopState, data: &VaultStoreData) {
@@ -261,13 +389,16 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(
+            tauri_plugin_opener::Builder::new()
+                .open_js_links_on_click(false)
+                .build(),
+        )
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(
             tauri_plugin_window_state::Builder::default()
                 // Geometry only, and deliberately not the whole default set.
                 //
-                // `VISIBLE` is left out because this app has one window and no
-                // tray icon: a run that happened to save "hidden" would start
-                // the app with nothing on screen and no way to get it back.
-                // Visibility is decided unconditionally in `setup` below.
+                // Visibility is decided by the active vault, never restored.
                 //
                 // `DECORATIONS` is left out because the frame is a config
                 // decision — `titleBarStyle: Overlay` on macOS — and a value
@@ -287,23 +418,6 @@ pub fn run() {
             });
         })
         .setup(|app| {
-            // The window is created hidden (`"visible": false`) so the restore
-            // above lands before anything is painted; left visible it would
-            // appear at the configured default size and then visibly jump to
-            // the remembered one. Tauri builds the config windows before
-            // running this hook, so the geometry is already settled here.
-            //
-            // Shown before anything fallible: no `?` below may leave the user
-            // looking at a running app with no window. Iterating rather than
-            // naming the window keeps that promise if a second one is ever
-            // added, and makes a failure loud — silence here is a black screen
-            // with nothing to go on.
-            for (label, window) in app.webview_windows() {
-                if let Err(error) = window.show() {
-                    tracing::error!(%label, %error, "could not show the window");
-                }
-            }
-
             let vaults_path = app.path().app_data_dir()?.join("vaults.json");
             // The OS cache dir (XDG_CACHE_HOME / ~/.cache on Linux, ~/Library/Caches
             // on macOS, %LOCALAPPDATA% on Windows), resolved the same way as the app
@@ -317,6 +431,11 @@ pub fn run() {
             let secret_store: Arc<dyn SecretStore> = Arc::new(KeyringSecretStore::new());
 
             let data = vaults::load(&vaults_path);
+            let initial_window = if data.active.is_some() {
+                "main"
+            } else {
+                "vault-manager"
+            };
             let api = data.active.as_ref().map(|path| {
                 build_router(
                     path,
@@ -327,20 +446,34 @@ pub fn run() {
             });
             app.manage(DesktopState {
                 api: Mutex::new(api),
+                unsaved_changes: Mutex::new(false),
                 vaults_path,
                 cache_ttl,
                 secret_store,
                 index_cache_dir,
             });
+            show_window(app.handle(), initial_window).map_err(std::io::Error::other)?;
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if window.label() == "main" && matches!(event, tauri::WindowEvent::Destroyed) {
+                *window
+                    .state::<DesktopState>()
+                    .unsaved_changes
+                    .lock()
+                    .unwrap() = false;
+            }
         })
         .invoke_handler(tauri::generate_handler![
             api_request,
             list_vaults,
+            open_vault_manager,
+            set_unsaved_changes,
             add_vault,
             create_vault,
             switch_vault,
             remove_vault,
+            entity_file_action,
             get_credentials,
             set_credentials
         ])

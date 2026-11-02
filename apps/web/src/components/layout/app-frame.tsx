@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { statsQuery } from "@/api/queries";
+import { VaultPicker } from "@/components/desktop/vault-picker";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { HeaderSearch } from "@/components/layout/header-search";
 import { LanguageSelect } from "@/components/layout/language-select";
@@ -422,10 +423,11 @@ function AppSidebar({
       <div className="flex min-h-(--toolbar-height) shrink-0 items-center px-3">
         <Link to="/" className="flex min-w-0 items-center gap-2" aria-label="KizunaShelf">
           <AppLogo />
-          {showWordmark ? (
+          {showWordmark && !isDesktopRuntime() ? (
             <span className="truncate text-sm font-semibold">KizunaShelf</span>
           ) : null}
         </Link>
+        {isDesktopRuntime() ? <VaultPicker /> : null}
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto overscroll-contain p-3 pt-0">
         <SidebarContent stats={stats} activeType={activeType} pathname={pathname} />
@@ -486,8 +488,10 @@ function MobileSidebar({
       >
         <header className="flex min-h-(--toolbar-height) items-center gap-2 border-b px-3">
           <AppLogo />
-          <div className="min-w-0 flex-1">
-            {showWordmark ? (
+          <div className="flex min-w-0 flex-1">
+            {isDesktopRuntime() ? (
+              <VaultPicker />
+            ) : showWordmark ? (
               <span className="block truncate text-sm font-semibold">KizunaShelf</span>
             ) : null}
           </div>

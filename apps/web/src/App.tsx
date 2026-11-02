@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 
 import { settingsConfigQuery } from "@/api/queries";
+import { DesktopVaultSync } from "@/components/desktop/vault-sync";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AppShellFallback } from "@/components/layout/app-frame";
 import { VaultChangeSync } from "@/components/vault-change-sync";
@@ -70,12 +71,25 @@ const SmartListPage = lazy(() =>
 const StatisticsPage = lazy(() =>
   import("@/pages/statistics-page").then((m) => ({ default: m.StatisticsPage })),
 );
+const VaultManagerPage = lazy(() =>
+  import("@/pages/vault-manager-page").then((m) => ({ default: m.VaultManagerPage })),
+);
 
 // A data router lets editors block every in-app exit, including history POPs.
 // Keep the instance outside React so rerenders never reset its history/blockers.
 const router = createBrowserRouter([{ path: "*", element: <AppContent /> }]);
 
 export default function App() {
+  if (isDesktopRuntime() && window.location.pathname === "/vault-manager") {
+    return (
+      <>
+        <LocaleSync />
+        <Suspense fallback={<main className="h-dvh bg-background" />}>
+          <VaultManagerPage />
+        </Suspense>
+      </>
+    );
+  }
   return <RouterProvider router={router} />;
 }
 
@@ -84,6 +98,7 @@ function AppContent() {
   return (
     <>
       <LocaleSync />
+      <DesktopVaultSync />
       <HistoryPositionProvider>
         <RoutedErrorBoundary key={vaultSession} />
       </HistoryPositionProvider>

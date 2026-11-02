@@ -58,7 +58,7 @@ msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, other {# 个问题}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:636
+#: src/pages/entity-page.tsx:680
 #: src/pages/lists-page.tsx:87
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 项}}"
@@ -190,7 +190,7 @@ msgstr "{0}标题：{1}"
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 个数据源}}"
 
-#: src/pages/entity-page.tsx:514
+#: src/pages/entity-page.tsx:558
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} 编辑操作不可用。"
 
@@ -292,8 +292,8 @@ msgid "A type with the same name already exists, so {assignedIds} was used inste
 msgstr "已存在同名类型，因此改用了 {assignedIds}。添加后可重命名。"
 
 #: src/components/layout/command-palette.tsx:191
-#: src/pages/entity-page.tsx:475
-#: src/pages/entity-page.tsx:478
+#: src/pages/entity-page.tsx:490
+#: src/pages/entity-page.tsx:493
 msgid "Actions"
 msgstr "操作"
 
@@ -450,7 +450,7 @@ msgstr "正在添加…"
 msgid "adds new section"
 msgstr "添加新板块"
 
-#: src/pages/onboarding-page.tsx:246
+#: src/pages/onboarding-page.tsx:249
 msgid "Advanced: edit full schema"
 msgstr "高级：编辑完整 schema"
 
@@ -548,7 +548,7 @@ msgstr "资源根目录"
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
-#: src/components/layout/app-frame.tsx:211
+#: src/components/layout/app-frame.tsx:212
 #: src/components/settings/preset-picker.tsx:197
 #: src/components/settings/settings-dialogs.tsx:75
 #: src/components/settings/settings-editor.tsx:218
@@ -601,7 +601,7 @@ msgstr "日历"
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:209
-#: src/pages/entity-page.tsx:534
+#: src/pages/entity-page.tsx:578
 #: src/pages/import-wizard-page.tsx:239
 #: src/pages/import-wizard-page.tsx:280
 #: src/pages/list-detail-page.tsx:543
@@ -665,7 +665,7 @@ msgstr "选择要添加到首页的列表。已有列表的修改会保留。"
 msgid "Choose the frontmatter key used for tags."
 msgstr "选择用于存储标签的 frontmatter 键。"
 
-#: src/pages/onboarding-page.tsx:227
+#: src/pages/onboarding-page.tsx:230
 msgid "Choose what to track. You can add more later."
 msgstr "选择想要记录的内容。以后可以继续添加。"
 
@@ -682,8 +682,8 @@ msgstr "清除评分"
 msgid "Close"
 msgstr "关闭"
 
-#: src/components/layout/app-frame.tsx:473
-#: src/components/layout/app-frame.tsx:499
+#: src/components/layout/app-frame.tsx:475
+#: src/components/layout/app-frame.tsx:503
 msgid "Close navigation"
 msgstr "关闭导航"
 
@@ -697,7 +697,7 @@ msgstr ""
 #: src/components/settings/settings-field-form.tsx:214
 #: src/components/settings/settings-field-form.tsx:295
 #: src/pages/activity-page.tsx:42
-#: src/pages/entity-page.tsx:410
+#: src/pages/entity-page.tsx:415
 msgid "Completed"
 msgstr "已完成"
 
@@ -762,6 +762,10 @@ msgstr "继续"
 msgid "Continue ({0})"
 msgstr "继续（{0}）"
 
+#: src/pages/entity-page.tsx:517
+msgid "Copy file path"
+msgstr "复制文件路径"
+
 #: src/components/settings/settings-dialogs.tsx:392
 msgid "Copy this type's fields and metadata mappings into a new type with its own folder. Existing items stay in this type. Changes save with the rest of the schema."
 msgstr "将此类型的字段和元数据映射复制到一个拥有独立文件夹的新类型。现有项目仍保留在原类型中。更改将与其余架构一起保存。"
@@ -771,7 +775,7 @@ msgid "Could not read this CSV file."
 msgstr "无法读取此 CSV 文件。"
 
 #: src/components/settings/settings-editor.tsx:181
-#: src/pages/onboarding-page.tsx:200
+#: src/pages/onboarding-page.tsx:203
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "无法添加推荐列表。你可以在首页重试。"
 
@@ -789,29 +793,29 @@ msgstr "创建"
 msgid "Create “{query}” manually →"
 msgstr "手动创建「{query}」 →"
 
-#: src/pages/entity-page.tsx:672
+#: src/pages/entity-page.tsx:716
 msgid "Create & add"
 msgstr "创建并添加"
 
-#: src/components/settings/vault-switcher.tsx:175
+#: src/components/desktop/vault-manager.tsx:102
 msgid "Create new vault"
 msgstr "新建保管库"
 
+#: src/components/desktop/vault-manager.tsx:135
 #: src/components/settings/settings-editor.tsx:227
-#: src/components/settings/vault-switcher.tsx:207
-#: src/pages/onboarding-page.tsx:254
+#: src/pages/onboarding-page.tsx:257
 msgid "Create vault"
 msgstr "创建保管库"
 
 #. placeholder {0}: selected.size
-#: src/pages/onboarding-page.tsx:253
+#: src/pages/onboarding-page.tsx:256
 msgid "Create vault ({0})"
 msgstr "创建保管库（{0}）"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:132
-#: src/pages/entity-page.tsx:672
+#: src/pages/entity-page.tsx:716
 #: src/pages/lists-page.tsx:240
-#: src/pages/onboarding-page.tsx:251
+#: src/pages/onboarding-page.tsx:254
 msgid "Creating…"
 msgstr "正在创建…"
 
@@ -888,7 +892,7 @@ msgid "Default line format"
 msgstr "默认行格式"
 
 #: src/components/lists/section-block.tsx:121
-#: src/pages/entity-page.tsx:508
+#: src/pages/entity-page.tsx:551
 #: src/pages/list-detail-page.tsx:394
 #: src/pages/smart-list-page.tsx:297
 #: src/pages/smart-list-page.tsx:409
@@ -929,17 +933,17 @@ msgstr "禁用"
 
 #: src/pages/entity-create-page.tsx:320
 #: src/pages/entity-edit-page.tsx:321
-#: src/pages/settings-page.tsx:187
-#: src/pages/settings-page.tsx:232
+#: src/pages/settings-page.tsx:183
+#: src/pages/settings-page.tsx:228
 msgid "Discard"
 msgstr "丢弃"
 
-#: src/components/settings/vault-switcher.tsx:241
+#: src/hooks/use-vault-actions.tsx:71
 msgid "Discard and switch"
 msgstr "放弃并切换"
 
-#: src/components/settings/vault-switcher.tsx:222
-#: src/pages/settings-page.tsx:208
+#: src/hooks/use-vault-actions.tsx:52
+#: src/pages/settings-page.tsx:204
 msgid "Discard unsaved changes?"
 msgstr "丢弃未保存的更改？"
 
@@ -960,11 +964,11 @@ msgstr "未链接到"
 #: src/components/lists/add-items-dialog.tsx:120
 #: src/components/settings/settings-dialogs.tsx:514
 #: src/components/settings/settings-dialogs.tsx:550
-#: src/pages/entity-page.tsx:680
+#: src/pages/entity-page.tsx:724
 msgid "Done"
 msgstr "完成"
 
-#: src/pages/entity-page.tsx:498
+#: src/pages/entity-page.tsx:539
 msgid "Download cover"
 msgstr "下载封面"
 
@@ -1011,7 +1015,7 @@ msgstr "重复的文件名"
 msgid "Duplicate type"
 msgstr "复制类型"
 
-#: src/pages/entity-page.tsx:384
+#: src/pages/entity-page.tsx:389
 #: src/pages/list-detail-page.tsx:593
 msgid "Edit"
 msgstr "编辑"
@@ -1091,7 +1095,7 @@ msgid "Entity name"
 msgstr "条目名称"
 
 #: src/pages/entity-edit-page.tsx:273
-#: src/pages/entity-page.tsx:437
+#: src/pages/entity-page.tsx:442
 msgid "Entity not found"
 msgstr "未找到条目"
 
@@ -1203,9 +1207,13 @@ msgstr "文件"
 #: src/pages/entity-create-page.tsx:233
 #: src/pages/entity-create-page.tsx:241
 #: src/pages/entity-create-page.tsx:244
-#: src/pages/entity-page.tsx:309
+#: src/pages/entity-page.tsx:314
 msgid "File name"
 msgstr "文件名"
+
+#: src/pages/entity-page.tsx:480
+msgid "File path copied"
+msgstr "已复制文件路径"
 
 #: src/components/entities/edit-conflict-review.tsx:97
 #: src/components/settings/settings-entity-type.tsx:99
@@ -1245,11 +1253,11 @@ msgstr "完成"
 msgid "Finish saving"
 msgstr "完成保存"
 
-#: src/pages/settings-page.tsx:117
+#: src/pages/settings-page.tsx:113
 msgid "Form"
 msgstr "表单"
 
-#: src/components/layout/app-frame.tsx:222
+#: src/components/layout/app-frame.tsx:223
 msgid "Forward"
 msgstr ""
 
@@ -1265,11 +1273,11 @@ msgstr "前置元数据键"
 msgid "Game"
 msgstr "游戏"
 
-#: src/components/layout/app-frame.tsx:210
+#: src/components/layout/app-frame.tsx:211
 msgid "Go back"
 msgstr "返回"
 
-#: src/components/layout/app-frame.tsx:221
+#: src/components/layout/app-frame.tsx:222
 msgid "Go forward"
 msgstr ""
 
@@ -1310,7 +1318,7 @@ msgstr "不含以下任何"
 msgid "Heading"
 msgstr "标题"
 
-#: src/components/layout/app-frame.tsx:180
+#: src/components/layout/app-frame.tsx:181
 msgid "Hide sidebar"
 msgstr ""
 
@@ -1496,11 +1504,11 @@ msgid "JSON value"
 msgstr "JSON 值"
 
 #: src/components/entities/edit-conflict-review.tsx:112
-#: src/components/settings/vault-switcher.tsx:230
+#: src/hooks/use-vault-actions.tsx:60
 #: src/pages/entity-create-page.tsx:310
 #: src/pages/entity-edit-page.tsx:311
-#: src/pages/settings-page.tsx:178
-#: src/pages/settings-page.tsx:224
+#: src/pages/settings-page.tsx:174
+#: src/pages/settings-page.tsx:220
 msgid "Keep editing"
 msgstr "继续编辑"
 
@@ -1605,7 +1613,7 @@ msgstr "关联到"
 msgid "List"
 msgstr "列表"
 
-#: src/pages/entity-page.tsx:597
+#: src/pages/entity-page.tsx:641
 #: src/pages/lists-page.tsx:148
 msgid "List created"
 msgstr "列表已创建"
@@ -1642,7 +1650,7 @@ msgstr "正在加载活动…"
 msgid "Loading built-in types…"
 msgstr "正在加载内置类型…"
 
-#: src/components/layout/app-frame.tsx:587
+#: src/components/layout/app-frame.tsx:591
 msgid "Loading taxonomy"
 msgstr "正在加载分类"
 
@@ -1657,15 +1665,15 @@ msgstr "正在加载类型…"
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
 #: src/pages/entity-edit-page.tsx:257
-#: src/pages/entity-page.tsx:300
-#: src/pages/entity-page.tsx:616
+#: src/pages/entity-page.tsx:305
+#: src/pages/entity-page.tsx:660
 #: src/pages/home-page.tsx:58
 #: src/pages/import-wizard-page.tsx:218
 #: src/pages/list-detail-page.tsx:365
 #: src/pages/lists-page.tsx:54
-#: src/pages/onboarding-page.tsx:84
+#: src/pages/onboarding-page.tsx:87
 #: src/pages/review-page.tsx:148
-#: src/pages/settings-page.tsx:139
+#: src/pages/settings-page.tsx:135
 #: src/pages/smart-list-page.tsx:226
 #: src/pages/statistics-page.tsx:45
 msgid "Loading…"
@@ -1693,10 +1701,15 @@ msgstr "记录到每日笔记"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "记录默认值 — 记录行写入的标题下方，以及后备的行格式。每个类型都可覆盖这些设置并添加自己的标签。"
 
-#: src/pages/entity-page.tsx:489
-#: src/pages/entity-page.tsx:610
+#: src/pages/entity-page.tsx:530
+#: src/pages/entity-page.tsx:654
 msgid "Manage lists"
 msgstr "管理列表"
+
+#: src/components/desktop/vault-picker.tsx:28
+#: src/components/desktop/vault-picker.tsx:74
+msgid "Manage vaults…"
+msgstr "管理保管库…"
 
 #: src/components/settings/settings-field-form.tsx:364
 msgid "Map each option to a status"
@@ -1723,7 +1736,7 @@ msgstr "标记观看进度"
 msgid "Markdown body sections"
 msgstr "Markdown 正文板块"
 
-#: src/pages/entity-page.tsx:493
+#: src/pages/entity-page.tsx:534
 msgid "Match"
 msgstr "匹配"
 
@@ -1765,16 +1778,16 @@ msgstr "将 {label} 上移"
 msgid "Move list to trash?"
 msgstr "将列表移到回收站？"
 
-#: src/pages/entity-page.tsx:537
+#: src/pages/entity-page.tsx:581
 #: src/pages/list-detail-page.tsx:552
 msgid "Move to Trash"
 msgstr "移到回收站"
 
-#: src/pages/entity-page.tsx:523
+#: src/pages/entity-page.tsx:567
 msgid "Move to trash?"
 msgstr "移到回收站？"
 
-#: src/pages/entity-page.tsx:224
+#: src/pages/entity-page.tsx:229
 msgid "Moved to trash"
 msgstr "已移到回收站"
 
@@ -1786,7 +1799,7 @@ msgstr "音乐"
 msgid "My edits"
 msgstr "我的编辑"
 
-#: src/components/settings/vault-switcher.tsx:194
+#: src/components/desktop/vault-manager.tsx:121
 msgid "My Vault"
 msgstr "我的保管库"
 
@@ -1796,7 +1809,7 @@ msgstr "我的保管库"
 msgid "Name"
 msgstr "名称"
 
-#: src/components/layout/app-frame.tsx:478
+#: src/components/layout/app-frame.tsx:480
 msgid "Navigation"
 msgstr "导航"
 
@@ -1808,7 +1821,7 @@ msgstr "待检查"
 msgid "New field"
 msgstr "新字段"
 
-#: src/pages/entity-page.tsx:657
+#: src/pages/entity-page.tsx:701
 #: src/pages/lists-page.tsx:48
 #: src/pages/lists-page.tsx:168
 msgid "New list"
@@ -1901,7 +1914,7 @@ msgstr "无外部匹配"
 msgid "No fields configured."
 msgstr "未配置字段。"
 
-#: src/components/settings/vault-switcher.tsx:179
+#: src/components/desktop/vault-manager.tsx:106
 msgid "No folder selected"
 msgstr "未选择文件夹"
 
@@ -1922,7 +1935,7 @@ msgstr "暂无项目。使用「添加项目」将条目加入此列表，或使
 msgid "No limit"
 msgstr "无限制"
 
-#: src/pages/entity-page.tsx:620
+#: src/pages/entity-page.tsx:664
 msgid "No lists yet. Create one below."
 msgstr "暂无列表。在下方创建一个。"
 
@@ -2000,7 +2013,7 @@ msgstr "未返回值"
 msgid "No values."
 msgstr "无值。"
 
-#: src/components/settings/vault-switcher.tsx:158
+#: src/components/desktop/vault-manager.tsx:85
 msgid "No vaults yet."
 msgstr "暂无保管库。"
 
@@ -2102,7 +2115,7 @@ msgstr "只能上传图片文件。"
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "仅支持公开的个人资料。在你检查计划之前不会写入任何内容。"
 
-#: src/components/settings/vault-switcher.tsx:139
+#: src/components/desktop/vault-manager.tsx:64
 #: src/pages/quick-capture-page.tsx:386
 msgid "Open"
 msgstr "打开"
@@ -2112,19 +2125,23 @@ msgstr "打开"
 msgid "Open {0}"
 msgstr "打开 {0}"
 
-#: src/components/settings/vault-switcher.tsx:166
+#: src/components/desktop/vault-manager.tsx:93
 msgid "Open existing vault"
 msgstr "打开现有保管库"
 
-#: src/components/settings/vault-switcher.tsx:170
+#: src/components/desktop/vault-manager.tsx:97
 msgid "Open folder"
 msgstr "打开文件夹"
 
-#: src/components/layout/app-frame.tsx:192
+#: src/pages/entity-page.tsx:513
+msgid "Open in default editor"
+msgstr "在默认编辑器中打开"
+
+#: src/components/layout/app-frame.tsx:193
 msgid "Open navigation"
 msgstr "打开导航"
 
-#: src/components/settings/vault-switcher.tsx:116
+#: src/components/desktop/vault-manager.tsx:45
 msgid "Open or create a vault to get started."
 msgstr "打开或创建保管库以开始。"
 
@@ -2165,7 +2182,7 @@ msgstr "页面未找到"
 msgid "Pagination"
 msgstr "分页"
 
-#: src/components/settings/vault-switcher.tsx:177
+#: src/components/desktop/vault-manager.tsx:104
 msgid "Parent folder"
 msgstr "父文件夹"
 
@@ -2252,7 +2269,7 @@ msgid "Public profile"
 msgstr "公开个人资料"
 
 #: src/components/entities/entity-ratings.tsx:73
-#: src/pages/entity-page.tsx:411
+#: src/pages/entity-page.tsx:416
 msgid "Rate"
 msgstr "评分"
 
@@ -2324,8 +2341,8 @@ msgstr "重新加载最新版本"
 
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
+#: src/components/desktop/vault-manager.tsx:70
 #: src/components/entities/metadata-editor.tsx:254
-#: src/components/settings/vault-switcher.tsx:146
 msgid "Remove {0}"
 msgstr "移除 {0}"
 
@@ -2386,8 +2403,8 @@ msgstr "已移除"
 
 #: src/components/lists/section-block.tsx:117
 #: src/components/rename-dialog.tsx:94
-#: src/pages/entity-page.tsx:308
-#: src/pages/entity-page.tsx:485
+#: src/pages/entity-page.tsx:313
+#: src/pages/entity-page.tsx:526
 #: src/pages/list-detail-page.tsx:384
 #: src/pages/smart-list-page.tsx:287
 msgid "Rename"
@@ -2401,11 +2418,11 @@ msgstr "重命名列表"
 msgid "Rename smart list"
 msgstr "重命名智能列表"
 
-#: src/pages/entity-page.tsx:163
+#: src/pages/entity-page.tsx:168
 msgid "Renamed"
 msgstr "已重命名"
 
-#: src/pages/entity-page.tsx:162
+#: src/pages/entity-page.tsx:167
 msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "已重命名 — 更新了 {updated, plural, other {# 个关联}}"
 
@@ -2432,8 +2449,8 @@ msgstr "必填 — 在此输入文件名，或填写下方的标题。"
 msgid "Required — enter a file name."
 msgstr "必填 — 请输入文件名。"
 
-#: src/components/layout/app-frame.tsx:351
 #: src/components/layout/app-frame.tsx:352
+#: src/components/layout/app-frame.tsx:353
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "重新扫描保管库"
@@ -2451,6 +2468,18 @@ msgstr ""
 #: src/components/vault-change-sync.tsx:36
 msgid "Retry"
 msgstr "重试"
+
+#: src/pages/entity-page.tsx:506
+msgid "Reveal in Explorer"
+msgstr "在文件资源管理器中显示"
+
+#: src/pages/entity-page.tsx:508
+msgid "Reveal in file manager"
+msgstr "在文件管理器中显示"
+
+#: src/pages/entity-page.tsx:504
+msgid "Reveal in Finder"
+msgstr "在访达中显示"
 
 #: src/components/layout/nav-destinations.ts:45
 msgid "Review"
@@ -2480,7 +2509,7 @@ msgstr "保存"
 
 #. Saves the entity draft and then continues the navigation the user requested
 #: src/pages/entity-edit-page.tsx:331
-#: src/pages/settings-page.tsx:193
+#: src/pages/settings-page.tsx:189
 msgid "Save and leave"
 msgstr "保存并离开"
 
@@ -2497,7 +2526,7 @@ msgstr "保存凭据"
 #. Explains the options for leaving an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:305
 #: src/pages/entity-edit-page.tsx:303
-#: src/pages/settings-page.tsx:172
+#: src/pages/settings-page.tsx:168
 msgid "Save your edits before leaving, or discard them."
 msgstr "离开前保存编辑内容，或放弃这些更改。"
 
@@ -2521,7 +2550,7 @@ msgstr "将当前类型、条件和排序保存为智能列表。搜索内容不
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/entity-edit-page.tsx:329
 #: src/pages/list-detail-page.tsx:406
-#: src/pages/settings-page.tsx:193
+#: src/pages/settings-page.tsx:189
 #: src/pages/smart-list-page.tsx:263
 msgid "Saving…"
 msgstr "正在保存…"
@@ -2543,7 +2572,7 @@ msgstr "范围"
 msgid "Search"
 msgstr "搜索"
 
-#: src/components/layout/app-frame.tsx:91
+#: src/components/layout/app-frame.tsx:92
 msgid "Search {activeTypeLabel}"
 msgstr "搜索 {activeTypeLabel}"
 
@@ -2564,8 +2593,8 @@ msgstr "搜索条目…"
 msgid "Search for a match"
 msgstr "搜索匹配项"
 
-#: src/components/layout/app-frame.tsx:92
-#: src/components/layout/app-frame.tsx:241
+#: src/components/layout/app-frame.tsx:93
+#: src/components/layout/app-frame.tsx:242
 #: src/components/layout/header-search.tsx:150
 msgid "Search library"
 msgstr "搜索库"
@@ -2647,7 +2676,7 @@ msgstr "选择文件夹"
 msgid "Select group"
 msgstr "选择分组"
 
-#: src/components/settings/vault-switcher.tsx:184
+#: src/components/desktop/vault-manager.tsx:111
 msgid "Select parent folder"
 msgstr "选择父文件夹"
 
@@ -2683,7 +2712,7 @@ msgstr "设置已保存"
 msgid "Show all"
 msgstr "显示全部"
 
-#: src/components/layout/app-frame.tsx:180
+#: src/components/layout/app-frame.tsx:181
 msgid "Show sidebar"
 msgstr ""
 
@@ -2726,11 +2755,11 @@ msgstr "已重命名智能列表"
 msgid "Smart list saved"
 msgstr "已保存智能列表"
 
-#: src/pages/entity-page.tsx:210
+#: src/pages/entity-page.tsx:215
 msgid "Some images could not be downloaded"
 msgstr "部分图片无法下载"
 
-#: src/pages/entity-page.tsx:209
+#: src/pages/entity-page.tsx:214
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "部分图片无法下载：{reasons}"
 
@@ -2739,8 +2768,6 @@ msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "此文件的部分语法不受支持，将被忽略:"
 
 #: src/components/error-boundary.tsx:55
-#: src/components/settings/vault-switcher.tsx:64
-#: src/components/settings/vault-switcher.tsx:92
 msgid "Something went wrong"
 msgstr "出了点问题"
 
@@ -2828,15 +2855,12 @@ msgstr "存储在你的系统密钥链中。此处列出的数据源需要凭据
 msgid "Summary"
 msgstr "摘要"
 
-#: src/components/settings/vault-switcher.tsx:117
-msgid "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
-msgstr "在保管库之间切换或管理你的列表。移除保管库只是在此处将其遗忘 — 其文件夹仍保留在磁盘上。"
+#. placeholder {0}: active.name
+#: src/components/desktop/vault-picker.tsx:48
+msgid "Switch vault: {0}"
+msgstr "切换保管库：{0}"
 
-#: src/components/settings/vault-switcher.tsx:137
-msgid "Switched vault"
-msgstr "已切换保管库"
-
-#: src/components/settings/vault-switcher.tsx:225
+#: src/hooks/use-vault-actions.tsx:55
 msgid "Switching vaults will discard your unsaved edits."
 msgstr "切换资料库将放弃未保存的编辑。"
 
@@ -2944,7 +2968,7 @@ msgid "This month"
 msgstr "本月"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-page.tsx:526
+#: src/pages/entity-page.tsx:570
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "这会将 {0} 移到回收站。如需要，之后可以恢复。"
 
@@ -3082,7 +3106,7 @@ msgstr "未解析的关联"
 #. Title of the confirmation dialog when navigating away from an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:302
 #: src/pages/entity-edit-page.tsx:298
-#: src/pages/settings-page.tsx:169
+#: src/pages/settings-page.tsx:165
 msgid "Unsaved changes"
 msgstr "未保存的更改"
 
@@ -3153,16 +3177,11 @@ msgstr "值"
 msgid "Vault"
 msgstr "保管库"
 
-#: src/components/settings/vault-switcher.tsx:100
-msgid "Vault added"
-msgstr "已添加保管库"
-
-#: src/components/settings/vault-switcher.tsx:204
-#: src/pages/onboarding-page.tsx:202
+#: src/pages/onboarding-page.tsx:205
 msgid "Vault created"
 msgstr "已创建保管库"
 
-#: src/components/settings/vault-switcher.tsx:191
+#: src/components/desktop/vault-manager.tsx:118
 msgid "Vault name"
 msgstr "保管库名称"
 
@@ -3170,15 +3189,14 @@ msgstr "保管库名称"
 msgid "Vault path or URL"
 msgstr "保管库路径或 URL"
 
-#: src/components/settings/vault-switcher.tsx:149
-msgid "Vault removed"
-msgstr "已移除保管库"
-
 #: src/hooks/use-rescan-library.ts:23
 msgid "Vault rescanned"
 msgstr "已重新扫描保管库"
 
-#: src/components/settings/vault-switcher.tsx:113
+#: src/components/desktop/vault-manager.tsx:45
+#: src/components/desktop/vault-picker.tsx:48
+#: src/components/desktop/vault-picker.tsx:51
+#: src/pages/vault-manager-page.tsx:11
 msgid "Vaults"
 msgstr "保管库"
 
@@ -3186,7 +3204,7 @@ msgstr "保管库"
 msgid "Watching now"
 msgstr "在看"
 
-#: src/pages/entity-page.tsx:663
+#: src/pages/entity-page.tsx:707
 #: src/pages/lists-page.tsx:202
 msgid "Watchlist"
 msgstr "想看清单"
@@ -3196,7 +3214,7 @@ msgstr "想看清单"
 msgid "weeks"
 msgstr "周"
 
-#: src/pages/onboarding-page.tsx:224
+#: src/pages/onboarding-page.tsx:227
 msgid "What do you want to track?"
 msgstr "你想追踪什么？"
 
@@ -3215,7 +3233,7 @@ msgstr "将根据标题创建为“{0}.md”。"
 msgid "within the next"
 msgstr "未来"
 
-#: src/pages/settings-page.tsx:126
+#: src/pages/settings-page.tsx:122
 msgid "YAML"
 msgstr "YAML"
 
@@ -3252,11 +3270,11 @@ msgstr "可以多次添加同一个内置类型。每个副本都有独立的 ID
 msgid "You can still open entities already in your library."
 msgstr "你仍可以打开库中已有的条目。"
 
-#: src/pages/settings-page.tsx:212
+#: src/pages/settings-page.tsx:208
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "表单编辑器中有未保存的更改。切换编辑器将丢弃它们。"
 
-#: src/pages/settings-page.tsx:216
+#: src/pages/settings-page.tsx:212
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "YAML 编辑器中有未保存的更改。切换编辑器将丢弃它们。"
 

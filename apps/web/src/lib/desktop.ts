@@ -62,11 +62,23 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
 }
 
 export const listVaults = () => invoke<VaultInfo[]>("list_vaults");
-export const addVault = (path: string) => invoke<VaultInfo[]>("add_vault", { path });
-export const createVault = (parent: string, name: string) =>
-  invoke<VaultInfo[]>("create_vault", { parent, name });
-export const switchVault = (path: string) => invoke<VaultInfo[]>("switch_vault", { path });
-export const removeVault = (path: string) => invoke<VaultInfo[]>("remove_vault", { path });
+export const openVaultManager = () => invoke<void>("open_vault_manager");
+export const setUnsavedChanges = (dirty: boolean) => invoke<void>("set_unsaved_changes", { dirty });
+export const addVault = (path: string, discardChanges = false) =>
+  invoke<VaultInfo[]>("add_vault", { path, discardChanges });
+export const createVault = (parent: string, name: string, discardChanges = false) =>
+  invoke<VaultInfo[]>("create_vault", { parent, name, discardChanges });
+export const switchVault = (path: string, discardChanges = false) =>
+  invoke<VaultInfo[]>("switch_vault", { path, discardChanges });
+export const removeVault = (path: string, discardChanges = false) =>
+  invoke<VaultInfo[]>("remove_vault", { path, discardChanges });
+
+export async function onVaultsChanged(callback: (vaults: VaultInfo[]) => void) {
+  const { listen } = await import("@tauri-apps/api/event");
+  return listen<VaultInfo[]>("vaults-changed", (event) => callback(event.payload));
+}
+export const entityFileAction = (path: string, action: "reveal" | "open" | "copy_path") =>
+  invoke<void>("entity_file_action", { path, action });
 export const getCredentials = () => invoke<Credentials>("get_credentials");
 export const setCredentials = (credentials: Credentials) =>
   invoke<void>("set_credentials", { credentials });

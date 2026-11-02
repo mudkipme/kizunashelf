@@ -19,7 +19,9 @@ You can add types and change their fields later in **More → Vault Schema**. An
 
 1. Download the desktop alpha for macOS, Linux, or Windows from [GitHub Releases](https://github.com/mudkipme/kizunashelf/releases). Choose the amd64 build for Intel/AMD machines or arm64 for Apple Silicon and other ARM machines.
 2. On macOS, open the DMG and drag KizunaShelf to Applications. On Windows, run the installer. On Linux, make the AppImage executable (`chmod +x KizunaShelf_*.AppImage`), then open it.
-3. Open or create a vault folder. For a new vault, choose your preferred language and the types you want to collect.
+3. In the vault manager, open or create a vault folder. Your library window opens after you select a vault. For a new vault, choose your preferred language and the types you want to collect.
+
+The active vault appears at the top of the sidebar. Select its name to switch vaults or choose **Manage vaults…** to open the separate manager. Removing a vault from the manager only forgets its location; its files stay on disk. Subsequent launches reopen your last selected vault.
 
 Schema settings are under **Settings**. The desktop release is an alpha; feedback and bug reports are welcome on [GitHub Issues](https://github.com/mudkipme/kizunashelf/issues).
 

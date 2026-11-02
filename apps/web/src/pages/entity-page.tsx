@@ -4,8 +4,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2Icon,
   CircleIcon,
+  ClipboardCopyIcon,
   DownloadIcon,
   FilePenLineIcon,
+  FileTextIcon,
+  FolderOpenIcon,
   ListChecksIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -61,6 +64,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -73,6 +77,7 @@ import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { todayLocal } from "@/lib/date";
+import { entityFileAction, isDesktopRuntime, isMacDesktopRuntime } from "@/lib/desktop";
 import { useLanguagePreference, useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
 import { entityTitle } from "@/lib/title-language";
@@ -467,6 +472,16 @@ function EntityActions({
   const { t } = useLingui();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const language = useTitleLanguage();
+  const desktop = isDesktopRuntime();
+
+  async function fileAction(action: Parameters<typeof entityFileAction>[1]) {
+    try {
+      await entityFileAction(entity.path, action);
+      if (action === "copy_path") toast.success(t`File path copied`);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    }
+  }
 
   return (
     <>
@@ -480,33 +495,62 @@ function EntityActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuItem onSelect={onRename} disabled={!contentWritable || saving}>
-            <FilePenLineIcon />
-            <Trans>Rename</Trans>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onManageLists} disabled={!contentWritable}>
-            <ListChecksIcon />
-            <Trans>Manage lists</Trans>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onMatch}>
-            <SearchIcon />
-            <Trans>Match</Trans>
-          </DropdownMenuItem>
-          {showDownloadCover ? (
-            <DropdownMenuItem onSelect={onDownloadCover} disabled={saving}>
-              <DownloadIcon />
-              <Trans>Download cover</Trans>
-            </DropdownMenuItem>
+          {desktop ? (
+            <>
+              <DropdownMenuGroup>
+                <DropdownMenuItem onSelect={() => void fileAction("reveal")}>
+                  <FolderOpenIcon />
+                  {isMacDesktopRuntime() ? (
+                    <Trans>Reveal in Finder</Trans>
+                  ) : navigator.platform.startsWith("Win") ? (
+                    <Trans>Reveal in Explorer</Trans>
+                  ) : (
+                    <Trans>Reveal in file manager</Trans>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void fileAction("open")}>
+                  <FileTextIcon />
+                  <Trans>Open in default editor</Trans>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void fileAction("copy_path")}>
+                  <ClipboardCopyIcon />
+                  <Trans>Copy file path</Trans>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+            </>
           ) : null}
+          <DropdownMenuGroup>
+            <DropdownMenuItem onSelect={onRename} disabled={!contentWritable || saving}>
+              <FilePenLineIcon />
+              <Trans>Rename</Trans>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onManageLists} disabled={!contentWritable}>
+              <ListChecksIcon />
+              <Trans>Manage lists</Trans>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onMatch}>
+              <SearchIcon />
+              <Trans>Match</Trans>
+            </DropdownMenuItem>
+            {showDownloadCover ? (
+              <DropdownMenuItem onSelect={onDownloadCover} disabled={saving}>
+                <DownloadIcon />
+                <Trans>Download cover</Trans>
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            disabled={!contentWritable || saving}
-            onSelect={() => setDeleteOpen(true)}
-          >
-            <Trash2Icon />
-            <Trans>Delete</Trans>
-          </DropdownMenuItem>
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              variant="destructive"
+              disabled={!contentWritable || saving}
+              onSelect={() => setDeleteOpen(true)}
+            >
+              <Trash2Icon />
+              <Trans>Delete</Trans>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-xs font-normal break-all text-muted-foreground">
             {contentWritable

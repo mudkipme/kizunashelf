@@ -13,6 +13,7 @@ import {
 } from "@/api/queries";
 import { resolveTypePresets, saveSettingsConfig } from "@/api/settings";
 import { addSuggestedSmartLists } from "@/api/smart-lists";
+import { VaultManagerButton } from "@/components/desktop/vault-picker";
 import { PageContainer } from "@/components/layout/page-container";
 import {
   defaultSeedLanguage,
@@ -25,7 +26,6 @@ import {
   defaultDailyNotes,
   defaultVaultConfig,
 } from "@/components/settings/settings-model";
-import { VaultSwitcher } from "@/components/settings/vault-switcher";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
@@ -36,9 +36,8 @@ import { cn } from "@/lib/utils";
 import type { UserLanguage, VaultConfig } from "@/types/api";
 
 /**
- * Onboarding. On desktop with no open vault, choose/create one via the native
- * vault switcher. Otherwise (a vault is open but has no `KizunaShelf/config.yaml`
- * yet) run the type-picker wizard: choose what to track, pick one language (it
+ * Onboarding for an open vault with no `KizunaShelf/config.yaml` yet:
+ * choose what to track, pick one language (it
  * drives both the seeded labels and the title language), and the vault is
  * created from those built-in types. An "Advanced" escape hatch
  * opens the full schema editor for power users.
@@ -71,8 +70,12 @@ export function OnboardingPage() {
 
   let body;
   if (desktop && settings.error) {
-    // Desktop replies 503 (query error) until a vault is open.
-    body = <VaultSwitcher onboarding onChanged={refresh} />;
+    body = (
+      <div className="flex flex-col gap-3">
+        <Alert>{errorMessage(settings.error)}</Alert>
+        <VaultManagerButton />
+      </div>
+    );
   } else if (
     settings.isPending ||
     providerCatalog.isPending ||

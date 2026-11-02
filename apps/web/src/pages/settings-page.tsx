@@ -1,10 +1,11 @@
 import { Trans } from "@lingui/react/macro";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { useBlocker } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { languagesQuery, providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
+import { VaultManagerButton } from "@/components/desktop/vault-picker";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
 import { SaveFailure } from "@/components/save-failure";
@@ -12,7 +13,6 @@ import { ProviderCredentials } from "@/components/settings/provider-credentials"
 import { RawConfigEditor } from "@/components/settings/raw-config-editor";
 import { SettingsEditor } from "@/components/settings/settings-editor";
 import type { SettingsEditorHandle } from "@/components/settings/settings-shared";
-import { VaultSwitcher } from "@/components/settings/vault-switcher";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +32,6 @@ import { isDesktopRuntime } from "@/lib/desktop";
 type EditorMode = "form" | "yaml";
 
 export function SettingsPage() {
-  const queryClient = useQueryClient();
   const settings = useQuery(settingsConfigQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
@@ -97,10 +96,7 @@ export function SettingsPage() {
         {/* Desktop manages vaults + credentials natively (multi-vault, OS keychain). */}
         {desktop ? (
           <>
-            <VaultSwitcher
-              hasUnsavedChanges={dirty || busy}
-              onChanged={() => void queryClient.invalidateQueries()}
-            />
+            <VaultManagerButton />
             <ProviderCredentials providers={providerCatalog.data?.providers ?? []} />
           </>
         ) : null}

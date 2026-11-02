@@ -58,7 +58,7 @@ msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, one {# issue} other {# issues}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:636
+#: src/pages/entity-page.tsx:680
 #: src/pages/lists-page.tsx:87
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
@@ -190,7 +190,7 @@ msgstr "{0} title: {1}"
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 
-#: src/pages/entity-page.tsx:514
+#: src/pages/entity-page.tsx:558
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 
@@ -292,8 +292,8 @@ msgid "A type with the same name already exists, so {assignedIds} was used inste
 msgstr "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 
 #: src/components/layout/command-palette.tsx:191
-#: src/pages/entity-page.tsx:475
-#: src/pages/entity-page.tsx:478
+#: src/pages/entity-page.tsx:490
+#: src/pages/entity-page.tsx:493
 msgid "Actions"
 msgstr "Actions"
 
@@ -450,7 +450,7 @@ msgstr "Adding…"
 msgid "adds new section"
 msgstr "adds new section"
 
-#: src/pages/onboarding-page.tsx:246
+#: src/pages/onboarding-page.tsx:249
 msgid "Advanced: edit full schema"
 msgstr "Advanced: edit full schema"
 
@@ -548,7 +548,7 @@ msgstr "Asset root"
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
-#: src/components/layout/app-frame.tsx:211
+#: src/components/layout/app-frame.tsx:212
 #: src/components/settings/preset-picker.tsx:197
 #: src/components/settings/settings-dialogs.tsx:75
 #: src/components/settings/settings-editor.tsx:218
@@ -601,7 +601,7 @@ msgstr "Calendar"
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:209
-#: src/pages/entity-page.tsx:534
+#: src/pages/entity-page.tsx:578
 #: src/pages/import-wizard-page.tsx:239
 #: src/pages/import-wizard-page.tsx:280
 #: src/pages/list-detail-page.tsx:543
@@ -665,7 +665,7 @@ msgstr "Choose lists to add to Home. Existing lists keep their changes."
 msgid "Choose the frontmatter key used for tags."
 msgstr "Choose the frontmatter key used for tags."
 
-#: src/pages/onboarding-page.tsx:227
+#: src/pages/onboarding-page.tsx:230
 msgid "Choose what to track. You can add more later."
 msgstr "Choose what to track. You can add more later."
 
@@ -682,8 +682,8 @@ msgstr "Clear rating"
 msgid "Close"
 msgstr "Close"
 
-#: src/components/layout/app-frame.tsx:473
-#: src/components/layout/app-frame.tsx:499
+#: src/components/layout/app-frame.tsx:475
+#: src/components/layout/app-frame.tsx:503
 msgid "Close navigation"
 msgstr "Close navigation"
 
@@ -697,7 +697,7 @@ msgstr "Command palette"
 #: src/components/settings/settings-field-form.tsx:214
 #: src/components/settings/settings-field-form.tsx:295
 #: src/pages/activity-page.tsx:42
-#: src/pages/entity-page.tsx:410
+#: src/pages/entity-page.tsx:415
 msgid "Completed"
 msgstr "Completed"
 
@@ -762,6 +762,10 @@ msgstr "Continue"
 msgid "Continue ({0})"
 msgstr "Continue ({0})"
 
+#: src/pages/entity-page.tsx:517
+msgid "Copy file path"
+msgstr "Copy file path"
+
 #: src/components/settings/settings-dialogs.tsx:392
 msgid "Copy this type's fields and metadata mappings into a new type with its own folder. Existing items stay in this type. Changes save with the rest of the schema."
 msgstr "Copy this type's fields and metadata mappings into a new type with its own folder. Existing items stay in this type. Changes save with the rest of the schema."
@@ -771,7 +775,7 @@ msgid "Could not read this CSV file."
 msgstr "Could not read this CSV file."
 
 #: src/components/settings/settings-editor.tsx:181
-#: src/pages/onboarding-page.tsx:200
+#: src/pages/onboarding-page.tsx:203
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "Couldn't add suggested lists. You can retry from Home."
 
@@ -789,29 +793,29 @@ msgstr "Create"
 msgid "Create “{query}” manually →"
 msgstr "Create “{query}” manually →"
 
-#: src/pages/entity-page.tsx:672
+#: src/pages/entity-page.tsx:716
 msgid "Create & add"
 msgstr "Create & add"
 
-#: src/components/settings/vault-switcher.tsx:175
+#: src/components/desktop/vault-manager.tsx:102
 msgid "Create new vault"
 msgstr "Create new vault"
 
+#: src/components/desktop/vault-manager.tsx:135
 #: src/components/settings/settings-editor.tsx:227
-#: src/components/settings/vault-switcher.tsx:207
-#: src/pages/onboarding-page.tsx:254
+#: src/pages/onboarding-page.tsx:257
 msgid "Create vault"
 msgstr "Create vault"
 
 #. placeholder {0}: selected.size
-#: src/pages/onboarding-page.tsx:253
+#: src/pages/onboarding-page.tsx:256
 msgid "Create vault ({0})"
 msgstr "Create vault ({0})"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:132
-#: src/pages/entity-page.tsx:672
+#: src/pages/entity-page.tsx:716
 #: src/pages/lists-page.tsx:240
-#: src/pages/onboarding-page.tsx:251
+#: src/pages/onboarding-page.tsx:254
 msgid "Creating…"
 msgstr "Creating…"
 
@@ -888,7 +892,7 @@ msgid "Default line format"
 msgstr "Default line format"
 
 #: src/components/lists/section-block.tsx:121
-#: src/pages/entity-page.tsx:508
+#: src/pages/entity-page.tsx:551
 #: src/pages/list-detail-page.tsx:394
 #: src/pages/smart-list-page.tsx:297
 #: src/pages/smart-list-page.tsx:409
@@ -929,17 +933,17 @@ msgstr "Disable"
 
 #: src/pages/entity-create-page.tsx:320
 #: src/pages/entity-edit-page.tsx:321
-#: src/pages/settings-page.tsx:187
-#: src/pages/settings-page.tsx:232
+#: src/pages/settings-page.tsx:183
+#: src/pages/settings-page.tsx:228
 msgid "Discard"
 msgstr "Discard"
 
-#: src/components/settings/vault-switcher.tsx:241
+#: src/hooks/use-vault-actions.tsx:71
 msgid "Discard and switch"
 msgstr "Discard and switch"
 
-#: src/components/settings/vault-switcher.tsx:222
-#: src/pages/settings-page.tsx:208
+#: src/hooks/use-vault-actions.tsx:52
+#: src/pages/settings-page.tsx:204
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
@@ -960,11 +964,11 @@ msgstr "does not link to"
 #: src/components/lists/add-items-dialog.tsx:120
 #: src/components/settings/settings-dialogs.tsx:514
 #: src/components/settings/settings-dialogs.tsx:550
-#: src/pages/entity-page.tsx:680
+#: src/pages/entity-page.tsx:724
 msgid "Done"
 msgstr "Done"
 
-#: src/pages/entity-page.tsx:498
+#: src/pages/entity-page.tsx:539
 msgid "Download cover"
 msgstr "Download cover"
 
@@ -1011,7 +1015,7 @@ msgstr "Duplicate Filenames"
 msgid "Duplicate type"
 msgstr "Duplicate type"
 
-#: src/pages/entity-page.tsx:384
+#: src/pages/entity-page.tsx:389
 #: src/pages/list-detail-page.tsx:593
 msgid "Edit"
 msgstr "Edit"
@@ -1091,7 +1095,7 @@ msgid "Entity name"
 msgstr "Entity name"
 
 #: src/pages/entity-edit-page.tsx:273
-#: src/pages/entity-page.tsx:437
+#: src/pages/entity-page.tsx:442
 msgid "Entity not found"
 msgstr "Entity not found"
 
@@ -1203,9 +1207,13 @@ msgstr "File"
 #: src/pages/entity-create-page.tsx:233
 #: src/pages/entity-create-page.tsx:241
 #: src/pages/entity-create-page.tsx:244
-#: src/pages/entity-page.tsx:309
+#: src/pages/entity-page.tsx:314
 msgid "File name"
 msgstr "File name"
+
+#: src/pages/entity-page.tsx:480
+msgid "File path copied"
+msgstr "File path copied"
 
 #: src/components/entities/edit-conflict-review.tsx:97
 #: src/components/settings/settings-entity-type.tsx:99
@@ -1245,11 +1253,11 @@ msgstr "Finish"
 msgid "Finish saving"
 msgstr "Finish saving"
 
-#: src/pages/settings-page.tsx:117
+#: src/pages/settings-page.tsx:113
 msgid "Form"
 msgstr "Form"
 
-#: src/components/layout/app-frame.tsx:222
+#: src/components/layout/app-frame.tsx:223
 msgid "Forward"
 msgstr "Forward"
 
@@ -1265,11 +1273,11 @@ msgstr "Frontmatter key"
 msgid "Game"
 msgstr "Game"
 
-#: src/components/layout/app-frame.tsx:210
+#: src/components/layout/app-frame.tsx:211
 msgid "Go back"
 msgstr "Go back"
 
-#: src/components/layout/app-frame.tsx:221
+#: src/components/layout/app-frame.tsx:222
 msgid "Go forward"
 msgstr "Go forward"
 
@@ -1310,7 +1318,7 @@ msgstr "has none of"
 msgid "Heading"
 msgstr "Heading"
 
-#: src/components/layout/app-frame.tsx:180
+#: src/components/layout/app-frame.tsx:181
 msgid "Hide sidebar"
 msgstr "Hide sidebar"
 
@@ -1496,11 +1504,11 @@ msgid "JSON value"
 msgstr "JSON value"
 
 #: src/components/entities/edit-conflict-review.tsx:112
-#: src/components/settings/vault-switcher.tsx:230
+#: src/hooks/use-vault-actions.tsx:60
 #: src/pages/entity-create-page.tsx:310
 #: src/pages/entity-edit-page.tsx:311
-#: src/pages/settings-page.tsx:178
-#: src/pages/settings-page.tsx:224
+#: src/pages/settings-page.tsx:174
+#: src/pages/settings-page.tsx:220
 msgid "Keep editing"
 msgstr "Keep editing"
 
@@ -1605,7 +1613,7 @@ msgstr "Links to"
 msgid "List"
 msgstr "List"
 
-#: src/pages/entity-page.tsx:597
+#: src/pages/entity-page.tsx:641
 #: src/pages/lists-page.tsx:148
 msgid "List created"
 msgstr "List created"
@@ -1642,7 +1650,7 @@ msgstr "Loading activity…"
 msgid "Loading built-in types…"
 msgstr "Loading built-in types…"
 
-#: src/components/layout/app-frame.tsx:587
+#: src/components/layout/app-frame.tsx:591
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
@@ -1657,15 +1665,15 @@ msgstr "Loading type…"
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
 #: src/pages/entity-edit-page.tsx:257
-#: src/pages/entity-page.tsx:300
-#: src/pages/entity-page.tsx:616
+#: src/pages/entity-page.tsx:305
+#: src/pages/entity-page.tsx:660
 #: src/pages/home-page.tsx:58
 #: src/pages/import-wizard-page.tsx:218
 #: src/pages/list-detail-page.tsx:365
 #: src/pages/lists-page.tsx:54
-#: src/pages/onboarding-page.tsx:84
+#: src/pages/onboarding-page.tsx:87
 #: src/pages/review-page.tsx:148
-#: src/pages/settings-page.tsx:139
+#: src/pages/settings-page.tsx:135
 #: src/pages/smart-list-page.tsx:226
 #: src/pages/statistics-page.tsx:45
 msgid "Loading…"
@@ -1693,10 +1701,15 @@ msgstr "Log to daily note"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 
-#: src/pages/entity-page.tsx:489
-#: src/pages/entity-page.tsx:610
+#: src/pages/entity-page.tsx:530
+#: src/pages/entity-page.tsx:654
 msgid "Manage lists"
 msgstr "Manage lists"
+
+#: src/components/desktop/vault-picker.tsx:28
+#: src/components/desktop/vault-picker.tsx:74
+msgid "Manage vaults…"
+msgstr "Manage vaults…"
 
 #: src/components/settings/settings-field-form.tsx:364
 msgid "Map each option to a status"
@@ -1723,7 +1736,7 @@ msgstr "Mark watched progress"
 msgid "Markdown body sections"
 msgstr "Markdown body sections"
 
-#: src/pages/entity-page.tsx:493
+#: src/pages/entity-page.tsx:534
 msgid "Match"
 msgstr "Match"
 
@@ -1765,16 +1778,16 @@ msgstr "Move {label} up"
 msgid "Move list to trash?"
 msgstr "Move list to trash?"
 
-#: src/pages/entity-page.tsx:537
+#: src/pages/entity-page.tsx:581
 #: src/pages/list-detail-page.tsx:552
 msgid "Move to Trash"
 msgstr "Move to Trash"
 
-#: src/pages/entity-page.tsx:523
+#: src/pages/entity-page.tsx:567
 msgid "Move to trash?"
 msgstr "Move to trash?"
 
-#: src/pages/entity-page.tsx:224
+#: src/pages/entity-page.tsx:229
 msgid "Moved to trash"
 msgstr "Moved to trash"
 
@@ -1786,7 +1799,7 @@ msgstr "Music"
 msgid "My edits"
 msgstr "My edits"
 
-#: src/components/settings/vault-switcher.tsx:194
+#: src/components/desktop/vault-manager.tsx:121
 msgid "My Vault"
 msgstr "My Vault"
 
@@ -1796,7 +1809,7 @@ msgstr "My Vault"
 msgid "Name"
 msgstr "Name"
 
-#: src/components/layout/app-frame.tsx:478
+#: src/components/layout/app-frame.tsx:480
 msgid "Navigation"
 msgstr "Navigation"
 
@@ -1808,7 +1821,7 @@ msgstr "Needs review"
 msgid "New field"
 msgstr "New field"
 
-#: src/pages/entity-page.tsx:657
+#: src/pages/entity-page.tsx:701
 #: src/pages/lists-page.tsx:48
 #: src/pages/lists-page.tsx:168
 msgid "New list"
@@ -1901,7 +1914,7 @@ msgstr "No external matches"
 msgid "No fields configured."
 msgstr "No fields configured."
 
-#: src/components/settings/vault-switcher.tsx:179
+#: src/components/desktop/vault-manager.tsx:106
 msgid "No folder selected"
 msgstr "No folder selected"
 
@@ -1922,7 +1935,7 @@ msgstr "No items yet. Use “Add items” to put entities on this list, or “Ad
 msgid "No limit"
 msgstr "No limit"
 
-#: src/pages/entity-page.tsx:620
+#: src/pages/entity-page.tsx:664
 msgid "No lists yet. Create one below."
 msgstr "No lists yet. Create one below."
 
@@ -2000,7 +2013,7 @@ msgstr "No value returned"
 msgid "No values."
 msgstr "No values."
 
-#: src/components/settings/vault-switcher.tsx:158
+#: src/components/desktop/vault-manager.tsx:85
 msgid "No vaults yet."
 msgstr "No vaults yet."
 
@@ -2102,7 +2115,7 @@ msgstr "Only image files can be uploaded."
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "Only public profiles are supported. Nothing is written until you review the plan."
 
-#: src/components/settings/vault-switcher.tsx:139
+#: src/components/desktop/vault-manager.tsx:64
 #: src/pages/quick-capture-page.tsx:386
 msgid "Open"
 msgstr "Open"
@@ -2112,19 +2125,23 @@ msgstr "Open"
 msgid "Open {0}"
 msgstr "Open {0}"
 
-#: src/components/settings/vault-switcher.tsx:166
+#: src/components/desktop/vault-manager.tsx:93
 msgid "Open existing vault"
 msgstr "Open existing vault"
 
-#: src/components/settings/vault-switcher.tsx:170
+#: src/components/desktop/vault-manager.tsx:97
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/components/layout/app-frame.tsx:192
+#: src/pages/entity-page.tsx:513
+msgid "Open in default editor"
+msgstr "Open in default editor"
+
+#: src/components/layout/app-frame.tsx:193
 msgid "Open navigation"
 msgstr "Open navigation"
 
-#: src/components/settings/vault-switcher.tsx:116
+#: src/components/desktop/vault-manager.tsx:45
 msgid "Open or create a vault to get started."
 msgstr "Open or create a vault to get started."
 
@@ -2165,7 +2182,7 @@ msgstr "Page not found"
 msgid "Pagination"
 msgstr "Pagination"
 
-#: src/components/settings/vault-switcher.tsx:177
+#: src/components/desktop/vault-manager.tsx:104
 msgid "Parent folder"
 msgstr "Parent folder"
 
@@ -2252,7 +2269,7 @@ msgid "Public profile"
 msgstr "Public profile"
 
 #: src/components/entities/entity-ratings.tsx:73
-#: src/pages/entity-page.tsx:411
+#: src/pages/entity-page.tsx:416
 msgid "Rate"
 msgstr "Rate"
 
@@ -2324,8 +2341,8 @@ msgstr "Reload latest version"
 
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
+#: src/components/desktop/vault-manager.tsx:70
 #: src/components/entities/metadata-editor.tsx:254
-#: src/components/settings/vault-switcher.tsx:146
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
@@ -2386,8 +2403,8 @@ msgstr "Removed"
 
 #: src/components/lists/section-block.tsx:117
 #: src/components/rename-dialog.tsx:94
-#: src/pages/entity-page.tsx:308
-#: src/pages/entity-page.tsx:485
+#: src/pages/entity-page.tsx:313
+#: src/pages/entity-page.tsx:526
 #: src/pages/list-detail-page.tsx:384
 #: src/pages/smart-list-page.tsx:287
 msgid "Rename"
@@ -2401,11 +2418,11 @@ msgstr "Rename list"
 msgid "Rename smart list"
 msgstr "Rename smart list"
 
-#: src/pages/entity-page.tsx:163
+#: src/pages/entity-page.tsx:168
 msgid "Renamed"
 msgstr "Renamed"
 
-#: src/pages/entity-page.tsx:162
+#: src/pages/entity-page.tsx:167
 msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "Renamed — updated {updated, plural, one {# link} other {# links}}"
 
@@ -2432,8 +2449,8 @@ msgstr "Required — enter a file name here or fill in the title below."
 msgid "Required — enter a file name."
 msgstr "Required — enter a file name."
 
-#: src/components/layout/app-frame.tsx:351
 #: src/components/layout/app-frame.tsx:352
+#: src/components/layout/app-frame.tsx:353
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "Rescan vault"
@@ -2451,6 +2468,18 @@ msgstr "Results"
 #: src/components/vault-change-sync.tsx:36
 msgid "Retry"
 msgstr "Retry"
+
+#: src/pages/entity-page.tsx:506
+msgid "Reveal in Explorer"
+msgstr "Reveal in Explorer"
+
+#: src/pages/entity-page.tsx:508
+msgid "Reveal in file manager"
+msgstr "Reveal in file manager"
+
+#: src/pages/entity-page.tsx:504
+msgid "Reveal in Finder"
+msgstr "Reveal in Finder"
 
 #: src/components/layout/nav-destinations.ts:45
 msgid "Review"
@@ -2480,7 +2509,7 @@ msgstr "Save"
 
 #. Saves the entity draft and then continues the navigation the user requested
 #: src/pages/entity-edit-page.tsx:331
-#: src/pages/settings-page.tsx:193
+#: src/pages/settings-page.tsx:189
 msgid "Save and leave"
 msgstr "Save and leave"
 
@@ -2497,7 +2526,7 @@ msgstr "Save credentials"
 #. Explains the options for leaving an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:305
 #: src/pages/entity-edit-page.tsx:303
-#: src/pages/settings-page.tsx:172
+#: src/pages/settings-page.tsx:168
 msgid "Save your edits before leaving, or discard them."
 msgstr "Save your edits before leaving, or discard them."
 
@@ -2521,7 +2550,7 @@ msgstr "Saves the current type, criteria, and sort as a smart list. Your search 
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/entity-edit-page.tsx:329
 #: src/pages/list-detail-page.tsx:406
-#: src/pages/settings-page.tsx:193
+#: src/pages/settings-page.tsx:189
 #: src/pages/smart-list-page.tsx:263
 msgid "Saving…"
 msgstr "Saving…"
@@ -2543,7 +2572,7 @@ msgstr "Scope"
 msgid "Search"
 msgstr "Search"
 
-#: src/components/layout/app-frame.tsx:91
+#: src/components/layout/app-frame.tsx:92
 msgid "Search {activeTypeLabel}"
 msgstr "Search {activeTypeLabel}"
 
@@ -2564,8 +2593,8 @@ msgstr "Search entities…"
 msgid "Search for a match"
 msgstr "Search for a match"
 
-#: src/components/layout/app-frame.tsx:92
-#: src/components/layout/app-frame.tsx:241
+#: src/components/layout/app-frame.tsx:93
+#: src/components/layout/app-frame.tsx:242
 #: src/components/layout/header-search.tsx:150
 msgid "Search library"
 msgstr "Search library"
@@ -2647,7 +2676,7 @@ msgstr "Select folder"
 msgid "Select group"
 msgstr "Select group"
 
-#: src/components/settings/vault-switcher.tsx:184
+#: src/components/desktop/vault-manager.tsx:111
 msgid "Select parent folder"
 msgstr "Select parent folder"
 
@@ -2683,7 +2712,7 @@ msgstr "Settings saved"
 msgid "Show all"
 msgstr "Show all"
 
-#: src/components/layout/app-frame.tsx:180
+#: src/components/layout/app-frame.tsx:181
 msgid "Show sidebar"
 msgstr "Show sidebar"
 
@@ -2726,11 +2755,11 @@ msgstr "Smart list renamed"
 msgid "Smart list saved"
 msgstr "Smart list saved"
 
-#: src/pages/entity-page.tsx:210
+#: src/pages/entity-page.tsx:215
 msgid "Some images could not be downloaded"
 msgstr "Some images could not be downloaded"
 
-#: src/pages/entity-page.tsx:209
+#: src/pages/entity-page.tsx:214
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "Some images could not be downloaded: {reasons}"
 
@@ -2739,8 +2768,6 @@ msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "Some of this file's syntax isn't supported here and is ignored:"
 
 #: src/components/error-boundary.tsx:55
-#: src/components/settings/vault-switcher.tsx:64
-#: src/components/settings/vault-switcher.tsx:92
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
@@ -2828,15 +2855,12 @@ msgstr "Stored in your system keychain. Providers listed here require credential
 msgid "Summary"
 msgstr "Summary"
 
-#: src/components/settings/vault-switcher.tsx:117
-msgid "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
-msgstr "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
+#. placeholder {0}: active.name
+#: src/components/desktop/vault-picker.tsx:48
+msgid "Switch vault: {0}"
+msgstr "Switch vault: {0}"
 
-#: src/components/settings/vault-switcher.tsx:137
-msgid "Switched vault"
-msgstr "Switched vault"
-
-#: src/components/settings/vault-switcher.tsx:225
+#: src/hooks/use-vault-actions.tsx:55
 msgid "Switching vaults will discard your unsaved edits."
 msgstr "Switching vaults will discard your unsaved edits."
 
@@ -2944,7 +2968,7 @@ msgid "This month"
 msgstr "This month"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-page.tsx:526
+#: src/pages/entity-page.tsx:570
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "This moves {0} to the Trash. You can restore it later if you need it."
 
@@ -3082,7 +3106,7 @@ msgstr "Unresolved Relations"
 #. Title of the confirmation dialog when navigating away from an entity editor with an unsaved draft
 #: src/pages/entity-create-page.tsx:302
 #: src/pages/entity-edit-page.tsx:298
-#: src/pages/settings-page.tsx:169
+#: src/pages/settings-page.tsx:165
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -3153,16 +3177,11 @@ msgstr "Values"
 msgid "Vault"
 msgstr "Vault"
 
-#: src/components/settings/vault-switcher.tsx:100
-msgid "Vault added"
-msgstr "Vault added"
-
-#: src/components/settings/vault-switcher.tsx:204
-#: src/pages/onboarding-page.tsx:202
+#: src/pages/onboarding-page.tsx:205
 msgid "Vault created"
 msgstr "Vault created"
 
-#: src/components/settings/vault-switcher.tsx:191
+#: src/components/desktop/vault-manager.tsx:118
 msgid "Vault name"
 msgstr "Vault name"
 
@@ -3170,15 +3189,14 @@ msgstr "Vault name"
 msgid "Vault path or URL"
 msgstr "Vault path or URL"
 
-#: src/components/settings/vault-switcher.tsx:149
-msgid "Vault removed"
-msgstr "Vault removed"
-
 #: src/hooks/use-rescan-library.ts:23
 msgid "Vault rescanned"
 msgstr "Vault rescanned"
 
-#: src/components/settings/vault-switcher.tsx:113
+#: src/components/desktop/vault-manager.tsx:45
+#: src/components/desktop/vault-picker.tsx:48
+#: src/components/desktop/vault-picker.tsx:51
+#: src/pages/vault-manager-page.tsx:11
 msgid "Vaults"
 msgstr "Vaults"
 
@@ -3186,7 +3204,7 @@ msgstr "Vaults"
 msgid "Watching now"
 msgstr "Watching now"
 
-#: src/pages/entity-page.tsx:663
+#: src/pages/entity-page.tsx:707
 #: src/pages/lists-page.tsx:202
 msgid "Watchlist"
 msgstr "Watchlist"
@@ -3196,7 +3214,7 @@ msgstr "Watchlist"
 msgid "weeks"
 msgstr "weeks"
 
-#: src/pages/onboarding-page.tsx:224
+#: src/pages/onboarding-page.tsx:227
 msgid "What do you want to track?"
 msgstr "What do you want to track?"
 
@@ -3215,7 +3233,7 @@ msgstr "Will be created as “{0}.md”, from the title."
 msgid "within the next"
 msgstr "within the next"
 
-#: src/pages/settings-page.tsx:126
+#: src/pages/settings-page.tsx:122
 msgid "YAML"
 msgstr "YAML"
 
@@ -3252,11 +3270,11 @@ msgstr "You can add a built-in type more than once. Each copy gets its own ID an
 msgid "You can still open entities already in your library."
 msgstr "You can still open entities already in your library."
 
-#: src/pages/settings-page.tsx:212
+#: src/pages/settings-page.tsx:208
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "You have unsaved changes in the form editor. Switching editors will discard them."
 
-#: src/pages/settings-page.tsx:216
+#: src/pages/settings-page.tsx:212
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "You have unsaved changes in the YAML editor. Switching editors will discard them."
 
