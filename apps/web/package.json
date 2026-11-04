@@ -35,17 +35,17 @@
     "react-day-picker": "^10.0.2",
     "react-dom": "19.3.1",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.18.4",
+    "react-router-dom": "^7.18.5",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
     "yet-another-react-lightbox": "^3.32.2",
     "zod": "^4.6.7",
-    "zustand": "^5.0.15"
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
-    "@babel/core": "^8.0.7",
+    "@babel/core": "^8.0.10",
     "@lingui/babel-plugin-lingui-macro": "^6.10.0",
     "@lingui/cli": "^6.11.0",
     "@lingui/vite-plugin": "^6.6.0",
