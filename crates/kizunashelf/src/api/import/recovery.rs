@@ -1,8 +1,7 @@
 //! Host-private, durable import checkpoints. Only native hosts may configure
 //! this real directory; all vault reads and writes still use the VFS.
-use super::{ImportJobRecord, ItemOutcome};
+use super::{ImportJobRecord, ImportState, ItemOutcome};
 use crate::api::{error::ApiError, state::ApiOptions};
-use crate::contract::ImportJobStatus;
 use crate::library::file_revision;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -112,11 +111,16 @@ impl ImportRecovery {
                     "Invalid created checkpoint"
                 );
             }
-            if matches!(
-                record.job.status,
-                ImportJobStatus::Queued | ImportJobStatus::Fetching | ImportJobStatus::Committing
-            ) {
-                record.job.paused = true;
+            // A worker is process-local, so anything that was executing when the
+            // process stopped is parked at its durable boundary. The derived state
+            // knows the phase (enrichment is visible through `episodes_total`).
+            let state = record.state();
+            if let Some(phase) = state.resumable_phase() {
+                record.set_state(ImportState::Paused(phase));
+            } else {
+                // Normalize a resting/terminal journal that predates the explicit
+                // state: no stale `paused` bit on a plan or a finished job.
+                record.set_state(state);
             }
             record.running = false;
             jobs.insert(record.job.id.clone(), record);

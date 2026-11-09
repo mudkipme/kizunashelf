@@ -1,6 +1,6 @@
 //! Durable review snapshots owned and interpreted only by the core. Hosts keep
 //! the opaque envelope in private storage alongside their selection UI state.
-use super::{job::PlannedItem, ImportJobPath, ImportJobRecord};
+use super::{job::PlannedItem, ImportJobPath, ImportJobRecord, ImportState};
 use crate::api::{
     error::{ApiError, ApiResult},
     state::{require_content_writes, AppState},
@@ -52,7 +52,7 @@ pub(crate) async fn export_import_plan(
     let record = jobs
         .get(&path.id)
         .ok_or_else(|| ApiError::not_found("Import job not found"))?;
-    if record.job.status != ImportJobStatus::Planned {
+    if record.state() != ImportState::Planned {
         return Err(ApiError::conflict(
             "Only an uncommitted review can be saved",
         ));
@@ -100,6 +100,7 @@ pub(crate) async fn restore_import_plan(
         return Err(ApiError::bad_request("The saved import has no review plan"));
     };
     if snapshot.job.status != ImportJobStatus::Planned
+        || snapshot.job.paused
         || snapshot.job.created != 0
         || snapshot.job.total as usize != snapshot.items.len()
         || plan.items.len() != snapshot.items.len()
@@ -148,12 +149,7 @@ pub(crate) async fn restore_import_plan(
             "This import has already changed. Reload its current state.",
         ));
     }
-    if jobs.values().any(|r| {
-        matches!(
-            r.job.status,
-            ImportJobStatus::Queued | ImportJobStatus::Fetching | ImportJobStatus::Committing
-        )
-    }) {
+    if jobs.values().any(|record| record.state().is_active()) {
         return Err(ApiError::conflict("Another import job is running"));
     }
     let job = snapshot.job;

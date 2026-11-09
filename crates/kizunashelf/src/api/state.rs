@@ -1,8 +1,6 @@
 use super::error::ApiError;
-use super::import::ImportJobRecord;
-use crate::contract::{
-    AnalyticsResponse, AssetDownloadJob, CleanupQueuesResponse, ImportJob, ImportJobStatus,
-};
+use super::import::{ImportJobRecord, ImportState};
+use crate::contract::{AnalyticsResponse, AssetDownloadJob, CleanupQueuesResponse, ImportJob};
 use crate::library::{
     compute_listing_fingerprint, load_vault_config_via_vfs, read_library, read_library_cached,
     read_raw_vault_config_via_vfs, IndexCacheContext, MemoryIndexCache,
@@ -565,14 +563,7 @@ impl AppState {
         if jobs.len() > MAX_RETAINED_JOBS {
             let mut finished: Vec<(String, String)> = jobs
                 .values()
-                .filter(|record| {
-                    matches!(
-                        record.job.status,
-                        ImportJobStatus::Completed
-                            | ImportJobStatus::Cancelled
-                            | ImportJobStatus::Failed
-                    )
-                })
+                .filter(|record| record.state().is_terminal())
                 .map(|record| (record.job.id.clone(), record.job.started_at.clone()))
                 .collect();
             finished.sort_by(|a, b| a.1.cmp(&b.1));
@@ -603,14 +594,29 @@ impl AppState {
         job_id: &str,
         update: impl FnOnce(&mut ImportJob),
     ) {
+        self.update_import_record(job_id, |record| update(&mut record.job))
+            .await;
+    }
+
+    /// Applies `update` to the whole import record, so a transition can update the
+    /// lifecycle state and its counters under one journal write.
+    pub(crate) async fn update_import_record(
+        &self,
+        job_id: &str,
+        update: impl FnOnce(&mut ImportJobRecord),
+    ) {
         let mut jobs = self.import_jobs().lock().await;
         if let Some(record) = jobs.get_mut(job_id) {
-            let previous = record.job.clone();
-            update(&mut record.job);
+            let previous = record.clone();
+            update(record);
             if let Err(error) = self.import_recovery.save(record).await {
-                record.job = previous;
+                *record = previous;
                 record.cancel.store(true, Ordering::Relaxed);
-                record.job.paused = true;
+                // Keep the phase the update was leaving behind, so a native host
+                // can resume it; a resting/terminal job has nothing to pause.
+                if let Some(phase) = record.state().resumable_phase() {
+                    record.set_state(ImportState::Paused(phase));
+                }
                 record.job.errors.push(format!(
                     "Could not save import progress: {}",
                     error.message()

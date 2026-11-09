@@ -6,7 +6,7 @@ use super::model::{
     apply_user_data, candidate_types_for, needs_detail_fetch, ImportItem, ProviderRef,
 };
 use super::sources::SourceFetchFn;
-use super::{now_iso, CreationCheckpoint, ItemOutcome};
+use super::{now_iso, CreationCheckpoint, ImportJobRecord, ImportPhase, ImportState, ItemOutcome};
 use crate::api::episodes::import_new_entity_episodes_cancellable;
 use crate::api::error::ApiError;
 use crate::api::external::{
@@ -19,8 +19,7 @@ use crate::api::mutations::{
 use crate::api::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CommitImportJobRequest, ExistingEntityRef, ImportDecisionAction, ImportInput, ImportJob,
-    ImportJobStatus, ImportPlan, ImportPlanBucket, ImportPlanItem, ImportPlanItemState,
-    ImportReviewReason,
+    ImportPlan, ImportPlanBucket, ImportPlanItem, ImportPlanItemState, ImportReviewReason,
 };
 use crate::library::{serialize_markdown_document, split_markdown_document};
 use crate::types::KizunaConfig;
@@ -52,8 +51,13 @@ pub(super) async fn run_plan_job(
     input: ImportInput,
     cancel: Arc<AtomicBool>,
 ) {
+    // A pause or cancel may have landed between insertion and this task
+    // starting. Only a still-queued job advances; otherwise the requested state
+    // is left for the cancellation/pause path below.
     state
-        .update_import_job(&job_id, |job| job.status = ImportJobStatus::Fetching)
+        .update_import_record(&job_id, |record| {
+            record.begin_plan();
+        })
         .await;
 
     let fetched = tokio::select! {
@@ -136,13 +140,14 @@ pub(super) async fn run_plan_job(
 
     let mut jobs = state.import_jobs().lock().await;
     if let Some(record) = jobs.get_mut(&job_id) {
-        // Don't resurrect a job cancelled while we were fetching.
-        if record.job.status == ImportJobStatus::Cancelled {
+        // A pause or cancel while the fetch was resolving owns the next state;
+        // don't resurrect the job as a fresh plan.
+        if record.state() != ImportState::Running(ImportPhase::Planning) {
             return;
         }
         record.items = planned;
         record.schema = Some(schema);
-        record.job.status = ImportJobStatus::Planned;
+        record.set_state(ImportState::Planned);
         record.job.total = total;
         record.job.processed = total;
         record.job.needs_review = needs_review;
@@ -151,10 +156,8 @@ pub(super) async fn run_plan_job(
             items: plan_items,
         });
         if let Err(error) = state.import_recovery().save(record).await {
-            record.job.paused = true;
-            record.cancel.store(true, Ordering::Relaxed);
-            push_error(
-                &mut record.job,
+            pause_after_save_failure(
+                record,
                 format!("Couldn't save import review: {}", error.message()),
             );
         }
@@ -616,14 +619,17 @@ pub(super) async fn run_commit_job(
         .unwrap_or_default();
     if request.options.import_episodes && !created.is_empty() && !cancel.load(Ordering::Relaxed) {
         state
-            .update_import_job(&job_id, |job| {
-                job.episodes_total = Some(created.len() as u32);
-                job.episodes_processed = Some(
+            .update_import_record(&job_id, |record| {
+                record.job.episodes_total = Some(created.len() as u32);
+                record.job.episodes_processed = Some(
                     created
                         .iter()
                         .filter(|(_, intent)| intent.episodes_done)
                         .count() as u32,
                 );
+                if record.state() == ImportState::Running(ImportPhase::Creating) {
+                    record.set_state(ImportState::Running(ImportPhase::Enriching));
+                }
             })
             .await;
         for (position, intent) in &created {
@@ -703,10 +709,8 @@ pub(super) async fn run_commit_job(
                         .count() as u32,
                 );
                 if let Err(error) = state.import_recovery().save(record).await {
-                    record.job.paused = true;
-                    record.cancel.store(true, Ordering::Relaxed);
-                    push_error(
-                        &mut record.job,
+                    pause_after_save_failure(
+                        record,
                         format!("Couldn't save episode checkpoint: {}", error.message()),
                     );
                     return;
@@ -718,16 +722,16 @@ pub(super) async fn run_commit_job(
     state.invalidate_cache().await;
     let cancelled = cancel.load(Ordering::Relaxed);
     state
-        .update_import_job(&job_id, |job| {
-            if job.paused {
+        .update_import_record(&job_id, |record| {
+            if record.state().is_paused() || record.state().is_terminal() {
                 return;
             }
-            job.status = if cancelled {
-                ImportJobStatus::Cancelled
+            record.set_state(if cancelled {
+                ImportState::Cancelled
             } else {
-                ImportJobStatus::Completed
-            };
-            job.finished_at = Some(now_iso());
+                ImportState::Completed
+            });
+            record.job.finished_at = Some(now_iso());
         })
         .await;
 }
@@ -767,10 +771,8 @@ async fn checkpoint_outcome(
         }
     }
     if let Err(error) = state.import_recovery().save(record).await {
-        record.job.paused = true;
-        record.cancel.store(true, Ordering::Relaxed);
-        push_error(
-            &mut record.job,
+        pause_after_save_failure(
+            record,
             format!("Couldn't save import checkpoint: {}", error.message()),
         );
         return false;
@@ -790,15 +792,24 @@ async fn save_creation_intent(
     };
     record.creations.insert(position, intent);
     if let Err(error) = state.import_recovery().save(record).await {
-        record.job.paused = true;
-        record.cancel.store(true, Ordering::Relaxed);
-        push_error(
-            &mut record.job,
+        pause_after_save_failure(
+            record,
             format!("Couldn't save import checkpoint: {}", error.message()),
         );
         return false;
     }
     true
+}
+
+/// A journal write failed: stop before more work diverges from durable state.
+/// Native hosts can resume from the last checkpoint; an in-memory registry
+/// cannot, so its callers surface the failure as terminal instead.
+fn pause_after_save_failure(record: &mut ImportJobRecord, message: String) {
+    if let Some(phase) = record.state().resumable_phase() {
+        record.set_state(ImportState::Paused(phase));
+    }
+    record.cancel.store(true, Ordering::Relaxed);
+    push_error(&mut record.job, message);
 }
 
 /// Native hosts can resume pending enrichment. The web/desktop job registry
@@ -819,13 +830,17 @@ async fn record_episode_error(state: &AppState, id: &str, message: String) -> bo
 async fn pause_with_error(state: &AppState, id: &str, message: String) {
     let mut jobs = state.import_jobs().lock().await;
     if let Some(record) = jobs.get_mut(id) {
-        if record.job.status == ImportJobStatus::Cancelled || record.job.paused {
+        let state_now = record.state();
+        let Some(phase) = state_now.resumable_phase() else {
+            return;
+        };
+        if state_now.is_paused() || state_now.is_terminal() {
             return;
         }
         if state.options.host_asset_ingest {
-            record.job.paused = true;
+            record.set_state(ImportState::Paused(phase));
         } else {
-            record.job.status = ImportJobStatus::Failed;
+            record.set_state(ImportState::Failed);
             record.job.finished_at = Some(now_iso());
         }
         record.cancel.store(true, Ordering::Relaxed);
@@ -908,13 +923,13 @@ async fn recover_creation(
 async fn fail_plan(state: &AppState, job_id: &str, message: &str) {
     let message = message.to_string();
     state
-        .update_import_job(job_id, |job| {
-            if job.paused {
+        .update_import_record(job_id, |record| {
+            if record.state().is_paused() || record.state().is_terminal() {
                 return;
             }
-            push_error(job, message);
-            job.status = ImportJobStatus::Failed;
-            job.finished_at = Some(now_iso());
+            push_error(&mut record.job, message);
+            record.set_state(ImportState::Failed);
+            record.job.finished_at = Some(now_iso());
         })
         .await;
 }
@@ -922,29 +937,29 @@ async fn fail_plan(state: &AppState, job_id: &str, message: &str) {
 async fn fail_commit(state: &AppState, job_id: &str, message: &str, cancelled: bool) {
     let message = message.to_string();
     state
-        .update_import_job(job_id, |job| {
-            if job.paused {
+        .update_import_record(job_id, |record| {
+            if record.state().is_paused() || record.state().is_terminal() {
                 return;
             }
-            push_error(job, message);
-            job.status = if cancelled {
-                ImportJobStatus::Cancelled
+            push_error(&mut record.job, message);
+            record.set_state(if cancelled {
+                ImportState::Cancelled
             } else {
-                ImportJobStatus::Failed
-            };
-            job.finished_at = Some(now_iso());
+                ImportState::Failed
+            });
+            record.job.finished_at = Some(now_iso());
         })
         .await;
 }
 
 async fn finish_cancelled(state: &AppState, job_id: &str) {
     state
-        .update_import_job(job_id, |job| {
-            if job.paused {
+        .update_import_record(job_id, |record| {
+            if record.state().is_paused() || record.state().is_terminal() {
                 return;
             }
-            job.status = ImportJobStatus::Cancelled;
-            job.finished_at = Some(now_iso());
+            record.set_state(ImportState::Cancelled);
+            record.job.finished_at = Some(now_iso());
         })
         .await;
 }
@@ -960,7 +975,7 @@ mod tests {
     use super::*;
     use crate::api::import::{create_import_job, ImportJobRecord};
     use crate::api::ApiOptions;
-    use crate::contract::CreateImportJobRequest;
+    use crate::contract::{CreateImportJobRequest, ImportJobStatus};
     use crate::secrets::NativeSecretStore;
     use crate::types::AppConfig;
     use crate::vfs::{InMemoryVfs, Vfs};
@@ -1184,6 +1199,32 @@ mod tests {
         })
         .await
         .unwrap()
+    }
+
+    #[tokio::test]
+    async fn resumes_a_paused_plan_through_planning_not_commit() {
+        let (state, fs, id, _, _) = fixture().await;
+        let dir = tempfile::tempdir().unwrap();
+        let durable = durable_state(fs.clone(), dir.path(), "recovery-vault");
+        let mut record = state.import_jobs().lock().await[&id].clone();
+        record.running = false;
+        record.set_state(ImportState::Paused(ImportPhase::Planning));
+        durable
+            .import_recovery()
+            .save(&record)
+            .await
+            .unwrap_or_else(|error| panic!("{}", error.message()));
+        drop(durable);
+
+        let reloaded = durable_state(fs, dir.path(), "recovery-vault");
+        assert_eq!(
+            reloaded.import_jobs().lock().await[&id].state(),
+            ImportState::Paused(ImportPhase::Planning)
+        );
+        let job = resume_and_wait(&reloaded, &id).await;
+        assert_eq!(job.status, ImportJobStatus::Planned);
+        assert!(!job.paused);
+        assert_eq!(job.total, 1);
     }
 
     #[tokio::test]
