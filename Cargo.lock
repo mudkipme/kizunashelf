@@ -2634,7 +2634,7 @@ dependencies = [
 
 [[package]]
 name = "kizunashelf"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "aide",
  "anyhow",
@@ -2672,7 +2672,7 @@ dependencies = [
 
 [[package]]
 name = "kizunashelf-desktop"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "anyhow",
  "axum",
@@ -2692,7 +2692,7 @@ dependencies = [
 
 [[package]]
 name = "kizunashelf-ffi"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "anyhow",
  "async-trait",
