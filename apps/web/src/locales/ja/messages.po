@@ -212,7 +212,7 @@ msgstr "{monthLabel}: {0} — カレンダーで開く"
 msgid "{start}–{end} of {total}"
 msgstr "{total} 件中 {start}–{end} 件"
 
-#: src/pages/import-wizard-page.tsx:279
+#: src/pages/import-wizard-page.tsx:281
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {# 件のアイテムをインポート}}"
 
@@ -602,8 +602,8 @@ msgstr "カレンダー"
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:209
 #: src/pages/entity-page.tsx:578
-#: src/pages/import-wizard-page.tsx:254
-#: src/pages/import-wizard-page.tsx:295
+#: src/pages/import-wizard-page.tsx:256
+#: src/pages/import-wizard-page.tsx:297
 #: src/pages/list-detail-page.tsx:543
 #: src/pages/lists-page.tsx:233
 #: src/pages/smart-list-page.tsx:254
@@ -1185,7 +1185,7 @@ msgid "Fetching episodes…"
 msgstr "エピソードを取得中…"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:246
+#: src/pages/import-wizard-page.tsx:248
 msgid "Fetching your library from {0}…"
 msgstr "{0} からライブラリを取得しています…"
 
@@ -1289,7 +1289,7 @@ msgstr ""
 msgid "Go to"
 msgstr ""
 
-#: src/pages/import-wizard-page.tsx:300
+#: src/pages/import-wizard-page.tsx:302
 msgid "Go to library"
 msgstr "ライブラリへ移動"
 
@@ -1367,7 +1367,7 @@ msgstr "インポート（新規 {0} 件 · 更新 {already} 件）"
 msgid "Import ({incoming})"
 msgstr "インポート（{incoming}）"
 
-#: src/pages/import-wizard-page.tsx:303
+#: src/pages/import-wizard-page.tsx:305
 msgid "Import another"
 msgstr "別のものをインポート"
 
@@ -1379,7 +1379,7 @@ msgstr ""
 msgid "Import complete"
 msgstr "インポート完了"
 
-#: src/pages/import-wizard-page.tsx:205
+#: src/pages/import-wizard-page.tsx:207
 msgid "Importing creates files, so it is unavailable here."
 msgstr "インポートはファイルを作成するため、ここでは利用できません。"
 
@@ -1676,7 +1676,7 @@ msgstr "タイプを読み込み中…"
 #: src/pages/entity-page.tsx:305
 #: src/pages/entity-page.tsx:660
 #: src/pages/home-page.tsx:58
-#: src/pages/import-wizard-page.tsx:233
+#: src/pages/import-wizard-page.tsx:235
 #: src/pages/list-detail-page.tsx:365
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:87
@@ -2801,9 +2801,9 @@ msgstr "ソース"
 msgid "Start"
 msgstr "開始"
 
-#: src/pages/import-wizard-page.tsx:197
-#: src/pages/import-wizard-page.tsx:228
-#: src/pages/import-wizard-page.tsx:241
+#: src/pages/import-wizard-page.tsx:199
+#: src/pages/import-wizard-page.tsx:230
+#: src/pages/import-wizard-page.tsx:243
 msgid "Start over"
 msgstr "最初からやり直す"
 
@@ -2934,7 +2934,7 @@ msgstr "項目は作成されました。選択した画像と編集内容はこ
 msgid "The file is read in your browser. Nothing is written until you review the plan."
 msgstr "ファイルはブラウザ内で読み込まれます。プランを確認するまで何も書き込まれません。"
 
-#: src/pages/import-wizard-page.tsx:238
+#: src/pages/import-wizard-page.tsx:240
 msgid "The import failed."
 msgstr "インポートに失敗しました。"
 

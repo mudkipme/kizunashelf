@@ -212,7 +212,7 @@ msgstr "{monthLabel}：{0} — 在日曆中開啟"
 msgid "{start}–{end} of {total}"
 msgstr "共 {total} 項，第 {start}–{end} 項"
 
-#: src/pages/import-wizard-page.tsx:279
+#: src/pages/import-wizard-page.tsx:281
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {匯入 # 個項目}}"
 
@@ -602,8 +602,8 @@ msgstr "日曆"
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:209
 #: src/pages/entity-page.tsx:578
-#: src/pages/import-wizard-page.tsx:254
-#: src/pages/import-wizard-page.tsx:295
+#: src/pages/import-wizard-page.tsx:256
+#: src/pages/import-wizard-page.tsx:297
 #: src/pages/list-detail-page.tsx:543
 #: src/pages/lists-page.tsx:233
 #: src/pages/smart-list-page.tsx:254
@@ -1185,7 +1185,7 @@ msgid "Fetching episodes…"
 msgstr "正在取得劇集…"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:246
+#: src/pages/import-wizard-page.tsx:248
 msgid "Fetching your library from {0}…"
 msgstr "正在從 {0} 擷取你的庫…"
 
@@ -1289,7 +1289,7 @@ msgstr ""
 msgid "Go to"
 msgstr ""
 
-#: src/pages/import-wizard-page.tsx:300
+#: src/pages/import-wizard-page.tsx:302
 msgid "Go to library"
 msgstr "前往庫"
 
@@ -1367,7 +1367,7 @@ msgstr "匯入（{0} 新增 · {already} 更新）"
 msgid "Import ({incoming})"
 msgstr "匯入（{incoming}）"
 
-#: src/pages/import-wizard-page.tsx:303
+#: src/pages/import-wizard-page.tsx:305
 msgid "Import another"
 msgstr "再匯入一個"
 
@@ -1379,7 +1379,7 @@ msgstr ""
 msgid "Import complete"
 msgstr "匯入完成"
 
-#: src/pages/import-wizard-page.tsx:205
+#: src/pages/import-wizard-page.tsx:207
 msgid "Importing creates files, so it is unavailable here."
 msgstr "匯入會建立檔案，因此在此無法使用。"
 
@@ -1676,7 +1676,7 @@ msgstr "正在載入類型…"
 #: src/pages/entity-page.tsx:305
 #: src/pages/entity-page.tsx:660
 #: src/pages/home-page.tsx:58
-#: src/pages/import-wizard-page.tsx:233
+#: src/pages/import-wizard-page.tsx:235
 #: src/pages/list-detail-page.tsx:365
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:87
@@ -2801,9 +2801,9 @@ msgstr "來源"
 msgid "Start"
 msgstr "開始"
 
-#: src/pages/import-wizard-page.tsx:197
-#: src/pages/import-wizard-page.tsx:228
-#: src/pages/import-wizard-page.tsx:241
+#: src/pages/import-wizard-page.tsx:199
+#: src/pages/import-wizard-page.tsx:230
+#: src/pages/import-wizard-page.tsx:243
 msgid "Start over"
 msgstr "重新開始"
 
@@ -2934,7 +2934,7 @@ msgstr "項目已建立。所選圖片與編輯內容仍保留在此處，請重
 msgid "The file is read in your browser. Nothing is written until you review the plan."
 msgstr "檔案會在瀏覽器中讀取。在您檢查匯入計畫之前，不會寫入任何內容。"
 
-#: src/pages/import-wizard-page.tsx:238
+#: src/pages/import-wizard-page.tsx:240
 msgid "The import failed."
 msgstr "匯入失敗。"
 

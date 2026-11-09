@@ -212,7 +212,7 @@ msgstr "{monthLabel}: {0} — open in calendar"
 msgid "{start}–{end} of {total}"
 msgstr "{start}–{end} of {total}"
 
-#: src/pages/import-wizard-page.tsx:279
+#: src/pages/import-wizard-page.tsx:281
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
 
@@ -602,8 +602,8 @@ msgstr "Calendar"
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:209
 #: src/pages/entity-page.tsx:578
-#: src/pages/import-wizard-page.tsx:254
-#: src/pages/import-wizard-page.tsx:295
+#: src/pages/import-wizard-page.tsx:256
+#: src/pages/import-wizard-page.tsx:297
 #: src/pages/list-detail-page.tsx:543
 #: src/pages/lists-page.tsx:233
 #: src/pages/smart-list-page.tsx:254
@@ -1185,7 +1185,7 @@ msgid "Fetching episodes…"
 msgstr "Fetching episodes…"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:246
+#: src/pages/import-wizard-page.tsx:248
 msgid "Fetching your library from {0}…"
 msgstr "Fetching your library from {0}…"
 
@@ -1289,7 +1289,7 @@ msgstr "Go forward"
 msgid "Go to"
 msgstr "Go to"
 
-#: src/pages/import-wizard-page.tsx:300
+#: src/pages/import-wizard-page.tsx:302
 msgid "Go to library"
 msgstr "Go to library"
 
@@ -1367,7 +1367,7 @@ msgstr "Import ({0} new · {already} updated)"
 msgid "Import ({incoming})"
 msgstr "Import ({incoming})"
 
-#: src/pages/import-wizard-page.tsx:303
+#: src/pages/import-wizard-page.tsx:305
 msgid "Import another"
 msgstr "Import another"
 
@@ -1379,7 +1379,7 @@ msgstr "Import cancelled"
 msgid "Import complete"
 msgstr "Import complete"
 
-#: src/pages/import-wizard-page.tsx:205
+#: src/pages/import-wizard-page.tsx:207
 msgid "Importing creates files, so it is unavailable here."
 msgstr "Importing creates files, so it is unavailable here."
 
@@ -1676,7 +1676,7 @@ msgstr "Loading type…"
 #: src/pages/entity-page.tsx:305
 #: src/pages/entity-page.tsx:660
 #: src/pages/home-page.tsx:58
-#: src/pages/import-wizard-page.tsx:233
+#: src/pages/import-wizard-page.tsx:235
 #: src/pages/list-detail-page.tsx:365
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:87
@@ -2801,9 +2801,9 @@ msgstr "Source"
 msgid "Start"
 msgstr "Start"
 
-#: src/pages/import-wizard-page.tsx:197
-#: src/pages/import-wizard-page.tsx:228
-#: src/pages/import-wizard-page.tsx:241
+#: src/pages/import-wizard-page.tsx:199
+#: src/pages/import-wizard-page.tsx:230
+#: src/pages/import-wizard-page.tsx:243
 msgid "Start over"
 msgstr "Start over"
 
@@ -2934,7 +2934,7 @@ msgstr "The entry was created. Your selected images and edits are kept here. Ret
 msgid "The file is read in your browser. Nothing is written until you review the plan."
 msgstr "The file is read in your browser. Nothing is written until you review the plan."
 
-#: src/pages/import-wizard-page.tsx:238
+#: src/pages/import-wizard-page.tsx:240
 msgid "The import failed."
 msgstr "The import failed."
 
