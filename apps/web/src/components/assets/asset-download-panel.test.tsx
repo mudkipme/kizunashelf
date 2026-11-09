@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchAssetJob, startAssetJob } from "@/api/entities";
+import { fetchAssetJob, fetchAssetJobs, startAssetJob } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { queryKeys } from "@/api/queries";
 import { AssetDownloadPanel } from "@/components/assets/asset-download-panel";
@@ -43,6 +43,7 @@ function MutationButton() {
 }
 
 function cachedClient() {
+  vi.mocked(fetchAssetJobs).mockResolvedValue({ jobs: [] });
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   });
@@ -75,6 +76,30 @@ describe("entity-derived cache refresh", () => {
       .toBe(true);
     expect(client.getQueryState(queryKeys.config)?.isInvalidated).toBe(false);
     expect(client.getQueryState(queryKeys.providerCatalog)?.isInvalidated).toBe(false);
+    client.clear();
+  });
+
+  it("attaches to a batch job started elsewhere", async () => {
+    const remote: AssetDownloadJob = {
+      ...finished,
+      id: "remote",
+      status: "running",
+      total: 3,
+      processed: 1,
+    };
+    vi.mocked(fetchAssetJob).mockResolvedValue(remote);
+    const client = cachedClient();
+    vi.mocked(fetchAssetJobs).mockResolvedValue({ jobs: [remote] });
+    const screen = await render(
+      <QueryClientProvider client={client}>
+        <AssetDownloadPanel />
+      </QueryClientProvider>,
+    );
+    // No local `jobId`: the panel must adopt the in-flight job from the list.
+    await expect
+      .poll(() => client.getQueryState(queryKeys.assetJob("remote"))?.status)
+      .toBe("success");
+    expect(screen.getByRole("button", { name: "Cancel", exact: true })).toBeTruthy();
     client.clear();
   });
 

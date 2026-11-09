@@ -9001,11 +9001,14 @@
         ]
       },
       "AssetDownloadJobStatus": {
+        "description": "A batch job's lifecycle. `Queued`, `Running`, and `Cancelling` mean a worker\nis still live (and the job still occupies the single download slot); the\nworker owns every terminal transition. `Failed` means the job could not run\nat all, for example because the library failed to load.",
         "type": "string",
         "enum": [
           "queued",
           "running",
+          "cancelling",
           "completed",
+          "failed",
           "cancelled"
         ]
       },

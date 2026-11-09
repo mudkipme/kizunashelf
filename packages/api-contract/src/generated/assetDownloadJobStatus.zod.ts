@@ -6,7 +6,7 @@
  */
 import * as zod from 'zod';
 
-export const AssetDownloadJobStatus = zod.enum(['queued', 'running', 'completed', 'cancelled'])
+export const AssetDownloadJobStatus = zod.enum(['queued', 'running', 'cancelling', 'completed', 'failed', 'cancelled']).describe('A batch job\'s lifecycle. `Queued`, `Running`, and `Cancelling` mean a worker\nis still live (and the job still occupies the single download slot); the\nworker owns every terminal transition. `Failed` means the job could not run\nat all, for example because the library failed to load.')
 
 export type AssetDownloadJobStatus = zod.input<typeof AssetDownloadJobStatus>;
 export type AssetDownloadJobStatusOutput = zod.output<typeof AssetDownloadJobStatus>;

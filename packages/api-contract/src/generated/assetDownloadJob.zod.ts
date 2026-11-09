@@ -19,7 +19,7 @@ export const assetDownloadJobSkippedMin = 0;
 
 export const AssetDownloadJob = zod.object({
   "id": zod.string(),
-  "status": zod.enum(['queued', 'running', 'completed', 'cancelled']),
+  "status": zod.enum(['queued', 'running', 'cancelling', 'completed', 'failed', 'cancelled']).describe('A batch job\'s lifecycle. `Queued`, `Running`, and `Cancelling` mean a worker\nis still live (and the job still occupies the single download slot); the\nworker owns every terminal transition. `Failed` means the job could not run\nat all, for example because the library failed to load.'),
   "scope": zod.string().describe('Human-readable scope, e.g. `all` or `type:anime`.'),
   "total": zod.int().min(assetDownloadJobTotalMin),
   "processed": zod.int().min(assetDownloadJobProcessedMin),

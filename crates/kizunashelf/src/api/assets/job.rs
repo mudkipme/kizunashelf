@@ -123,11 +123,10 @@ pub(crate) async fn cancel_asset_job(
         return Err(ApiError::not_found("Job not found"));
     };
     record.cancel.store(true, Ordering::Relaxed);
-    if matches!(
-        record.job.status,
-        AssetDownloadJobStatus::Queued | AssetDownloadJobStatus::Running
-    ) {
-        record.job.status = AssetDownloadJobStatus::Cancelled;
+    if record.job.status.is_busy() {
+        // The worker keeps ownership of the terminal transition; until it exits,
+        // the job still occupies the single batch-download slot.
+        record.job.status = AssetDownloadJobStatus::Cancelling;
     }
     Ok(Json(record.job.clone()))
 }
@@ -138,8 +137,14 @@ async fn run_asset_job(
     entity_ids: Vec<String>,
     cancel: Arc<AtomicBool>,
 ) {
+    // A cancel may have landed between insertion and this task starting. Keep the
+    // requested `Cancelling` state instead of resurrecting the job as running.
     state
-        .update_asset_job(&job_id, |job| job.status = AssetDownloadJobStatus::Running)
+        .update_asset_job(&job_id, |job| {
+            if job.status == AssetDownloadJobStatus::Queued {
+                job.status = AssetDownloadJobStatus::Running;
+            }
+        })
         .await;
 
     let library = match get_library(&state).await {
@@ -148,7 +153,7 @@ async fn run_asset_job(
             let message = error.to_string();
             state
                 .update_asset_job(&job_id, |job| {
-                    job.status = AssetDownloadJobStatus::Completed;
+                    job.status = AssetDownloadJobStatus::Failed;
                     job.finished_at = Some(now_iso());
                     job.errors.push(AssetDownloadJobError {
                         entity_id: String::new(),
@@ -187,6 +192,9 @@ async fn run_asset_job(
                 return;
             }
             let Some(entity) = library.record_by_id(&entity_id).cloned() else {
+                task_state
+                    .update_asset_job(&job_id, |job| job.processed += 1)
+                    .await;
                 return;
             };
             let Some(type_config) = library
@@ -194,6 +202,9 @@ async fn run_asset_job(
                 .type_config(&entity.summary.entity_type)
                 .cloned()
             else {
+                task_state
+                    .update_asset_job(&job_id, |job| job.processed += 1)
+                    .await;
                 return;
             };
 
@@ -264,4 +275,119 @@ fn count_status(items: &[AssetDownloadItemResult], status: AssetDownloadStatus) 
 
 fn now_iso() -> String {
     Utc::now().to_rfc3339()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::api::state::ApiOptions;
+    use crate::secrets::NativeSecretStore;
+    use crate::types::AppConfig;
+    use crate::vfs::InMemoryVfs;
+    use std::time::Duration;
+
+    fn test_state() -> AppState {
+        AppState::with_vault(
+            ApiOptions {
+                cache_ttl: Duration::from_secs(3600),
+                web_dist_path: None,
+                settings_writable: true,
+                content_writable: true,
+                host_asset_ingest: false,
+                index_cache_dir: None,
+                import_state_dir: None,
+                index_cache_identity: None,
+            },
+            Arc::new(InMemoryVfs::new()),
+            AppConfig {
+                vault_root: "test".into(),
+                content_writable: Some(true),
+            },
+            Arc::new(NativeSecretStore::with_token_path(
+                std::path::PathBuf::from("/tmp/asset-job-test-unused-tokens.json"),
+            )),
+        )
+    }
+
+    fn record(id: &str, status: AssetDownloadJobStatus) -> AssetJobRecord {
+        AssetJobRecord {
+            job: AssetDownloadJob {
+                id: id.into(),
+                status,
+                scope: "all".into(),
+                total: 1,
+                processed: 0,
+                downloaded: 0,
+                failed: 0,
+                skipped: 0,
+                errors: Vec::new(),
+                started_at: now_iso(),
+                finished_at: None,
+            },
+            cancel: Arc::new(AtomicBool::new(false)),
+        }
+    }
+
+    async fn status(state: &AppState, id: &str) -> AssetDownloadJobStatus {
+        state.asset_jobs().lock().await[id].job.status
+    }
+
+    #[tokio::test]
+    async fn a_cancelling_job_keeps_the_batch_slot_until_the_worker_exits() {
+        let state = test_state();
+        assert!(
+            state
+                .insert_asset_job_if_idle(record("a", AssetDownloadJobStatus::Running))
+                .await
+        );
+
+        let cancelled =
+            cancel_asset_job(State(state.clone()), AxumPath(JobPath { id: "a".into() }))
+                .await
+                .unwrap_or_else(|error| panic!("{}", error.message()))
+                .0;
+        assert_eq!(cancelled.status, AssetDownloadJobStatus::Cancelling);
+        assert!(
+            !state
+                .insert_asset_job_if_idle(record("b", AssetDownloadJobStatus::Queued))
+                .await
+        );
+
+        // The worker owns the terminal transition and the slot is released after it.
+        state
+            .update_asset_job("a", |job| {
+                job.status = AssetDownloadJobStatus::Cancelled;
+                job.finished_at = Some(now_iso());
+            })
+            .await;
+        assert!(
+            state
+                .insert_asset_job_if_idle(record("b", AssetDownloadJobStatus::Queued))
+                .await
+        );
+    }
+
+    #[tokio::test]
+    async fn a_job_that_cannot_load_the_library_is_failed_not_completed() {
+        let state = test_state();
+        assert!(
+            state
+                .insert_asset_job_if_idle(record("a", AssetDownloadJobStatus::Queued))
+                .await
+        );
+
+        run_asset_job(
+            state.clone(),
+            "a".into(),
+            Vec::new(),
+            Arc::new(AtomicBool::new(false)),
+        )
+        .await;
+
+        assert_eq!(status(&state, "a").await, AssetDownloadJobStatus::Failed);
+        assert!(state.asset_jobs().lock().await["a"]
+            .job
+            .finished_at
+            .is_some());
+    }
 }

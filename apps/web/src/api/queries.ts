@@ -48,6 +48,7 @@ import { todayLocal } from "@/lib/date";
 export const queryKeys = {
   activity: (params: Omit<GetActivityParams, "cursor">) => ["activity", params] as const,
   assetJob: (jobId: string | undefined) => ["assetJob", jobId] as const,
+  assetJobs: ["assetJobs"] as const,
   upcoming: (params: GetUpcomingParams) => ["upcoming", params] as const,
   analytics: ["analytics"] as const,
   calendar: (params: GetCalendarParams) => ["calendar", params] as const,

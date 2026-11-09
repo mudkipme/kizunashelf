@@ -1423,13 +1423,28 @@ pub struct AssetDownloadJobRequest {
     pub entity_type: Option<String>,
 }
 
+/// A batch job's lifecycle. `Queued`, `Running`, and `Cancelling` mean a worker
+/// is still live (and the job still occupies the single download slot); the
+/// worker owns every terminal transition. `Failed` means the job could not run
+/// at all, for example because the library failed to load.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum AssetDownloadJobStatus {
     Queued,
     Running,
+    Cancelling,
     Completed,
+    Failed,
     Cancelled,
+}
+
+impl AssetDownloadJobStatus {
+    /// Whether a worker is queued, running, or still stopping. Admission control
+    /// and polling must use this rather than "not terminal", so a cancel cannot
+    /// release the one-job-at-a-time slot before the previous worker exits.
+    pub fn is_busy(self) -> bool {
+        matches!(self, Self::Queued | Self::Running | Self::Cancelling)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

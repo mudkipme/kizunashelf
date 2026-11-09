@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import {
@@ -64,9 +65,15 @@ export function ImportWizardPage() {
   });
   const status = job.data?.status;
   const plan = job.data?.plan;
+  // Detaching is only safe once the worker is gone: an active job keeps writing,
+  // and clearing `jobId` would hide it while still blocking a new import. If the
+  // job can't be read at all, allow the escape hatch.
+  const canDetach = Boolean(jobId) && (job.data ? !isActive(status) : job.isError);
 
   useEffect(() => {
-    if (status === "completed") void invalidateEntityData();
+    if (status === "completed" || status === "cancelled" || status === "failed") {
+      void invalidateEntityData();
+    }
   }, [status, invalidateEntityData]);
 
   // A reload drops the in-memory `jobId`, so on first mount we ask the server
@@ -141,6 +148,7 @@ export function ImportWizardPage() {
       setSkip(new Set());
       setJobId(created.id);
     },
+    onError: (error) => toast.error(errorMessage(error)),
   });
 
   // Seed the returned job into the poll cache so `refetchInterval` resumes: the
@@ -160,11 +168,13 @@ export function ImportWizardPage() {
       return commitImport(jobId as string, { types, decisions, options });
     },
     onSuccess: applyJob,
+    onError: (error) => toast.error(errorMessage(error)),
   });
 
   const cancel = useMutation({
     mutationFn: () => stopImportJob(jobId as string),
     onSuccess: applyJob,
+    onError: (error) => toast.error(errorMessage(error)),
   });
 
   const queryError = config.error ?? sources.error ?? capabilities.error;
@@ -184,7 +194,7 @@ export function ImportWizardPage() {
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
       <PageContainer>
         <header className="flex flex-wrap items-center justify-end gap-2">
-          {jobId ? (
+          {canDetach ? (
             <Button variant="outline" onClick={resetToConfigure}>
               <Trans>Start over</Trans>
             </Button>
@@ -213,6 +223,13 @@ export function ImportWizardPage() {
             starting={start.isPending}
             onStart={() => start.mutate()}
           />
+        ) : job.error ? (
+          <section className="rounded-md border p-4">
+            <p className="text-sm text-destructive">{errorMessage(job.error)}</p>
+            <Button className="mt-3" variant="outline" onClick={resetToConfigure}>
+              <Trans>Start over</Trans>
+            </Button>
+          </section>
         ) : !job.data ? (
           <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
             <Trans>Loading…</Trans>

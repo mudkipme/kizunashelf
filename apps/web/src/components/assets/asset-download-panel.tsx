@@ -1,10 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { errorMessage } from "@/api/client";
-import { fetchAssetJob, startAssetJob, stopAssetJob } from "@/api/entities";
+import { errorMessage, isConflictError } from "@/api/client";
+import { fetchAssetJob, fetchAssetJobs, startAssetJob, stopAssetJob } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { configQuery, queryKeys } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,12 @@ import type { AssetDownloadJob } from "@/types/api";
 
 const ALL_TYPES = "__all__";
 
-function isRunning(job?: AssetDownloadJob) {
-  return job?.status === "queued" || job?.status === "running";
+function isBusy(job?: AssetDownloadJob) {
+  return job?.status === "queued" || job?.status === "running" || job?.status === "cancelling";
+}
+
+function isTerminal(status: AssetDownloadJob["status"]) {
+  return status === "completed" || status === "failed" || status === "cancelled";
 }
 
 export function AssetDownloadPanel() {
@@ -24,21 +28,38 @@ export function AssetDownloadPanel() {
   const capabilities = useCapabilities();
   const config = useQuery(configQuery());
   const invalidateEntityData = useInvalidateEntityData();
+  const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState(ALL_TYPES);
   const [jobId, setJobId] = useState<string>();
   const [error, setError] = useState<string>();
+
+  // A job started in another tab (or before a reload) has no local id. Poll the
+  // collection while the panel is mounted and attach to whatever is in flight.
+  const jobs = useQuery({
+    queryKey: queryKeys.assetJobs,
+    queryFn: ({ signal }) => fetchAssetJobs({ signal }),
+    enabled: capabilities.assetDownloadEnabled,
+    refetchInterval: 3000,
+  });
+
+  useEffect(() => {
+    const active = jobs.data?.jobs.find((job) => isBusy(job));
+    if (!active || active.id === jobId) return;
+    setError(undefined);
+    setJobId(active.id);
+  }, [jobId, jobs.data]);
 
   const job = useQuery({
     queryKey: queryKeys.assetJob(jobId),
     queryFn: ({ signal }) => fetchAssetJob(jobId as string, { signal }),
     enabled: Boolean(jobId),
     refetchInterval: (query) =>
-      isRunning(query.state.data as AssetDownloadJob | undefined) ? 1000 : false,
+      isBusy(query.state.data as AssetDownloadJob | undefined) ? 1000 : false,
   });
 
   const status = job.data?.status;
   useEffect(() => {
-    if (status === "completed" || status === "cancelled") {
+    if (status && isTerminal(status)) {
       void invalidateEntityData();
     }
   }, [status, invalidateEntityData]);
@@ -50,18 +71,28 @@ export function AssetDownloadPanel() {
       setError(undefined);
       setJobId(created.id);
     },
-    onError: (mutationError) => setError(errorMessage(mutationError)),
+    onError: (mutationError) => {
+      setError(errorMessage(mutationError));
+      // Another tab (or a previous session) may own the busy slot: attach to it
+      // instead of leaving the user with an unexplained conflict.
+      if (isConflictError(mutationError)) void jobs.refetch();
+    },
   });
 
   const cancel = useMutation({
     mutationFn: () => stopAssetJob(jobId as string),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.assetJob(updated.id), updated);
+    },
     onError: (mutationError) => setError(errorMessage(mutationError)),
   });
 
   if (!capabilities.assetDownloadEnabled) return null;
 
   const current = job.data;
-  const running = isRunning(current);
+  const busy = isBusy(current);
+  const cancelling = current?.status === "cancelling";
+  const canCancel = current?.status === "queued" || current?.status === "running";
 
   return (
     <section className="rounded-md border p-3">
@@ -78,7 +109,7 @@ export function AssetDownloadPanel() {
           <Select
             value={selectedType}
             onChange={(event) => setSelectedType(event.target.value)}
-            disabled={running}
+            disabled={busy}
             aria-label={t`Download scope`}
           >
             <option value={ALL_TYPES}>{t`All types`}</option>
@@ -88,23 +119,19 @@ export function AssetDownloadPanel() {
               </option>
             ))}
           </Select>
-          <Button
-            type="button"
-            onClick={() => start.mutate()}
-            disabled={running || start.isPending}
-          >
+          <Button type="button" onClick={() => start.mutate()} disabled={busy || start.isPending}>
             <DownloadIcon data-icon="inline-start" />
-            {running ? <Trans>Running…</Trans> : <Trans>Start</Trans>}
+            {busy ? <Trans>Running…</Trans> : <Trans>Start</Trans>}
           </Button>
-          {running ? (
+          {canCancel || cancelling ? (
             <Button
               type="button"
               variant="outline"
               onClick={() => cancel.mutate()}
-              disabled={cancel.isPending}
+              disabled={cancel.isPending || cancelling}
             >
               <XIcon data-icon="inline-start" />
-              <Trans>Cancel</Trans>
+              {cancelling ? <Trans>Cancelling…</Trans> : <Trans>Cancel</Trans>}
             </Button>
           ) : null}
         </div>

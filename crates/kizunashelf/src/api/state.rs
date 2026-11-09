@@ -497,26 +497,15 @@ impl AppState {
     /// insert happen under a single lock so concurrent callers can't both start a
     /// job. Returns `false` (and inserts nothing) when a job is already in flight.
     pub(crate) async fn insert_asset_job_if_idle(&self, record: AssetJobRecord) -> bool {
-        use crate::contract::AssetDownloadJobStatus;
         let mut jobs = self.asset_jobs.lock().await;
-        if jobs.values().any(|existing| {
-            matches!(
-                existing.job.status,
-                AssetDownloadJobStatus::Queued | AssetDownloadJobStatus::Running
-            )
-        }) {
+        if jobs.values().any(|existing| existing.job.status.is_busy()) {
             return false;
         }
         jobs.insert(record.job.id.clone(), record);
         if jobs.len() > MAX_RETAINED_JOBS {
             let mut finished: Vec<(String, String)> = jobs
                 .values()
-                .filter(|record| {
-                    matches!(
-                        record.job.status,
-                        AssetDownloadJobStatus::Completed | AssetDownloadJobStatus::Cancelled
-                    )
-                })
+                .filter(|record| !record.job.status.is_busy())
                 .map(|record| (record.job.id.clone(), record.job.started_at.clone()))
                 .collect();
             finished.sort_by(|a, b| a.1.cmp(&b.1));

@@ -56,7 +56,13 @@ export function JobProgress({ job }: { job: ImportJob }) {
     <section className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span className="text-foreground capitalize">
-          {done ? <Trans>Import complete</Trans> : <Trans>Importing…</Trans>}
+          {job.status === "completed" ? (
+            <Trans>Import complete</Trans>
+          ) : job.status === "cancelled" ? (
+            <Trans>Import cancelled</Trans>
+          ) : (
+            <Trans>Importing…</Trans>
+          )}
         </span>
         <span className="tabular-nums">
           <Trans>
