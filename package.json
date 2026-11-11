@@ -26,7 +26,7 @@
     "serve": "cargo run -p kizunashelf --bin kizunashelf-api"
   },
   "devDependencies": {
-    "concurrently": "^10.0.6",
+    "concurrently": "^10.0.7",
     "orval": "^8.27.0",
     "oxfmt": "^0.73.0",
     "oxlint": "^1.89.0",
