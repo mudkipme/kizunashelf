@@ -39,7 +39,9 @@ export function AssetDownloadPanel() {
     queryKey: queryKeys.assetJobs,
     queryFn: ({ signal }) => fetchAssetJobs({ signal }),
     enabled: capabilities.assetDownloadEnabled,
-    refetchInterval: 3000,
+    // Poll only while a job is actually in flight; an idle panel (e.g. the
+    // Review page left open) shouldn't call the API every three seconds.
+    refetchInterval: (query) => (query.state.data?.jobs.some(isBusy) ? 3000 : false),
   });
 
   useEffect(() => {
@@ -143,6 +145,15 @@ export function AssetDownloadPanel() {
 }
 
 function JobProgress({ job }: { job: AssetDownloadJob }) {
+  const { t } = useLingui();
+  const statusLabels: Record<AssetDownloadJob["status"], string> = {
+    queued: t`Queued`,
+    running: t`Running`,
+    cancelling: t`Cancelling`,
+    completed: t`Completed`,
+    failed: t`Failed`,
+    cancelled: t`Cancelled`,
+  };
   const percent = job.total > 0 ? Math.round((job.processed / job.total) * 100) : 100;
   const errors = job.errors ?? [];
   return (
@@ -167,7 +178,7 @@ function JobProgress({ job }: { job: AssetDownloadJob }) {
             <Trans>{job.skipped} skipped</Trans>
           </span>
         ) : null}
-        <span className="capitalize">{job.status}</span>
+        <span>{statusLabels[job.status]}</span>
       </div>
       <div className="mt-2 h-2 rounded-sm bg-muted">
         <div className="h-2 rounded-sm bg-primary" style={{ width: `${percent}%` }} />

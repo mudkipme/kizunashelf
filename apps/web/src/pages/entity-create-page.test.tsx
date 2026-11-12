@@ -14,7 +14,7 @@ vi.mock("@/api/entities", () => ({
 vi.mock("@/api/invalidate-entity-data", () => ({ useInvalidateEntityData: () => vi.fn() }));
 vi.mock("@/api/use-relation-search", () => ({ useRelationSearch: () => vi.fn() }));
 vi.mock("@/lib/capabilities", () => ({
-  CONTENT_WRITES_DISABLED: "Content writes are disabled.",
+  contentWritesDisabled: () => "Content writes are disabled.",
   useCapabilities: () => ({ contentWritable: state.writable }),
 }));
 vi.mock("@/components/layout/app-frame", () => ({

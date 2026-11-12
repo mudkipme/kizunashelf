@@ -3,6 +3,7 @@
 //! name) and the season-list editor, whose rows are (year, season) pairs written
 //! back in the field's own season language.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -47,6 +48,7 @@ export function MultiValueInput({
   disabled: boolean;
   onChange: (values: string[]) => void;
 }) {
+  const { t } = useLingui();
   const [inputValue, setInputValue] = useState("");
   const [open, setOpen] = useState(false);
   const [remoteOptions, setRemoteOptions] = useState<MultiValueOption[]>([]);
@@ -76,7 +78,7 @@ export function MultiValueInput({
           .catch((error) => {
             if (isAbortError(error) || signal.aborted) return;
             setRemoteOptions([]);
-            setOptionsError(error instanceof Error ? error.message : "Could not load options.");
+            setOptionsError(error instanceof Error ? error.message : t`Could not load options.`);
           })
           .finally(() => {
             if (!signal.aborted) setLoadingOptions(false);
@@ -135,6 +137,7 @@ export function SeasonListInput({
   disabled: boolean;
   onChange: (value: FrontmatterValue) => void;
 }) {
+  const { t } = useLingui();
   const seasons = seasonOptions(language);
   const rows = values.map(parseSeasonValue);
 
@@ -171,7 +174,7 @@ export function SeasonListInput({
                 value={row.year}
                 onChange={(event) => updateRow(index, { ...row, year: event.target.value })}
                 className="w-28"
-                aria-label={`${ariaLabel} year`}
+                aria-label={t`${ariaLabel} year`}
                 disabled={disabled}
               />
               <Select
@@ -180,7 +183,7 @@ export function SeasonListInput({
                   updateRow(index, { ...row, season: event.target.value as SeasonKey })
                 }
                 className="min-w-32 flex-1"
-                aria-label={`${ariaLabel} season`}
+                aria-label={t`${ariaLabel} season`}
                 disabled={disabled}
               >
                 {seasons.map((season) => (
@@ -196,7 +199,7 @@ export function SeasonListInput({
             variant="ghost"
             size="icon"
             onClick={() => updateRows(rows.filter((_, itemIndex) => itemIndex !== index))}
-            aria-label={`Remove ${ariaLabel}`}
+            aria-label={t`Remove ${ariaLabel}`}
             disabled={disabled}
           >
             <Trash2Icon />
@@ -216,7 +219,7 @@ export function SeasonListInput({
         disabled={disabled}
       >
         <PlusIcon data-icon="inline-start" />
-        Add Season
+        <Trans>Add Season</Trans>
       </Button>
     </div>
   );

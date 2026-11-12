@@ -1,4 +1,6 @@
-import type { EntitySummary } from "@/types/api";
+import type { EntitySummary, SeasonLanguage } from "@/types/api";
+
+export type { SeasonLanguage };
 
 export type FrontmatterValue =
   | null
@@ -23,7 +25,6 @@ export type FieldKind =
   | "image"
   | "imageList";
 
-export type SeasonLanguage = "zh" | "ja" | "en";
 export type SeasonKey = "winter" | "spring" | "summer" | "autumn";
 export type SeasonRow =
   | { kind: "season"; year: string; season: SeasonKey }

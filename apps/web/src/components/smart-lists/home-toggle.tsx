@@ -1,9 +1,7 @@
 import { Trans } from "@lingui/react/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { HouseIcon } from "lucide-react";
-import { toast } from "sonner";
 
-import { errorMessage } from "@/api/client";
 import { invalidateSmartListData } from "@/api/invalidate-smart-list-data";
 import { setHomeVisibility } from "@/api/smart-lists";
 import { Button } from "@/components/ui/button";
@@ -14,8 +12,9 @@ export function HomeToggle({ list, disabled }: { list: SmartListDetail; disabled
   const toggle = useMutation({
     mutationFn: () => setHomeVisibility(list.id, list.revision, !list.showOnHome),
     onSuccess: () => invalidateSmartListData(queryClient),
-    onError: (error) => {
-      toast.error(errorMessage(error));
+    onError: () => {
+      // The global mutation handler shows the error; still refresh the toggle
+      // so it reflects the server's actual state.
       void invalidateSmartListData(queryClient);
     },
   });

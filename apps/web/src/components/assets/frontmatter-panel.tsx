@@ -3,14 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLinkIcon } from "lucide-react";
 
 import { configQuery } from "@/api/queries";
+import { stripWikilink } from "@/components/entities/frontmatter-utils";
+import type { FrontmatterObject, FrontmatterValue } from "@/components/entities/metadata-types";
 import { Badge } from "@/components/ui/badge";
 import { RatingScore, ratingNumber } from "@/components/ui/rating-score";
 import { configFields, fieldsByType, fieldLabelForKey, type FieldType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type { Entity, Relation, TypeConfig } from "@/types/api";
-
-type FrontmatterValue = null | boolean | number | string | FrontmatterValue[] | FrontmatterObject;
-type FrontmatterObject = { [key: string]: FrontmatterValue | undefined };
 
 /// The frontmatter entries "Details" would show, after hiding titles/status/dates
 /// /refs/relations and values already displayed elsewhere. Exposed so the parent
@@ -275,11 +274,6 @@ function normalizedPrimitiveSummary(value: FrontmatterValue | undefined): string
 
 function normalizeComparable(value: string) {
   return stripWikilink(value).trim().toLowerCase();
-}
-
-function stripWikilink(value: string) {
-  const match = value.match(/^\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?\]\]$/);
-  return match?.[2] ?? match?.[1] ?? value;
 }
 
 function formatKey(key: string) {

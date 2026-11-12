@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { useQuery } from "@tanstack/react-query";
 
 import { capabilitiesQuery } from "@/api/queries";
@@ -22,5 +23,8 @@ export function useCapabilities() {
   };
 }
 
-/** Shared copy for the read-only (content writes disabled) state. */
-export const CONTENT_WRITES_DISABLED = "Content writes are disabled.";
+/** Shared copy for the read-only (content writes disabled) state. A function so
+ * every render resolves it against the current UI locale. */
+export function contentWritesDisabled() {
+  return t`Content writes are disabled.`;
+}

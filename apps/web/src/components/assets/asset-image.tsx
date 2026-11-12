@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { useState, type ReactNode } from "react";
 
 import { useLightboxImage } from "@/components/assets/image-lightbox";
@@ -29,6 +30,7 @@ export function AssetImage({
   const [failedSrc, setFailedSrc] = useState<string>();
   const shown = resolved && failedSrc !== resolved ? resolved : undefined;
   const lb = useLightboxImage(lightbox ? shown : undefined);
+  const { t } = useLingui();
 
   if (!shown) {
     return <>{fallback}</>;
@@ -39,7 +41,9 @@ export function AssetImage({
   return (
     <img
       src={shown}
-      alt={alt}
+      // An interactive image is exposed as a button; an empty alt would leave
+      // that button with no accessible name.
+      alt={alt || (interactive ? t`Image preview` : "")}
       className={cn(className, interactive && "cursor-zoom-in")}
       loading="lazy"
       decoding="async"

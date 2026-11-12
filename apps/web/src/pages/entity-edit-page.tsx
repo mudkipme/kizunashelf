@@ -32,7 +32,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
-import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { contentWritesDisabled, useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 import { fieldLabelForKey } from "@/lib/type-config";
@@ -226,7 +226,7 @@ export function EntityEditPage() {
               {entity ? t`Edit ${entityTitle(entity, language)}` : t`Edit entity`}
             </h1>
 
-            {!contentWritable ? <Alert className="mb-6">{CONTENT_WRITES_DISABLED}</Alert> : null}
+            {!contentWritable ? <Alert className="mb-6">{contentWritesDisabled()}</Alert> : null}
 
             {conflict ? (
               <Alert className="mb-6 flex flex-wrap items-center justify-between gap-3">

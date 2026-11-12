@@ -24,7 +24,7 @@ export type MultiValueComboboxOption = {
 export function MultiValueCombobox({
   values,
   options,
-  placeholder = "Add value",
+  placeholder,
   ariaLabel,
   disabled = false,
   allowCustomValue = false,
@@ -32,7 +32,7 @@ export function MultiValueCombobox({
   onInputValueChange,
   loading = false,
   error,
-  emptyText = "No values found.",
+  emptyText,
   className,
   normalizeValue = defaultNormalizeValue,
   formatChipLabel,
@@ -57,6 +57,8 @@ export function MultiValueCombobox({
   onChange: (values: string[]) => void;
 }) {
   const { t } = useLingui();
+  const resolvedPlaceholder = placeholder ?? t`Add value`;
+  const resolvedEmptyText = emptyText ?? t`No values found.`;
   // The popup anchors to the chips box, not to the bare caret input inside it.
   // Left to itself the positioner takes the input as the anchor — and that input
   // is only the sliver of space after the last chip, so the list opened partway
@@ -154,13 +156,13 @@ export function MultiValueCombobox({
         </ComboboxValue>
         <ComboboxChipsInput
           aria-label={ariaLabel}
-          placeholder={selectedValues.length === 0 ? placeholder : ""}
+          placeholder={selectedValues.length === 0 ? resolvedPlaceholder : ""}
           onKeyDown={handleKeyDown}
           disabled={disabled}
         />
       </ComboboxChips>
       <ComboboxContent anchor={chipsRef}>
-        <ComboboxEmpty>{loading ? t`Searching…` : error ? error : emptyText}</ComboboxEmpty>
+        <ComboboxEmpty>{loading ? t`Searching…` : error ? error : resolvedEmptyText}</ComboboxEmpty>
         <ComboboxList>
           {(item) => (
             <ComboboxItem key={item} value={item}>

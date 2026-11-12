@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import {
@@ -24,7 +23,7 @@ import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { contentWritesDisabled, useCapabilities } from "@/lib/capabilities";
 import { useLanguagePreference } from "@/lib/language";
 import type { ImportJob, ImportPlanBucket } from "@/types/api";
 
@@ -148,7 +147,6 @@ export function ImportWizardPage() {
       setSkip(new Set());
       setJobId(created.id);
     },
-    onError: (error) => toast.error(errorMessage(error)),
   });
 
   // Seed the returned job into the poll cache so `refetchInterval` resumes: the
@@ -168,13 +166,11 @@ export function ImportWizardPage() {
       return commitImport(jobId as string, { types, decisions, options });
     },
     onSuccess: applyJob,
-    onError: (error) => toast.error(errorMessage(error)),
   });
 
   const cancel = useMutation({
     mutationFn: () => stopImportJob(jobId as string),
     onSuccess: applyJob,
-    onError: (error) => toast.error(errorMessage(error)),
   });
 
   const queryError = config.error ?? sources.error ?? capabilities.error;
@@ -203,7 +199,7 @@ export function ImportWizardPage() {
 
         {!contentWritable ? (
           <Alert>
-            {CONTENT_WRITES_DISABLED}{" "}
+            {contentWritesDisabled()}{" "}
             <Trans>Importing creates files, so it is unavailable here.</Trans>
           </Alert>
         ) : !jobId ? (

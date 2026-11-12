@@ -1,7 +1,9 @@
+import { msg } from "@lingui/core/macro";
 import { MutationCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { errorMessage, isAbortError, isConflictError } from "@/api/client";
+import { i18n } from "@/lib/i18n";
 
 // Toasts are the primary surface for failed writes. Every mutation error flows
 // through here, so call sites no longer render their own inline error UI (the
@@ -21,7 +23,7 @@ export const queryClient = new QueryClient({
       if (mutation.meta?.suppressErrorToast || isAbortError(error)) return;
       toast.error(
         isConflictError(error)
-          ? "This changed elsewhere since you opened it — reload and try again."
+          ? i18n._(msg`This changed elsewhere since you opened it — reload and try again.`)
           : errorMessage(error),
       );
     },

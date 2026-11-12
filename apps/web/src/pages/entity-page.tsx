@@ -75,7 +75,7 @@ import { Placeholder } from "@/components/ui/placeholder";
 import { reportEntityError, useEntityMutation } from "@/hooks/use-entity-mutation";
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
-import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { contentWritesDisabled, useCapabilities } from "@/lib/capabilities";
 import { todayLocal } from "@/lib/date";
 import { entityFileAction, isDesktopRuntime, isMacDesktopRuntime } from "@/lib/desktop";
 import { useLanguagePreference, useTitleLanguage } from "@/lib/language";
@@ -382,7 +382,7 @@ export function EntityPage() {
                     type="button"
                     size="sm"
                     disabled={!contentWritable}
-                    title={!contentWritable ? CONTENT_WRITES_DISABLED : undefined}
+                    title={!contentWritable ? contentWritesDisabled() : undefined}
                     onClick={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
                   >
                     <PencilIcon data-icon="inline-start" />
@@ -555,7 +555,7 @@ function EntityActions({
           <DropdownMenuLabel className="text-xs font-normal break-all text-muted-foreground">
             {contentWritable
               ? entity.path
-              : t`${CONTENT_WRITES_DISABLED} Editing actions are unavailable.`}
+              : t`Content writes are disabled. Editing actions are unavailable.`}
           </DropdownMenuLabel>
         </DropdownMenuContent>
       </DropdownMenu>

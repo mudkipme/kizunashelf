@@ -151,7 +151,6 @@ function CreateListDialog({
       await invalidateLists();
       navigate(created.href);
     },
-    onError: (error) => toast.error(errorMessage(error)),
   });
 
   return (

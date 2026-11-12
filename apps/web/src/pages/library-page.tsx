@@ -37,7 +37,7 @@ import {
   readAssetListPreferences,
   writeAssetListPreferences,
 } from "@/lib/asset-list-preferences";
-import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { contentWritesDisabled, useCapabilities } from "@/lib/capabilities";
 import { allTypes, defaultDirection, defaultSort, defaultView, pageSize } from "@/lib/constants";
 import { useTitleLanguage } from "@/lib/language";
 import { useNumberFormat } from "@/lib/locale";
@@ -337,7 +337,7 @@ export function LibraryPage() {
                   variant="outline"
                   size="sm"
                   disabled={!contentWritable}
-                  title={!contentWritable ? CONTENT_WRITES_DISABLED : t`Save as smart list`}
+                  title={!contentWritable ? contentWritesDisabled() : t`Save as smart list`}
                   onClick={() => setSaveSmartOpen(true)}
                 >
                   <SparklesIcon data-icon="inline-start" />
@@ -348,7 +348,7 @@ export function LibraryPage() {
                   variant="outline"
                   size="sm"
                   disabled={!contentWritable}
-                  title={!contentWritable ? CONTENT_WRITES_DISABLED : t`Add`}
+                  title={!contentWritable ? contentWritesDisabled() : t`Add`}
                   asChild={contentWritable}
                 >
                   {!contentWritable ? (

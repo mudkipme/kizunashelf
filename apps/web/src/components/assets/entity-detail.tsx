@@ -112,7 +112,7 @@ export function EntityDetail({
   /// The page's verbs, rendered at the right of the toolbar.
   actions?: ReactNode;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const language = useTitleLanguage();
   const { text: displayTitle, lang: displayTitleLang } = entityTitleParts(entity, language);
   // Stamp `lang` on the title only when it differs from the viewer's language,
@@ -121,7 +121,7 @@ export function EntityDetail({
   const titleLang =
     displayTitleLang && displayTitleLang !== language ? displayTitleLang : undefined;
   const relatedById = new Map(relatedEntities.map((item) => [item.id, item]));
-  const subtitleTitles = entitySubtitleTitles(entity, displayTitle, typeConfig);
+  const subtitleTitles = entitySubtitleTitles(entity, displayTitle, typeConfig, i18n.locale);
   // "Links to" groups by field; the untyped `body` field is further split by
   // target type ("body · Music"). "Linked from" groups by (source type, field)
   // so e.g. anime-via-franchise and games-via-franchise stay separate.
@@ -373,6 +373,7 @@ function entitySubtitleTitles(
   entity: Entity,
   displayTitle: string,
   typeConfig: TypeConfig | undefined,
+  uiLocale: string,
 ) {
   const normalize = (value: string) => value.trim().toLowerCase();
   const seen = new Set([normalize(displayTitle)]);
@@ -384,7 +385,7 @@ function entitySubtitleTitles(
     seen.add(normalized);
     subtitles.push({
       key,
-      label: titleLabelForKey(typeConfig, key) || titleLanguageLabel(key),
+      label: titleLabelForKey(typeConfig, key) || titleLanguageLabel(key, uiLocale),
       title,
     });
   }
