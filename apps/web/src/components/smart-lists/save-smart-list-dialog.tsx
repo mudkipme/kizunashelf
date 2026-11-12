@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-import { errorMessage } from "@/api/client";
 import { useInvalidateLists } from "@/api/invalidate-lists";
 import { addSmartList, saveSmartList } from "@/api/smart-lists";
 import { Button } from "@/components/ui/button";
@@ -68,7 +67,6 @@ export function SaveSmartListDialog({
       await invalidateLists();
       navigate(`/lists/smart/${encodeURIComponent(list.id)}`);
     },
-    onError: (error) => toast.error(errorMessage(error)),
   });
 
   return (

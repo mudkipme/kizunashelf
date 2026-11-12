@@ -279,7 +279,11 @@ pub(super) fn sort_records(records: &mut [EntityRecord]) {
         if !type_compare.is_eq() {
             return type_compare;
         }
+        // A final, unique key keeps the resident order deterministic when two
+        // files share a type and title (the `content_revision` fingerprint and
+        // paginated list order both depend on it).
         compare_string(&a.summary.title, &b.summary.title)
+            .then_with(|| a.summary.path.cmp(&b.summary.path))
     });
 }
 

@@ -320,7 +320,10 @@ pub fn splice_section(body: &str, heading: &str, content: &str) -> String {
             let heading_line = body[section.start..section.content_start].trim_end();
             let separator = if after.is_empty() { "\n" } else { "\n\n" };
             if content.is_empty() {
-                format!("{before}{heading_line}\n{separator}{after}")
+                // Do not add another `\n` before `separator`: the heading line
+                // is already newline-terminated here, and the pair used to
+                // produce two blank lines (`heading\n\n\nafter`).
+                format!("{before}{heading_line}{separator}{after}")
             } else {
                 format!("{before}{heading_line}\n\n{content}{separator}{after}")
             }
@@ -465,6 +468,17 @@ mod tests {
         assert!(next.contains("## Summary\nold"));
         assert!(next.contains("## Episodes\n\n- [x] 1\n- [ ] 2"));
         assert!(next.contains("## Notes\nkeep"));
+    }
+
+    #[test]
+    fn splice_clearing_a_section_leaves_one_blank_line() {
+        let body = "## Summary\nkeep\n\n## Episodes\n- [ ] 1\n\n## Notes\nkeep too\n";
+        let next = splice_section(body, "Episodes", "");
+        assert_eq!(
+            next,
+            "## Summary\nkeep\n\n## Episodes\n\n## Notes\nkeep too\n"
+        );
+        assert!(!next.contains("\n\n\n"), "no double blank line: {next:?}");
     }
 
     #[test]

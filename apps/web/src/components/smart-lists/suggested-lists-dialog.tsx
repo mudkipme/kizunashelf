@@ -2,7 +2,6 @@ import { Trans } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, SparklesIcon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { invalidateSmartListData } from "@/api/invalidate-smart-list-data";
@@ -51,10 +50,10 @@ function SuggestedListsDialog({ onClose }: { onClose: () => void }) {
       await invalidateSmartListData(queryClient);
       onClose();
     },
-    onError: (error) => {
-      toast.error(errorMessage(error));
+    onError: () => {
       // Creation is atomic per file. Refresh after a partial failure so retry
-      // only needs to finish the missing suggestions.
+      // only needs to finish the missing suggestions. The global mutation
+      // handler surfaces the error message.
       void invalidateSmartListData(queryClient);
     },
   });

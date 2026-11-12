@@ -56,13 +56,6 @@ export function typeSupportsQuickCapture(
   return typeExternalRefs(typeConfig).some((ref) => known.has(ref));
 }
 
-export function fieldNamesByType(
-  typeConfig: TypeConfig | undefined,
-  fieldType: FieldType,
-): string[] {
-  return fieldsByType(typeConfig, fieldType).map((field) => field.field);
-}
-
 export function fieldDisplayLabel(field: FieldConfig) {
   return field.displayName?.trim() || field.field;
 }
@@ -150,21 +143,6 @@ export function entityFieldLabel(
   // section, unless the type declares a real field named "body" (a hit above).
   if (field === "body") return bodyPseudoFieldLabel();
   return field;
-}
-
-export function dateRoleFields(
-  typeConfig: TypeConfig | undefined,
-  dateRole: DateRole,
-): FieldConfig[] {
-  return configFields(typeConfig).filter(
-    (field) => isDateFieldType(field.fieldType) && field.dateRole === dateRole,
-  );
-}
-
-export function dateFieldNames(typeConfig: TypeConfig | undefined): string[] {
-  return configFields(typeConfig)
-    .filter((field) => isDateFieldType(field.fieldType) && field.dateRole)
-    .map((field) => field.field);
 }
 
 export function isListFieldType(fieldType: FieldType) {

@@ -105,7 +105,6 @@ export function QuickLogDialog({
     revision: draftRevision,
     ...(writesNote && note.trim() ? { note: note.trim() } : {}),
   };
-
   const preview = useQuery({
     queryKey: [
       ...queryKeys.logPreview(entityId, date, activeKind ?? "", note),
@@ -290,7 +289,6 @@ function LogPreview({
   data?: Awaited<ReturnType<typeof postLogActivity>>;
   pending: boolean;
   fieldLabel?: (field: string) => string;
-  onCompleted?: () => void;
 }) {
   const { t } = useLingui();
   if (!data) {

@@ -170,6 +170,8 @@ export function SmartListPage() {
       await invalidate();
       toast.success(t`Smart list saved`);
     },
+    // This handler owns the conflict recovery and message.
+    meta: { suppressErrorToast: true },
     onError: (error) => {
       if (isConflictError(error)) void detail.refetch();
       toast.error(
@@ -187,7 +189,6 @@ export function SmartListPage() {
       await invalidateSmartListData(queryClient);
       navigate("/lists");
     },
-    onError: (error) => toast.error(errorMessage(error)),
   });
 
   const startEditing = () => {
@@ -546,6 +547,7 @@ function RenameSmartListDialog({
       await invalidateSmartListData(queryClient);
       navigate(`/lists/smart/${encodeURIComponent(updated.id)}`, { replace: true });
     },
+    meta: { suppressErrorToast: true },
     onError: (error) => {
       toast.error(
         isConflictError(error)

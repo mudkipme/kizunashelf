@@ -811,7 +811,7 @@ impl Library {
     /// Rebuilds the id/path/relation lookup indices from `records`/`relations`.
     /// Must be called whenever those collections are mutated in place (the
     /// constructor does this).
-    pub fn reindex(&mut self) {
+    fn reindex(&mut self) {
         self.by_id = self
             .records
             .iter()
@@ -904,12 +904,6 @@ pub struct LibraryDiagnostic {
     pub path: String,
     pub kind: String,
     pub message: String,
-}
-
-impl Entity {
-    pub fn id(&self) -> &str {
-        &self.summary.id
-    }
 }
 
 #[cfg(test)]

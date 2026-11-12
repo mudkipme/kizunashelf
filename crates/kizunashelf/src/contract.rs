@@ -1,8 +1,8 @@
-use crate::calendar::{ActivityResponse, CalendarDay, EntityDatesResponse, UpcomingResponse};
+use crate::calendar::CalendarDay;
 use crate::relations::Count;
 use crate::types::{
     AppConfig, CanonicalStatus, Entity, EntitySummary, EntityTypeConfig, EpisodeTracking,
-    KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
+    LibraryDiagnostic, Relation, VaultConfig,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -2274,36 +2274,4 @@ pub struct FlippedStatus {
     pub field: String,
     pub value: String,
     pub canonical: CanonicalStatus,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct ApiSchemas {
-    pub error: ErrorResponse,
-    pub health: HealthResponse,
-    pub settings_config: SettingsConfigResponse,
-    pub save_settings_request: SaveSettingsRequest,
-    pub raw_config: RawConfigResponse,
-    pub save_raw_config_request: SaveRawConfigRequest,
-    pub path_suggestions: PathSuggestionsResponse,
-    pub kizuna_config: KizunaConfig,
-    pub app_config: AppConfig,
-    pub vault_config: VaultConfig,
-    pub config: ConfigResponse,
-    pub home: HomeResponse,
-    pub stats: StatsResponse,
-    pub analytics: AnalyticsResponse,
-    pub external_provider_catalog: ExternalProviderCatalogResponse,
-    pub entities: EntityListResponse,
-    pub entity_detail: EntityDetailResponse,
-    pub entity_dates: EntityDatesResponse,
-    pub calendar: CalendarResponse,
-    pub activity: ActivityResponse,
-    pub upcoming: UpcomingResponse,
-    pub log_activity: LogActivityResponse,
-    pub asset_download: AssetDownloadResponse,
-    pub asset_upload: AssetUploadResponse,
-    pub asset_download_job: AssetDownloadJob,
-    pub asset_download_jobs: AssetDownloadJobListResponse,
-    pub library: crate::types::Library,
 }

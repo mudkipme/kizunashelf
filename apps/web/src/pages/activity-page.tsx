@@ -78,19 +78,22 @@ export function ActivityPage() {
     [feed.data],
   );
 
-  // Auto-load the next month when the sentinel scrolls into view.
+  // Auto-load the next month when the sentinel scrolls into view. Depend on the
+  // stable query fields, not the `feed` object (a fresh object every render tore
+  // the observer down and re-fired it, chaining fetches).
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = feed;
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const node = sentinel.current;
-    if (!node || !feed.hasNextPage) return;
+    if (!node || !hasNextPage) return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting && !feed.isFetchingNextPage) {
-        void feed.fetchNextPage();
+      if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+        void fetchNextPage();
       }
     });
     observer.observe(node);
     return () => observer.disconnect();
-  }, [feed.hasNextPage, feed.isFetchingNextPage, feed]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   function setParam(key: string, value: string, defaultValue = "all") {
     const next = new URLSearchParams(searchParams);

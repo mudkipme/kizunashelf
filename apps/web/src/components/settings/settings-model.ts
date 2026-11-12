@@ -344,17 +344,6 @@ export function defaultField(): FieldConfig {
   return { field: "field", fieldType: "text", displayName: "" };
 }
 
-export function replaceAt<T, K extends keyof T>(
-  object: T,
-  key: K,
-  index: number,
-  value: T[K] extends Array<infer U> ? U : never,
-): T {
-  const current = object[key];
-  if (!Array.isArray(current)) return object;
-  return { ...object, [key]: replaceArray(current, index, value) };
-}
-
 export function replaceArray<T>(items: T[], index: number, value: T) {
   return items.map((item, itemIndex) => (itemIndex === index ? value : item));
 }

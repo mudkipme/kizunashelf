@@ -20,6 +20,9 @@ pub struct ParsedEntityDate {
 pub fn parse_entity_date(value: Option<&str>) -> Option<ParsedEntityDate> {
     let value = value?;
     if let Some((year, month, day)) = exact_date_parts(Some(value)) {
+        // The regex only checks digit widths; a typo like `2024-13-40` must not
+        // ship as a parsed date (or derive a season from month 13).
+        normalize_date(year, month, day)?;
         return Some(ParsedEntityDate {
             year,
             month: Some(month),
@@ -42,7 +45,8 @@ pub fn parse_entity_date(value: Option<&str>) -> Option<ParsedEntityDate> {
         .captures(value)
         .and_then(|captures| captures.get(2))
         .and_then(|month| month.as_str().parse::<u32>().ok())
-        .map(|month| clamp_number(month as f64, 1, 12) as u32);
+        // An out-of-range month is a typo, not December.
+        .filter(|month| (1..=12).contains(month));
     let season =
         parse_season_name(value).or_else(|| month.map(|month| season_for_month(month).to_string()));
     let season_key = season
@@ -107,16 +111,6 @@ pub fn season_span(value: &str) -> Option<(String, String)> {
     ))
 }
 
-pub fn season_compare_value(season: &str) -> i32 {
-    match normalize_season_name(season).as_deref() {
-        Some("winter") => 0,
-        Some("spring") => 1,
-        Some("summer") => 2,
-        Some("autumn") => 3,
-        _ => i32::MIN,
-    }
-}
-
 pub fn parse_exact_date(value: Option<&str>) -> Option<String> {
     let (year, month, day) = exact_date_parts(value)?;
     normalize_date(year, month, day)
@@ -165,6 +159,18 @@ pub fn normalize_date(year: i32, month: u32, day: u32) -> Option<String> {
 
 pub fn is_in_month(date: &str, year: i32, month: u32) -> bool {
     date.starts_with(&format!("{year:04}-{month:02}-"))
+}
+
+/// The host's local calendar date as `YYYY-MM-DD`. This is only the fallback
+/// for handlers whose client omitted its own `today`; native runtimes share the
+/// user's clock, and a server container normally runs UTC. Kept in one place so
+/// date-relative endpoints can't disagree about which day it is.
+pub fn today_local() -> String {
+    today_local_date().format("%Y-%m-%d").to_string()
+}
+
+pub fn today_local_date() -> chrono::NaiveDate {
+    chrono::Local::now().date_naive()
 }
 
 pub fn clamp_number(value: f64, min: i64, max: i64) -> i64 {
@@ -326,7 +332,24 @@ mod tests {
             date_sort_key(Some("2025 Winter")),
             Some("2025-03-31".to_string())
         );
-        assert!(season_compare_value("Autumn") > season_compare_value("Summer"));
+    }
+
+    #[test]
+    fn invalid_numeric_dates_are_not_parsed() {
+        // A regex match alone is not a date: month 13/day 40 must not ship as
+        // parsed data (or derive a season).
+        assert_eq!(parse_entity_date(Some("2024-13-40")), None);
+        assert_eq!(parse_entity_date(Some("2024-02-31")), None);
+        assert_eq!(
+            parse_entity_date(Some("2024-13")),
+            Some(ParsedEntityDate {
+                year: 2024,
+                month: None,
+                day: None,
+                season: None,
+                season_key: None,
+            })
+        );
     }
 
     #[test]

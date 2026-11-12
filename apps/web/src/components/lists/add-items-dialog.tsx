@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useTitleLanguage } from "@/lib/language";
 
 export function AddItemsDialog({
@@ -38,8 +39,9 @@ export function AddItemsDialog({
   const language = useTitleLanguage();
   const [query, setQuery] = useState("");
   const [pendingId, setPendingId] = useState<string>();
+  const debouncedQuery = useDebouncedValue(query.trim(), 250);
   const search = useQuery({
-    ...entitiesQuery({ q: query.trim() || undefined, pageSize: 20, titleLanguage: language }),
+    ...entitiesQuery({ q: debouncedQuery || undefined, pageSize: 20, titleLanguage: language }),
     enabled: open,
   });
   const results = search.data?.items ?? [];

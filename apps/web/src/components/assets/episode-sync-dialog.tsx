@@ -315,6 +315,8 @@ export function EpisodeSyncDialog({
         {seasoned ? (
           <button
             type="button"
+            role="checkbox"
+            aria-checked={groupBySeason}
             onClick={() => setGroupBySeason((value) => !value)}
             className="flex items-center gap-2 self-start text-sm"
           >

@@ -275,7 +275,7 @@ jobs:
           if [[ "$WINDOWS_SIGNED" == 'true' ]]; then
             cat >> "$notes" <<'EOF'
 
-          Windows applications and installers are signed. Code signing policy and release setup: https://github.com/mudkipme/kizunashelf/blob/main/docs/desktop-release.md
+          Windows applications and installers are signed.
           Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
           EOF
           else

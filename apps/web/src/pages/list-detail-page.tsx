@@ -71,10 +71,6 @@ export function ListDetailPage() {
   const contentWritable = capabilities.contentWritable;
 
   const [sections, setSections] = useState<EditableSection[]>([]);
-  // Mirrors `sections` for the debounced toggle auto-save, whose timer fires after
-  // its scheduling render — reading the ref keeps it on the latest state.
-  const sectionsRef = useRef(sections);
-  sectionsRef.current = sections;
   const [description, setDescription] = useState("");
   const [trailing, setTrailing] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -198,10 +194,6 @@ export function ListDetailPage() {
     if (externalChange) cancelAutoSave();
   }, [cancelAutoSave, externalChange]);
 
-  function scheduleAutoSave() {
-    queueAutoSave(listPayload(sectionsRef.current));
-  }
-
   // Drop a pending toggle auto-save before any explicit write so a late timer
   // can't fire a redundant save or a stale-revision 409 over it.
   // Adding an entity writes to the file directly (server-side wikilink
@@ -318,15 +310,17 @@ export function ListDetailPage() {
   }
 
   function toggleItem(itemKey: string) {
-    setSections((current) =>
-      current.map((section) => ({
-        ...section,
-        items: section.items.map((item) =>
-          item.key === itemKey ? { ...item, checked: !(item.checked ?? false) } : item,
-        ),
-      })),
-    );
-    scheduleAutoSave();
+    // Build the next state first and hand it to the debounced save directly:
+    // the timer fires after this render, and `listPayload()` closes over the
+    // previous `sections` value, which used to persist the pre-toggle state.
+    const next = sections.map((section) => ({
+      ...section,
+      items: section.items.map((item) =>
+        item.key === itemKey ? { ...item, checked: !(item.checked ?? false) } : item,
+      ),
+    }));
+    setSections(next);
+    queueAutoSave(listPayload(next));
   }
 
   const rename = useMutation({

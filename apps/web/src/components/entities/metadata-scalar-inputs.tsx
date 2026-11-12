@@ -127,6 +127,7 @@ export function NumberStepper({
   disabled?: boolean;
   ariaLabel: string;
 }) {
+  const { t } = useLingui();
   const number = Number(value || 0);
   const current = Number.isFinite(number) ? number : 0;
   const step = (delta: number) => onChange(String(Math.max(0, current + delta)));
@@ -144,7 +145,7 @@ export function NumberStepper({
         disabled={disabled}
         onClick={() => step(-1)}
         onKeyDown={(event) => keyStep(event, -1)}
-        aria-label={`Decrease ${ariaLabel}`}
+        aria-label={t`Decrease ${ariaLabel}`}
       >
         <MinusIcon />
       </Button>
@@ -165,7 +166,7 @@ export function NumberStepper({
         disabled={disabled}
         onClick={() => step(1)}
         onKeyDown={(event) => keyStep(event, 1)}
-        aria-label={`Increase ${ariaLabel}`}
+        aria-label={t`Increase ${ariaLabel}`}
       >
         <PlusIcon />
       </Button>
@@ -232,7 +233,7 @@ export function DatePickerInput({
           size="icon"
           onClick={clearDate}
           disabled={disabled}
-          aria-label={`Clear ${ariaLabel}`}
+          aria-label={t`Clear ${ariaLabel}`}
         >
           <XIcon />
         </Button>

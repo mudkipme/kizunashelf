@@ -121,20 +121,6 @@ pub async fn read_raw_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<Option<Strin
     }
 }
 
-/// Reads and validates the vault config for a settings/onboarding gate.
-///
-/// A missing file is a normal first-run state. Invalid YAML/schema/path data is
-/// returned as an existing-but-invalid state so clients can offer repair without
-/// overwriting it. Actual VFS failures remain `Err` and must be retried rather
-/// than treated as absence.
-pub async fn inspect_vault_config_via_vfs(
-    vfs: &dyn Vfs,
-    app: &crate::types::AppConfig,
-) -> Result<VaultConfigInspection> {
-    let raw = read_raw_vault_config_via_vfs(vfs).await?;
-    Ok(inspect_vault_config_text(raw.as_deref(), app))
-}
-
 /// Inspect the same bytes used for a settings revision. A second VFS read could
 /// pair an old schema with a new revision when another device edits the file.
 pub(crate) fn inspect_vault_config_text(

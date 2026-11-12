@@ -6,7 +6,6 @@ import {
   deleteEntity,
   downloadEntityAssets,
   getAssetJob,
-  getCapabilities,
   listAssetJobs,
   quickAddExternalEntity,
   reviewExternalCandidate,
@@ -30,10 +29,6 @@ import {
 } from "@kizunashelf/api-contract";
 
 import { apiFetch } from "@/api/client";
-
-export function getAppCapabilities(init?: RequestInit) {
-  return getCapabilities(init, apiFetch);
-}
 
 export function saveEntity(id: string, request: UpdateEntityRequest) {
   return updateEntity(id, request, undefined, apiFetch);

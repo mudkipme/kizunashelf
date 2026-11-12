@@ -199,28 +199,6 @@ export function TextField({
   );
 }
 
-export function NumberField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value?: number | null;
-  onChange: (value: number | null) => void;
-}) {
-  return (
-    <Field label={label}>
-      <Input
-        type="number"
-        value={value ?? ""}
-        onChange={(event) =>
-          onChange(event.target.value === "" ? null : Number(event.target.value))
-        }
-      />
-    </Field>
-  );
-}
-
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1">

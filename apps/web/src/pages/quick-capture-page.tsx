@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useDebouncedCallback } from "@/hooks/use-debounce";
-import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { contentWritesDisabled, useCapabilities } from "@/lib/capabilities";
 import { useLanguagePreference } from "@/lib/language";
 import { useQuickCaptureTypeStore } from "@/lib/quick-capture-preferences";
 import { typeSupportsQuickCapture } from "@/lib/type-config";
@@ -236,7 +236,7 @@ export function QuickCapturePage() {
 
         {!contentWritable ? (
           <Alert>
-            {CONTENT_WRITES_DISABLED}{" "}
+            {contentWritesDisabled()}{" "}
             <Trans>You can still open entities already in your library.</Trans>
           </Alert>
         ) : null}

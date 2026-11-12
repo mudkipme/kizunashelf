@@ -179,15 +179,14 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
 
 /// Which MusicBrainz entities this field searches. Unconstrained defaults to
 /// `release` (the common music case); `artist`/`release-group` are opt-in so an
-/// album field doesn't surface people. `release-group` searches are not offered
-/// (MB's search endpoint is per-entity and release covers the album case), but
-/// the type stays selectable for URL resolution.
+/// album field doesn't surface people. Each type is a real search entity, so
+/// selecting it both searches and resolves URLs of that kind.
 fn musicbrainz_entities(provider_config: &ProviderSearchConfig) -> Vec<&'static str> {
     let Some(types) = provider_config.external_types() else {
         return vec!["release"];
     };
     let mut entities = Vec::new();
-    for entity in ["release", "artist"] {
+    for entity in ["release", "artist", "release-group"] {
         if types
             .iter()
             .any(|external_type| external_type.trim().eq_ignore_ascii_case(entity))

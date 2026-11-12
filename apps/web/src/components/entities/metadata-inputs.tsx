@@ -169,7 +169,6 @@ export function FieldValueInput({
     <Input
       value={valueToText(value)}
       onChange={(event) => onChange(event.target.value || null)}
-      list={field.options.length > 0 ? `${field.key}-options` : undefined}
       aria-label={field.label}
       disabled={disabled}
     />

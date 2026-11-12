@@ -61,12 +61,3 @@ fn normalize_locale_title_language(language: &str) -> Option<String> {
     }
     Some(language.to_ascii_lowercase())
 }
-
-pub fn compare_optional_string(a: Option<&str>, b: Option<&str>) -> std::cmp::Ordering {
-    match (a, b) {
-        (None, None) => std::cmp::Ordering::Equal,
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (Some(a), Some(b)) => compare_string(a, b),
-    }
-}

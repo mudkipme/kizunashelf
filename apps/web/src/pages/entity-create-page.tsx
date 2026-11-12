@@ -35,7 +35,7 @@ import { Select } from "@/components/ui/select";
 import { useCreateImages } from "@/hooks/use-create-images";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { normalizeBasename } from "@/lib/basename";
-import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { contentWritesDisabled, useCapabilities } from "@/lib/capabilities";
 import { filenameTitleField, resolveCreateBasename } from "@/lib/entity-create-form";
 import type { Entity } from "@/types/api";
 
@@ -198,7 +198,7 @@ export function EntityCreatePage() {
               <Trans>Add manually</Trans>
             </h1>
 
-            {!contentWritable ? <Alert className="mb-6">{CONTENT_WRITES_DISABLED}</Alert> : null}
+            {!contentWritable ? <Alert className="mb-6">{contentWritesDisabled()}</Alert> : null}
 
             <DetailSection title={t`File`}>
               <div className="grid gap-x-6 gap-y-4 md:grid-cols-[220px_minmax(0,1fr)]">

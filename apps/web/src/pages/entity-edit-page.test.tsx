@@ -36,7 +36,7 @@ vi.mock("@/api/queries", () => ({
   configQuery: () => ({ queryKey: ["config"], queryFn: async () => ({ types: [] }) }),
 }));
 vi.mock("@/lib/capabilities", () => ({
-  CONTENT_WRITES_DISABLED: "Read only",
+  contentWritesDisabled: () => "Read only",
   useCapabilities: () => ({ contentWritable: true }),
 }));
 vi.mock("@/api/use-relation-search", () => ({ useRelationSearch: () => vi.fn() }));

@@ -179,7 +179,12 @@ async fn fetch_tmdb_episodes(
 
     let mut groups = Vec::new();
     for (number, season) in seasons.iter().zip(season_values) {
-        let items = tmdb_season_items(&season?);
+        // One removed/renumbered season must not discard every season already
+        // fetched (and abort the whole quick-add/import for a usable show).
+        let Ok(season) = season else {
+            continue;
+        };
+        let items = tmdb_season_items(&season);
         if !items.is_empty() {
             groups.push(ProviderEpisodeGroup {
                 label: tmdb_season_label(*number),

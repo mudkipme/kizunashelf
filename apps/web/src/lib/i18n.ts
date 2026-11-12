@@ -3,9 +3,10 @@ import { i18n, type Messages } from "@lingui/core";
 import { messages as enMessages } from "@/locales/en/messages.po";
 
 /**
- * The UI locales the app ships translations for — mirrors the core's
- * `uiSupported` user languages. Any other language preference falls back to
- * the English UI (titles still follow the preference).
+ * The UI locales this build ships translations for. This is a client build fact,
+ * not a contract flag: the core lists every *preference* option, and any
+ * preference without a catalog here falls back to the English UI (titles still
+ * follow the preference).
  */
 export const UI_LOCALES = ["en", "ja", "zh-Hans", "zh-Hant"] as const;
 export type UiLocale = (typeof UI_LOCALES)[number];
@@ -21,15 +22,31 @@ const catalogLoaders: Record<Exclude<UiLocale, "en">, () => Promise<{ messages: 
   "zh-Hant": () => import("../locales/zh-Hant/messages.po"),
 };
 
+// Monotonic request token: two fast language switches can resolve their
+// dynamic imports out of order, and the last *selected* locale must win.
+let activation = 0;
+
 export async function activateUiLocale(locale: UiLocale) {
   if (i18n.locale === locale) {
     return;
   }
-  if (locale !== "en") {
-    const { messages } = await catalogLoaders[locale]();
-    i18n.load(locale, messages);
+  const request = ++activation;
+  try {
+    if (locale !== "en") {
+      const { messages } = await catalogLoaders[locale]();
+      if (request !== activation) return;
+      i18n.load(locale, messages);
+    }
+    if (request === activation) {
+      i18n.activate(locale);
+    }
+  } catch (error) {
+    // Keep the previous catalog rather than leaving the UI half-switched; the
+    // next switch (or reload) retries the chunk.
+    if (request === activation) {
+      console.error(`Failed to load the ${locale} UI catalog`, error);
+    }
   }
-  i18n.activate(locale);
 }
 
 export { i18n };

@@ -221,15 +221,28 @@ pub fn normalize_relative(path: &str) -> VfsResult<String> {
             ".." => {
                 return Err(VfsError::InvalidPath(path.to_string()));
             }
-            // Reject Windows drive prefixes like `C:`; bare `:` is also illegal in
-            // vault paths.
-            segment if segment.contains(':') => {
+            // Reject a Windows drive prefix (`C:` / `C:foo`) in the first
+            // segment. A colon anywhere else is a legal filename character on
+            // macOS/Linux (e.g. Obsidian's `Re:Zero.md`), so rejecting it would
+            // make an otherwise valid vault unreadable.
+            segment if parts.is_empty() && is_drive_prefix(segment) => {
                 return Err(VfsError::InvalidPath(path.to_string()));
             }
             segment => parts.push(segment),
         }
     }
     Ok(parts.join("/"))
+}
+
+/// Whether a path segment is a Windows drive prefix (`C:`), which would make a
+/// "relative" path absolute on Windows. Checked only for the first segment so
+/// ordinary names containing a colon stay usable.
+fn is_drive_prefix(segment: &str) -> bool {
+    let mut chars = segment.chars();
+    chars
+        .next()
+        .is_some_and(|letter| letter.is_ascii_alphabetic())
+        && chars.next() == Some(':')
 }
 
 /// Resolves a vault-relative path to the actual on-disk path when the stored
@@ -336,18 +349,8 @@ pub async fn exists_nfc_tolerant(vfs: &dyn Vfs, path: &str) -> VfsResult<bool> {
 }
 
 /// Recursively collects vault-relative paths of `.md` files under `root` (a
-/// vault-relative directory). A missing directory yields an empty list. Used for
-/// the daily-notes walk.
-pub async fn walk_markdown_files(vfs: &dyn Vfs, root: &str) -> VfsResult<Vec<String>> {
-    Ok(walk_markdown_files_with_meta(vfs, root)
-        .await?
-        .into_iter()
-        .map(|(path, _, _)| path)
-        .collect())
-}
-
-/// Like [`walk_markdown_files`] but also returns each file's `(len,
-/// modified_unix_nanos)` fingerprint — taken from the same `read_dir`
+/// vault-relative directory) with each file's `(len, modified_unix_nanos)`
+/// fingerprint — taken from the same `read_dir`
 /// enumeration, no extra stat — so callers (the daily-note index cache) can
 /// decide what to re-read without reading contents.
 pub async fn walk_markdown_files_with_meta(
@@ -391,6 +394,14 @@ mod tests {
         assert!(normalize_relative("../escape").is_err());
         assert!(normalize_relative("a/../../b").is_err());
         assert!(normalize_relative("C:/Windows").is_err());
+        assert!(normalize_relative("./C:/Windows").is_err());
+        // A colon inside a filename is legal on macOS/Linux and must not make
+        // the whole vault unreadable (Obsidian titles like `Re:Zero.md`).
+        assert_eq!(normalize_relative("Re:Zero.md").unwrap(), "Re:Zero.md");
+        assert_eq!(
+            normalize_relative("Daily Notes/12:30.md").unwrap(),
+            "Daily Notes/12:30.md"
+        );
     }
 
     // Katakana GA: composed (NFC, U+30AC) vs decomposed (NFD, KA + combining

@@ -47,6 +47,29 @@ pub(crate) struct ListsQuery {
     today: Option<String>,
 }
 
+/// Re-reads `path` and writes `next` only when it still equals the bytes the
+/// caller built `next` from. The content lock serializes in-process writers, but
+/// an external editor (Obsidian) can change the file between that read and this
+/// write; without the compare, the edit would be silently lost.
+async fn write_list_if_unchanged(
+    mutation: &super::state::ContentMutationGuard<'_>,
+    vfs: &dyn Vfs,
+    path: &str,
+    expected: &str,
+    next: &str,
+) -> Result<(), ApiError> {
+    let latest = vfs
+        .read_to_string(path)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read list {path}: {error}"))?;
+    if latest != expected {
+        return Err(ApiError::conflict(
+            "This list changed on disk. Reload it and try again.",
+        ));
+    }
+    Ok(write_entity_raw(mutation, vfs, path, next).await?)
+}
+
 pub(crate) async fn get_lists(
     State(state): State<AppState>,
     Query(query): Query<ListsQuery>,
@@ -264,7 +287,7 @@ pub(crate) async fn add_list_item(
         }
         let new_body = render_list(&parsed.description, &parsed.sections, &parsed.trailing);
         let new_raw = compose_document(&frontmatter, &new_body);
-        write_entity_raw(&mutation, vfs.as_ref(), &path, &new_raw).await?;
+        write_list_if_unchanged(&mutation, vfs.as_ref(), &path, &raw, &new_raw).await?;
         return Ok(Json(detail_from_parts(&path, parsed, &new_raw, &index)));
     }
     Ok(Json(detail_from_parts(&path, parsed, &raw, &index)))
@@ -299,7 +322,7 @@ pub(crate) async fn remove_list_item(
     if after != before {
         let new_body = render_list(&parsed.description, &parsed.sections, &parsed.trailing);
         let new_raw = compose_document(&frontmatter, &new_body);
-        write_entity_raw(&mutation, vfs.as_ref(), &path, &new_raw).await?;
+        write_list_if_unchanged(&mutation, vfs.as_ref(), &path, &raw, &new_raw).await?;
         return Ok(Json(detail_from_parts(&path, parsed, &new_raw, &index)));
     }
     Ok(Json(detail_from_parts(&path, parsed, &raw, &index)))

@@ -398,7 +398,7 @@ async fn download_one(
     // what closes the redirect-into-internal-host bypass.
     let mut current = reqwest::Url::parse(url).map_err(|_| DownloadError::BlockedUrl)?;
     let mut redirects = 0;
-    let response = loop {
+    let mut response = loop {
         validate_download_url(&current).await?;
         let response = client
             .get(current.clone())
@@ -441,11 +441,21 @@ async fn download_one(
         .and_then(|value| value.to_str().ok())
         .unwrap_or_default()
         .to_string();
-    let bytes = response
-        .bytes()
+    // Stream with a hard cap. `Response::bytes()` would buffer the whole body
+    // first, so a chunked (no Content-Length) response could exhaust memory
+    // before the post-hoc size check ever ran.
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response
+        .chunk()
         .await
-        .map_err(|error| DownloadError::Request(error.to_string()))?;
-    process_downloaded_bytes(bytes.to_vec(), &content_type, url)
+        .map_err(|error| DownloadError::Request(error.to_string()))?
+    {
+        if bytes.len() as u64 + chunk.len() as u64 > MAX_ASSET_BYTES {
+            return Err(DownloadError::TooLarge);
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    process_downloaded_bytes(bytes, &content_type, url)
 }
 
 /// Validates already-downloaded bytes are an image within the size limit and

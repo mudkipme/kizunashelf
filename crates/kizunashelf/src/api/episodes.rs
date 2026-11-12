@@ -202,22 +202,7 @@ pub(crate) async fn import_new_entity_episodes(
     entity_id: &str,
     language: Option<&str>,
 ) -> Option<QuickAddEpisodeResult> {
-    import_new_entity_episodes_marked(state, library, entity_id, None, language).await
-}
-
-/// Like [`import_new_entity_episodes`], but marks the first `watched_count`
-/// episodes (across groups, in order) as watched — how batch import stamps a
-/// source's "watched N episodes" progress onto a freshly-created entity. `None`
-/// leaves every item unwatched (the quick-add behavior).
-pub(crate) async fn import_new_entity_episodes_marked(
-    state: &AppState,
-    library: &Library,
-    entity_id: &str,
-    watched_count: Option<u32>,
-    language: Option<&str>,
-) -> Option<QuickAddEpisodeResult> {
-    import_new_entity_episodes_with_cancel(state, library, entity_id, watched_count, language, None)
-        .await
+    import_new_entity_episodes_with_cancel(state, library, entity_id, None, language, None).await
 }
 
 pub(crate) async fn import_new_entity_episodes_cancellable(

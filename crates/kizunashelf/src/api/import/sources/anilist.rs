@@ -10,6 +10,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
+use crate::api::external::external_client;
 use crate::api::external::{
     anilist_fuzzy_date, anilist_origin_language, provider_error, send_limited, USER_AGENT,
 };
@@ -50,7 +51,7 @@ impl ImportSource for AniListSource {
         &["anilist", "myanimelist"]
     }
 
-    async fn fetch(state: &AppState, input: &ImportInput) -> Result<Vec<ImportItem>, ApiError> {
+    async fn fetch(_state: &AppState, input: &ImportInput) -> Result<Vec<ImportItem>, ApiError> {
         let username = input
             .username
             .as_deref()
@@ -60,8 +61,7 @@ impl ImportSource for AniListSource {
 
         let body = json!({ "query": QUERY, "variables": { "userName": username } });
         let value: Value = send_limited(
-            state
-                .http_client()
+            external_client()
                 .post(ENDPOINT)
                 .header(reqwest::header::USER_AGENT, USER_AGENT)
                 .json(&body),

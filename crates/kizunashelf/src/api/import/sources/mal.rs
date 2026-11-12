@@ -7,6 +7,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
+use crate::api::external::external_client;
 use crate::api::external::{
     mal_list_candidate, provider_error, send_limited, ProviderResponseExt, MAL_LIST_FIELDS,
     USER_AGENT,
@@ -64,7 +65,7 @@ impl ImportSource for MyAnimeListSource {
 
         let mut items = Vec::new();
         for media_type in ["anime", "manga"] {
-            fetch_list(state, &client_id, username, media_type, &mut items).await?;
+            fetch_list(&client_id, username, media_type, &mut items).await?;
         }
         Ok(items)
     }
@@ -78,13 +79,12 @@ fn client_id(state: &AppState) -> Option<String> {
 }
 
 async fn fetch_list(
-    state: &AppState,
     client_id: &str,
     username: &str,
     media_type: &str,
     items: &mut Vec<ImportItem>,
 ) -> Result<(), ApiError> {
-    let client = state.http_client();
+    let client = external_client();
     let mut url = format!(
         "https://api.myanimelist.net/v2/users/{}/{media_type}list?fields={MAL_LIST_FIELDS}&nsfw=true&limit=1000",
         urlencoding::encode(username)

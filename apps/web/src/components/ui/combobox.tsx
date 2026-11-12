@@ -1,4 +1,5 @@
 import { Combobox as ComboboxPrimitive } from "@base-ui/react";
+import { useLingui } from "@lingui/react/macro";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import * as React from "react";
 
@@ -242,6 +243,7 @@ function ComboboxChip({
 }: ComboboxPrimitive.Chip.Props & {
   showRemove?: boolean;
 }) {
+  const { t } = useLingui();
   return (
     <ComboboxPrimitive.Chip
       data-slot="combobox-chip"
@@ -254,7 +256,7 @@ function ComboboxChip({
       {children}
       {showRemove ? (
         <ComboboxPrimitive.ChipRemove
-          render={<Button variant="ghost" size="icon-xs" />}
+          render={<Button variant="ghost" size="icon-xs" aria-label={t`Remove`} />}
           className="-ml-1 opacity-50 hover:opacity-100"
           data-slot="combobox-chip-remove"
         >

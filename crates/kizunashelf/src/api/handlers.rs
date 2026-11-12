@@ -332,7 +332,7 @@ pub(crate) async fn calendar(
     Query(query): Query<CalendarQuery>,
 ) -> ApiResult<CalendarResponse> {
     let library = get_library(&state).await?;
-    let now = chrono::Utc::now();
+    let now = chrono::Local::now();
     let year = clamp_number(
         query
             .year
@@ -403,7 +403,7 @@ pub(crate) async fn activity(
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(str::to_string)
-        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
+        .unwrap_or_else(crate::dates::today_local);
     let vfs = state.vault_vfs(&library.config.vault_root);
     Ok(Json(
         build_activity(
@@ -454,7 +454,7 @@ pub(crate) async fn upcoming(
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(str::to_string)
-        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
+        .unwrap_or_else(crate::dates::today_local);
     let vfs = state.vault_vfs(&library.config.vault_root);
     let activity = build_activity(
         &library,

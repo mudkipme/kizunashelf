@@ -1,4 +1,3 @@
-export const allOptions = "all";
 export const allTypes = "all";
 // The library browser is an unsaved smart list, so it sorts by Bases property
 // reference (`file.name`, `file.mtime`, `note.<field>`) — see

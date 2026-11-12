@@ -11,7 +11,7 @@ import { HomeSmartList } from "@/components/home/home-smart-list";
 import { AppFrame } from "@/components/layout/app-frame";
 import { SuggestedListsButton } from "@/components/smart-lists/suggested-lists-dialog";
 import { Button } from "@/components/ui/button";
-import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { contentWritesDisabled, useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
 import { fieldLabelsByType } from "@/lib/type-config";
 
@@ -36,7 +36,7 @@ export function HomePage() {
           <Button
             type="button"
             disabled={!capabilities.contentWritable}
-            title={!capabilities.contentWritable ? CONTENT_WRITES_DISABLED : t`Add`}
+            title={!capabilities.contentWritable ? contentWritesDisabled() : t`Add`}
             asChild={capabilities.contentWritable}
           >
             {!capabilities.contentWritable ? (

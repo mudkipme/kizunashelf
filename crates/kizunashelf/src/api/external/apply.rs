@@ -135,11 +135,25 @@ pub(crate) async fn apply_external_candidate(
                         .insert(entry.field.clone(), entry.value.clone());
                 }
             }
+            // Two mappings may target the same heading (e.g. TMDB and TheTVDB
+            // both fill `Summary`). Splicing them one at a time would let the
+            // second replace the first, so join all selected values per heading
+            // and write each heading once.
+            let mut by_heading: Vec<(&str, Vec<&str>)> = Vec::new();
             for section in &resolved.body_sections {
-                if section.has_value && selected_sections.contains(section.key.as_str()) {
-                    document.body =
-                        splice_section(&document.body, &section.heading, &section.markdown);
+                if !section.has_value || !selected_sections.contains(section.key.as_str()) {
+                    continue;
                 }
+                match by_heading
+                    .iter_mut()
+                    .find(|(heading, _)| *heading == section.heading.as_str())
+                {
+                    Some((_, parts)) => parts.push(section.markdown.as_str()),
+                    None => by_heading.push((&section.heading, vec![&section.markdown])),
+                }
+            }
+            for (heading, parts) in by_heading {
+                document.body = splice_section(&document.body, heading, &parts.join("\n\n"));
             }
             // An entity with no body still gets the candidate's brief as a
             // starting point (only when nothing else filled the body).

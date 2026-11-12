@@ -47,12 +47,6 @@ export function isFrontmatterObject(
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function isScalarFrontmatterValue(
-  value: FrontmatterValue | undefined,
-): value is null | boolean | number | string {
-  return value === null || ["boolean", "number", "string"].includes(typeof value);
-}
-
 export function parseScalarValue(value: string): FrontmatterValue {
   const trimmed = value.trim();
   if (!trimmed) return null;

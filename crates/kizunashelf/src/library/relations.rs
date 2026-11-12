@@ -16,6 +16,9 @@ use super::read::cache_key;
 /// only relation kind that requires reading files outside the resident records).
 pub(crate) const DAILY_NOTE_RELATION_FIELD: &str = "daily-note";
 
+/// The `field` value marking a relation derived from a body `[[wikilink]]`.
+pub(crate) const BODY_RELATION_FIELD: &str = "body";
+
 /// Encodes a daily-note relation's `source_id` as `daily-note:{label}:{path}`.
 /// Paired with [`parse_daily_note_source_id`] so the encoding lives in one place.
 pub(super) fn daily_note_source_id(source_label: &str, relative_path: &str) -> String {
@@ -129,7 +132,7 @@ pub(super) fn build_record_outgoing(
             target_id: Some(target.summary.id.clone()),
             target_title: target_title.clone(),
             target_type: Some(target.summary.entity_type.clone()),
-            field: "body".to_string(),
+            field: BODY_RELATION_FIELD.to_string(),
             direction: RelationDirection::Out,
         });
     }

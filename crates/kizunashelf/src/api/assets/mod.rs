@@ -63,6 +63,24 @@ pub(crate) async fn download_entity_assets(
     };
     check_revision(&request.revision, &entity.revision)?;
     let type_config = type_config_or_err(&library.config, &entity.summary.entity_type)?;
+    // The ingest/upload siblings reject a name that isn't a schema image field;
+    // match them here so a client typo isn't reported as "nothing to download".
+    if let Some(fields) = request.fields.as_deref() {
+        let image_fields: std::collections::HashSet<&str> = type_config
+            .fields
+            .iter()
+            .filter(|field| matches!(field.field_type, FieldType::Image | FieldType::ImageList))
+            .map(|field| field.field.as_str())
+            .collect();
+        if let Some(unknown) = fields
+            .iter()
+            .find(|name| !image_fields.contains(name.as_str()))
+        {
+            return Err(ApiError::bad_request(&format!(
+                "Field is not an image field: {unknown}"
+            )));
+        }
+    }
 
     let all_local = all_local_asset_paths(&library);
     let vfs = state.vault_vfs(&library.config.vault_root);
@@ -406,6 +424,15 @@ pub(crate) async fn serve_asset(
     Response::builder()
         .header(header::CONTENT_TYPE, content_type)
         .header(header::CACHE_CONTROL, "private, max-age=3600")
+        // Assets are user/provider-supplied files served from the app's own
+        // origin. `nosniff` stops a mislabeled file being interpreted as HTML,
+        // and `sandbox` neuters script/network access if one is navigated to
+        // directly (e.g. an uploaded SVG) — `<img>` rendering is unaffected.
+        .header(header::X_CONTENT_TYPE_OPTIONS, "nosniff")
+        .header(
+            header::CONTENT_SECURITY_POLICY,
+            "default-src 'none'; sandbox",
+        )
         .body(Body::from(bytes))
         .map_err(|error| ApiError::from(anyhow::anyhow!(error.to_string())))
 }

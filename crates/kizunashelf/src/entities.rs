@@ -5,7 +5,9 @@
 
 use crate::contract::EntityListResponse;
 use crate::dates::clamp_number;
-use crate::library::compare_string_for_title_language;
+use crate::library::{
+    compare_string_for_title_language, parse_daily_note_source_id, DAILY_NOTE_RELATION_FIELD,
+};
 use crate::relations::{
     sort_entities, sort_entities_with_title_language, sort_records_by_modified, summary_by_id,
     SortDirection,
@@ -318,8 +320,8 @@ pub fn entity_detail_relations(library: &Library, entity_id: &str) -> Vec<Relati
         .into_iter()
         .map(|index| &library.relations[index])
         .filter(|relation| {
-            relation.field != "daily-note"
-                && !relation.source_id.starts_with("daily-note:")
+            relation.field != DAILY_NOTE_RELATION_FIELD
+                && parse_daily_note_source_id(&relation.source_id).is_none()
                 && (relation.source_id == entity_id
                     || (relation.target_id.as_deref() == Some(entity_id)
                         && relation.direction == RelationDirection::Out
