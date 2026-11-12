@@ -11,8 +11,9 @@ const SERVICE: &str = "me.mudkip.kizunashelf-desktop";
 /// derived OAuth token cache live here, keyed by the `SECRET_*` constants.
 ///
 /// If no secret service is available (e.g. a headless Linux box with no
-/// gnome-keyring/KWallet running), reads return `None` and writes return an
-/// error — surfaced to the user rather than silently dropped.
+/// gnome-keyring/KWallet running), reads log the failure and return `None`
+/// (indistinguishable from an unset credential, so the UI asks again) and
+/// writes return an error — surfaced to the user rather than silently dropped.
 pub struct KeyringSecretStore;
 
 impl KeyringSecretStore {
@@ -27,7 +28,10 @@ impl SecretStore for KeyringSecretStore {
         match entry.get_password() {
             Ok(value) => Some(value),
             Err(keyring::Error::NoEntry) => None,
-            Err(_) => None,
+            Err(error) => {
+                tracing::warn!(%error, key, "keyring read failed");
+                None
+            }
         }
     }
 

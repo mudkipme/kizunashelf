@@ -33,8 +33,13 @@ pub fn save(path: &Path, data: &VaultStoreData) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    fs::write(path, serde_json::to_string_pretty(data)?)
-        .with_context(|| format!("failed to write vault list to {}", path.display()))?;
+    // Temp + rename so a crash can't leave a half-written vault list (losing
+    // the remembered vaults is more annoying than losing a token cache).
+    let tmp = path.with_extension("json.tmp");
+    fs::write(&tmp, serde_json::to_string_pretty(data)?)
+        .with_context(|| format!("failed to write vault list to {}", tmp.display()))?;
+    fs::rename(&tmp, path)
+        .with_context(|| format!("failed to replace vault list at {}", path.display()))?;
     Ok(())
 }
 
