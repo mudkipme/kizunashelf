@@ -674,7 +674,6 @@ fn parses_a_hand_edited_document_leniently() {
     assert_eq!(list.views[0].sort[0].direction, SortDirection::Desc);
     assert_eq!(list.views[1].layout, ViewLayout::Grid);
     assert_eq!(list.views[1].image.as_deref(), Some("note.cover"));
-    assert_eq!(list.views[1].source_index, 1);
 
     assert!(list.warnings.iter().any(|w| w.contains("formula.ppu")));
     assert!(list.warnings.iter().any(|w| w.contains("Places")));

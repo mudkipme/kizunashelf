@@ -85,16 +85,30 @@ impl SecretStore for NativeSecretStore {
         if key != SECRET_PROVIDER_TOKENS {
             return Ok(());
         }
+        use std::io::Write;
+
         if let Some(parent) = self.token_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        std::fs::write(&self.token_path, format!("{value}\n"))?;
+        // Create the file with `0600` from the start (and re-assert it on an
+        // existing file). `write` + a later `chmod` left a window where the
+        // provider tokens were readable by other local users under the umask.
+        let mut options = std::fs::OpenOptions::new();
+        options.write(true).create(true).truncate(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options.open(&self.token_path)?;
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
             let _ =
                 std::fs::set_permissions(&self.token_path, std::fs::Permissions::from_mode(0o600));
         }
+        file.write_all(format!("{value}\n").as_bytes())?;
+        file.sync_all()?;
         Ok(())
     }
 }

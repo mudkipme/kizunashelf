@@ -58,7 +58,7 @@ pub(crate) async fn cleanup_queues(
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(str::to_string)
-        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
+        .unwrap_or_else(crate::dates::today_local);
     // The memo single-flights the build, which scans the whole library and stats
     // every local cover through the VFS. The status-mismatch queue is date-relative,
     // so `today` joins the content revision in the memo key — the cached result is

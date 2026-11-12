@@ -344,7 +344,10 @@ pub fn wikilink_regex() -> &'static Regex {
 
 fn summary_heading_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?im)^##\s+(摘要|概览|简介|Summary)\s*$").unwrap())
+    // Includes every heading the built-in presets seed for the Summary section
+    // (ja `概要`, zh-Hant `簡介`), so a preset body isn't rendered with the
+    // heading word leaking into the card summary.
+    RE.get_or_init(|| Regex::new(r"(?im)^##\s+(摘要|概要|概览|简介|簡介|Summary)\s*$").unwrap())
 }
 
 fn image_markdown_regex() -> &'static Regex {

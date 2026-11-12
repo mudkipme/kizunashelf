@@ -7,6 +7,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
+use crate::api::external::external_client;
 use crate::api::external::{
     provider_error, send_limited, CredentialSpec, ProviderResponseExt, USER_AGENT,
 };
@@ -66,8 +67,7 @@ impl ImportSource for SteamSource {
             urlencoding::encode(steam_id)
         );
         let response = send_limited(
-            state
-                .http_client()
+            external_client()
                 .get(&url)
                 .header(reqwest::header::USER_AGENT, USER_AGENT),
         )

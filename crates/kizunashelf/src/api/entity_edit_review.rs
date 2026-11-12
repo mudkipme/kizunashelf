@@ -38,7 +38,10 @@ pub(crate) async fn review_entity_edit(
     Path(path): Path<EntityPath>,
     Json(request): Json<EntityEditReviewRequest>,
 ) -> ApiResult<EntityEditReviewResponse> {
-    let _guard = state.content_mutation_lock().await;
+    // Review never writes. A read-only snapshot does not need the exclusive
+    // content lock, and holding it here serialized a whole-vault reload against
+    // every write; atomic vault writes mean each read still sees a complete
+    // file, and the closing schema-revision check catches a concurrent edit.
     let vfs = state.vault_vfs(&state.app_config().vault_root);
     let (schema_revision, schema) = read_schema(&state, vfs.as_ref()).await?;
     // A review is an explicit fresh read, including in native engines with a long TTL.

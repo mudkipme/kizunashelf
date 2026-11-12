@@ -116,7 +116,7 @@ impl IntoResponse for ApiError {
 }
 
 /// Marks a response as one that already logged its own reason above. The
-/// router's fallback logging ([`super::router::log_unlogged_failures`]) uses it
+/// router's fallback logging ([`super::router::trace_requests`]) uses it
 /// to tell those apart from a request axum rejected *before* any handler ran — a
 /// malformed query, a method the route doesn't take — which never builds an
 /// `ApiError` and would otherwise leave no trace at all.

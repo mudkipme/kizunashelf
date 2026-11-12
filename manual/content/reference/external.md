@@ -122,7 +122,7 @@ Profile imports support **public profiles** only; CSV sources use the file suppl
 | --- | --- | --- | --- |
 | Bangumi | username | `bangumi` | — |
 | MyAnimeList | username | `myanimelist` | MyAnimeList client id (same as search) |
-| AniList | username | `myanimelist` (via each entry's MAL id) | — |
+| AniList | username | `anilist`, falling back to `myanimelist` | — |
 | Kitsu | username | `myanimelist` (via each entry's MAL mapping) | — |
 | Trakt | username (slug) | `tmdb` | Trakt client id |
 | Steam | SteamID64 | `steam` | Steam Web API key |

@@ -8,6 +8,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
+use crate::api::external::external_client;
 use crate::api::external::{
     provider_error, send_limited, CredentialSpec, ProviderResponseExt, USER_AGENT,
 };
@@ -65,10 +66,10 @@ impl ImportSource for TraktSource {
             client_id(state).ok_or_else(|| ApiError::bad_request("Set the Trakt client ID"))?;
         let slug = urlencoding::encode(slug);
 
-        let movies = trakt_get(state, &client_id, &format!("/users/{slug}/watched/movies")).await?;
-        let shows = trakt_get(state, &client_id, &format!("/users/{slug}/watched/shows")).await?;
-        let watchlist = trakt_get(state, &client_id, &format!("/users/{slug}/watchlist")).await?;
-        let ratings = trakt_get(state, &client_id, &format!("/users/{slug}/ratings")).await?;
+        let movies = trakt_get(&client_id, &format!("/users/{slug}/watched/movies")).await?;
+        let shows = trakt_get(&client_id, &format!("/users/{slug}/watched/shows")).await?;
+        let watchlist = trakt_get(&client_id, &format!("/users/{slug}/watchlist")).await?;
+        let ratings = trakt_get(&client_id, &format!("/users/{slug}/ratings")).await?;
 
         Ok(build_items(&movies, &shows, &watchlist, &ratings))
     }
@@ -81,32 +82,56 @@ fn client_id(state: &AppState) -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
-async fn trakt_get(state: &AppState, client_id: &str, path: &str) -> Result<Value, ApiError> {
-    let response = send_limited(
-        state
-            .http_client()
-            .get(format!("{BASE}{path}"))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .header("trakt-api-version", "2")
-            .header("trakt-api-key", client_id),
-    )
-    .await
-    .map_err(provider_error)?;
-    match response.status().as_u16() {
-        404 => return Err(ApiError::bad_request("Trakt user not found")),
-        401 => {
-            return Err(ApiError::bad_request(
-                "Trakt profile is private (public profiles only)",
-            ))
-        }
-        _ => {}
-    }
-    response
-        .error_for_status_body()
-        .await?
-        .json()
+async fn trakt_get(client_id: &str, path: &str) -> Result<Value, ApiError> {
+    // Trakt paginates list endpoints (default 10 per page) and reports the page
+    // count in a header. Reading only the first response silently truncated
+    // every library to its first few entries.
+    const PAGE_LIMIT: u32 = 100;
+    const MAX_PAGES: u32 = 200;
+    let separator = if path.contains('?') { '&' } else { '?' };
+    let mut items = Vec::new();
+    for page in 1..=MAX_PAGES {
+        let url = format!("{BASE}{path}{separator}limit={PAGE_LIMIT}&page={page}");
+        let response = send_limited(
+            external_client()
+                .get(url)
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .header("trakt-api-version", "2")
+                .header("trakt-api-key", client_id),
+        )
         .await
-        .map_err(|_| ApiError::bad_gateway("Invalid Trakt response"))
+        .map_err(provider_error)?;
+        match response.status().as_u16() {
+            404 => return Err(ApiError::bad_request("Trakt user not found")),
+            401 => {
+                return Err(ApiError::bad_request(
+                    "Trakt profile is private (public profiles only)",
+                ))
+            }
+            _ => {}
+        }
+        let page_count = response
+            .headers()
+            .get("x-pagination-page-count")
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.parse::<u32>().ok())
+            .unwrap_or(1)
+            .max(1);
+        let value: Value = response
+            .error_for_status_body()
+            .await?
+            .json()
+            .await
+            .map_err(|_| ApiError::bad_gateway("Invalid Trakt response"))?;
+        let page_items = value
+            .as_array()
+            .ok_or_else(|| ApiError::bad_gateway("Invalid Trakt response"))?;
+        items.extend(page_items.iter().cloned());
+        if page >= page_count {
+            break;
+        }
+    }
+    Ok(Value::Array(items))
 }
 
 /// Builds items from the four lists (pure; no network). Each list contributes a

@@ -224,7 +224,6 @@ pub(crate) async fn preview_smart_list(
         sort: request.sort.iter().map(contract_sort_to_core).collect(),
         limit: request.limit.map(u64::from),
         image: None,
-        source_index: 0,
     };
     let ctx = eval_context(&library, request.today.as_deref());
     let records = smart_lists::smart_list_records(
@@ -659,7 +658,7 @@ pub(crate) fn resolve_today(client_today: Option<&str>) -> chrono::NaiveDate {
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .and_then(|value| chrono::NaiveDate::parse_from_str(value, "%Y-%m-%d").ok())
-        .unwrap_or_else(|| chrono::Local::now().date_naive())
+        .unwrap_or_else(crate::dates::today_local_date)
 }
 
 fn parse_list_raw(path: &str, raw: &str) -> Result<SmartList, ApiError> {

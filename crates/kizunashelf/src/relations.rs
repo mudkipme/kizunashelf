@@ -52,13 +52,6 @@ pub fn relation_source_type_label(
         })
 }
 
-pub fn target_key(relation: &Relation) -> &str {
-    relation
-        .target_id
-        .as_deref()
-        .unwrap_or(&relation.target_title)
-}
-
 pub fn summary_by_id(library: &Library) -> HashMap<&str, &EntitySummary> {
     library
         .summaries()
@@ -74,6 +67,8 @@ pub fn type_label(library: &Library, entity_type: Option<&String>) -> Option<Str
         .iter()
         .find(|item| item.id == *entity_type)
         .map(|item| item.label.clone())
+        // An unknown type id is still a usable label (a stale config reference
+        // should read as its id, not disappear).
         .or_else(|| Some(entity_type.clone()))
 }
 

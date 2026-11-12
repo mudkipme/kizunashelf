@@ -8,6 +8,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
+use crate::api::external::external_client;
 use crate::api::external::{provider_error, send_limited, ProviderResponseExt, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
@@ -33,14 +34,14 @@ impl ImportSource for BangumiSource {
         &["bangumi"]
     }
 
-    async fn fetch(state: &AppState, input: &ImportInput) -> Result<Vec<ImportItem>, ApiError> {
+    async fn fetch(_state: &AppState, input: &ImportInput) -> Result<Vec<ImportItem>, ApiError> {
         let username = input
             .username
             .as_deref()
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .ok_or_else(|| ApiError::bad_request("A Bangumi username is required"))?;
-        let client = state.http_client();
+        let client = external_client();
 
         let mut items = Vec::new();
         let mut offset = 0u32;

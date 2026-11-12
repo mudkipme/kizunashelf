@@ -61,12 +61,17 @@ use axum::extract::Request;
 use axum::http::StatusCode;
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
-use axum::routing::get;
+use axum::routing::{any, get};
 use axum::{Json, Router};
 use std::sync::Arc;
 use std::time::Instant;
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::Instrument;
+
+/// Base64 of the engine's 25 MB asset cap, with headroom for the JSON envelope.
+const UPLOAD_BODY_LIMIT: usize = 40 * 1024 * 1024;
+/// Whole-library CSV imports (Goodreads/IMDb/Yamtrack) can be tens of MB.
+const IMPORT_BODY_LIMIT: usize = 64 * 1024 * 1024;
 
 /// Builds the router with an injected vault filesystem and inline app config —
 /// the iOS entry point. The vault config and entities are read through `vault_fs`
@@ -111,7 +116,10 @@ fn build_router(state: AppState) -> Router {
     let app = api_router()
         .with_state(state)
         .finish_api(&mut api)
-        .route("/api/{*path}", get(api_not_found))
+        // `any`, not `get`: an unknown path under a non-GET method must still
+        // answer the API's own JSON 404 instead of Axum's bare 405 with
+        // `Allow: GET`, which reads like a real method mismatch to clients.
+        .route("/api/{*path}", any(api_not_found))
         // Applied before the static-file fallback below, so it traces the API
         // routes only: a missing web asset is the browser's business, not a
         // server fault worth a log line.
@@ -559,7 +567,9 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<403, Json<ErrorResponse>>()
                     .response::<409, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
-            }),
+            })
+            // CSV exports can exceed the default 2 MB body limit.
+            .layer(axum::extract::DefaultBodyLimit::max(IMPORT_BODY_LIMIT)),
         )
         .api_route(
             "/api/import-jobs/{id}",
@@ -591,7 +601,7 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<409, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             })
-            .layer(axum::extract::DefaultBodyLimit::max(64 * 1024 * 1024)),
+            .layer(axum::extract::DefaultBodyLimit::max(IMPORT_BODY_LIMIT)),
         )
         .api_route(
             "/api/import-jobs/{id}/commit",
@@ -669,7 +679,10 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<404, Json<ErrorResponse>>()
                     .response::<409, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
-            }),
+            })
+            // Base64 inflates the payload; the default 2 MB limit would cap
+            // uploads far below the engine's own 25 MB asset limit.
+            .layer(axum::extract::DefaultBodyLimit::max(UPLOAD_BODY_LIMIT)),
         )
         .api_route(
             "/api/tags",

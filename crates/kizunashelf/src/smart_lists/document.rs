@@ -169,7 +169,7 @@ fn parse_views(doc: &Mapping, warnings: &mut Vec<String>) -> Vec<SmartView> {
         return Vec::new();
     };
     let mut views = Vec::new();
-    for (index, entry) in entries.iter().enumerate() {
+    for entry in entries {
         let Value::Mapping(mapping) = entry else {
             warnings.push(format!("Ignored view: {}", yaml_summary(entry)));
             continue;
@@ -205,7 +205,6 @@ fn parse_views(doc: &Mapping, warnings: &mut Vec<String>) -> Vec<SmartView> {
             sort,
             limit,
             image,
-            source_index: index,
         });
     }
     views

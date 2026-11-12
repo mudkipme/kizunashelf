@@ -8,6 +8,7 @@ use super::super::csv_util::{field, parse_csv, CsvRow};
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
+use crate::api::external::external_client;
 use crate::api::external::{provider_error, send_limited, ProviderResponseExt, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
@@ -28,7 +29,7 @@ impl ImportSource for GoodreadsSource {
         &["openlibrary"]
     }
 
-    async fn fetch(state: &AppState, input: &ImportInput) -> Result<Vec<ImportItem>, ApiError> {
+    async fn fetch(_state: &AppState, input: &ImportInput) -> Result<Vec<ImportItem>, ApiError> {
         let text = input
             .csv_text
             .as_deref()
@@ -42,7 +43,7 @@ impl ImportSource for GoodreadsSource {
                 continue;
             };
             let resolved = match &parsed.isbn {
-                Some(isbn) => resolve_isbn(state, isbn).await?,
+                Some(isbn) => resolve_isbn(isbn).await?,
                 None => None,
             };
             items.push(build_item(parsed, resolved));
@@ -125,24 +126,14 @@ fn build_item(parsed: ParsedRow, resolved: Option<(String, String)>) -> ImportIt
 /// `/isbn/{isbn}.json` endpoint. `Ok(None)` on a 404 (unknown ISBN); a transport
 /// or server error propagates so the user sees Open Library was unreachable
 /// rather than a silent all-review result.
-async fn resolve_isbn(state: &AppState, isbn: &str) -> Result<Option<(String, String)>, ApiError> {
+async fn resolve_isbn(isbn: &str) -> Result<Option<(String, String)>, ApiError> {
     let response = send_limited(
-        state
-            .http_client()
+        external_client()
             .get(format!("https://openlibrary.org/isbn/{isbn}.json"))
             .header(reqwest::header::USER_AGENT, USER_AGENT),
     )
     .await
     .map_err(provider_error)?;
-    // The shared client doesn't follow redirects; `/isbn` may 3xx to `/books/OLID`.
-    if response.status().is_redirection() {
-        let location = response
-            .headers()
-            .get(reqwest::header::LOCATION)
-            .and_then(|value| value.to_str().ok())
-            .map(|value| value.trim_end_matches(".json").to_string());
-        return Ok(location.and_then(|location| olid_url(&location)));
-    }
     if response.status() == reqwest::StatusCode::NOT_FOUND {
         return Ok(None);
     }

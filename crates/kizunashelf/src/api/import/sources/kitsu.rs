@@ -7,6 +7,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
+use crate::api::external::external_client;
 use crate::api::external::{provider_error, send_limited, ProviderResponseExt, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
@@ -31,14 +32,14 @@ impl ImportSource for KitsuSource {
         &["myanimelist"]
     }
 
-    async fn fetch(state: &AppState, input: &ImportInput) -> Result<Vec<ImportItem>, ApiError> {
+    async fn fetch(_state: &AppState, input: &ImportInput) -> Result<Vec<ImportItem>, ApiError> {
         let username = input
             .username
             .as_deref()
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .ok_or_else(|| ApiError::bad_request("A Kitsu username is required"))?;
-        let client = state.http_client();
+        let client = external_client();
 
         let users: Value = kitsu_get(
             client,

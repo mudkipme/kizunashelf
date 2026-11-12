@@ -56,7 +56,7 @@ serde_json = { version = "1.0.151", features = ["preserve_order"] }
 serde_yaml = { package = "yaml_serde", version = "0.10.7" }
 tokio = { version = "1.53.1", features = ["full"] }
 tower = { version = "0.5.3", features = ["util"] }
-tower-http = { version = "0.7.0", features = ["cors", "fs"] }
+tower-http = { version = "0.7.0", features = ["fs"] }
 # Facade only — the core never installs a subscriber. Each host decides where
 # events go (the web binary and the desktop shell install one; iOS forwards to
 # `OSLog`), and with no subscriber installed every event compiles to a no-op.

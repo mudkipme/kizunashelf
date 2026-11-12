@@ -285,8 +285,6 @@ pub struct ViewSort {
 }
 
 /// One supported view parsed out of the document's `views:` sequence.
-/// `source_index` points back at the underlying YAML entry so mutations can
-/// edit it in place (preserving unknown keys like `order`/`cardSize`).
 #[derive(Clone, Debug, PartialEq)]
 pub struct SmartView {
     pub layout: ViewLayout,
@@ -296,7 +294,6 @@ pub struct SmartView {
     pub limit: Option<u64>,
     /// Cards image property reference (e.g. `note.cover`), verbatim.
     pub image: Option<String>,
-    pub source_index: usize,
 }
 
 /// A parsed `.base` document: the raw YAML tree (the round-trip source of
