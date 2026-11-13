@@ -9,7 +9,7 @@ import * as zod from 'zod';
 export const externalMatchCandidateTitlesDefault = {};
 export const externalMatchCandidateMetadataDefault = {};
 export const ExternalMatch = zod.object({
-  "entityType": zod.string().describe('The entity type this candidate was resolved against. Always set — with a\nconcrete `type` it echoes that type; in cross-type (`all`) search it is the\ntype whose schema produced these field\/body previews.'),
+  "entityType": zod.string().describe('The entity type this candidate was resolved against.'),
   "candidate": zod.object({
   "provider": zod.string(),
   "sourceId": zod.string(),

@@ -107,7 +107,7 @@ fields:
 | `enumOptions` | no | string[] | `enum`, `enumList` | Allowed or suggested values in editors and filters. |
 | `enumRole` | no | enum | `enum` | Semantic role of the enum field. Currently only `status` — marks the one field that represents the entity's lifecycle status. See [Status](./titles-dates-status.md#status). |
 | `statusValues` | no | object | `enum` (with `enumRole: status`) | Maps each canonical status (`planning`, `ongoing`, `paused`, `completed`, `dropped`) to the user option strings that mean it. See [Status](./titles-dates-status.md#status). |
-| `dateRole` | no | enum | `date`, `season` | Whether the date is for planning, started, or completion. |
+| `dateRole` | no | enum | `date`, `season` | Whether the date is for planning, started, completion, or an event. |
 | `seasonLanguage` | no | enum | `season` | Season display/parser language: `zh`, `ja`, or `en`. |
 | `externalRef` | no | string | `externalRef` | External provider represented by this URL/id field. |
 | `externalTypes` | no | string[] | `externalRef` | Provider-specific type filters for external search. |

@@ -583,7 +583,8 @@ pub(crate) async fn smart_list_summaries(
         None => build().await?,
     };
 
-    let ctx = EvalContext::new(library, chrono::Utc::now(), resolved_today);
+    let needs_eval = entity.is_some() || cached.rows.iter().any(|row| row.uses_now);
+    let ctx = needs_eval.then(|| EvalContext::new(library, chrono::Utc::now(), resolved_today));
     let wanted = entity.and_then(|id| library.record_by_id(id));
     Ok(cached
         .rows
@@ -592,16 +593,20 @@ pub(crate) async fn smart_list_summaries(
             let mut summary = row.summary.clone();
             // `now()` is an instant, not content. Keep those uncommon counts
             // live while still reusing the parsed filter tree.
-            if row.uses_now {
-                summary.item_count = library
-                    .records
-                    .iter()
-                    .filter(|record| smart_lists::record_matches(&row.filters, record, &ctx))
-                    .count();
+            if let Some(ctx) = ctx.as_ref() {
+                if row.uses_now {
+                    summary.item_count = library
+                        .records
+                        .iter()
+                        .filter(|record| smart_lists::record_matches(&row.filters, record, ctx))
+                        .count();
+                }
+                summary.contains = entity.map(|_| {
+                    wanted.is_some_and(|record| {
+                        smart_lists::record_matches(&row.filters, record, ctx)
+                    })
+                });
             }
-            summary.contains = entity.map(|_| {
-                wanted.is_some_and(|record| smart_lists::record_matches(&row.filters, record, &ctx))
-            });
             summary
         })
         .collect())
@@ -1174,9 +1179,6 @@ fn compare_value_to_core(
 /// Builds the core filter tree from the contract group plus the maintained
 /// scope atom. With a scope and a non-`all` root conjunction, the scope wraps
 /// the group in an outer `and` so it always constrains the result.
-///
-/// Also the bridge for home-section `criteria` (`api/handlers.rs`), which
-/// share the contract group model and this evaluator.
 pub(super) fn group_to_node(
     group: &SmartFilterGroup,
     scope_folder: Option<&str>,

@@ -126,7 +126,7 @@ function EditableRow({
             </div>
           ) : null}
         </div>
-        <ChevronRightIcon className="shrink-0 text-muted-foreground" />
+        <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
       </button>
       {action}
       <Button

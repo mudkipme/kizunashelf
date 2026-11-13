@@ -42,7 +42,7 @@ fn count_by_type(library: &Library) -> Vec<TypeCount> {
 
 /// Entity counts per canonical status over an already-scoped summary slice —
 /// the resolved status is resident on the summary, so this is a single pass.
-fn count_by_canonical_status(summaries: &[EntitySummary]) -> CanonicalStatusCounts {
+fn count_by_canonical_status(summaries: &[&EntitySummary]) -> CanonicalStatusCounts {
     let mut counts = CanonicalStatusCounts::default();
     for entity in summaries {
         match entity.status.as_ref().and_then(|status| status.canonical) {
@@ -61,15 +61,14 @@ fn count_by_canonical_status(summaries: &[EntitySummary]) -> CanonicalStatusCoun
 /// when `entity_type` is `Some(id)` (`None` or `"all"` covers every type).
 pub fn build_stats(library: &Library, entity_type: Option<&str>) -> StatsResponse {
     let type_filter = entity_type.filter(|value| *value != "all");
-    let summaries: Vec<EntitySummary> = match type_filter {
+    let summaries: Vec<&EntitySummary> = match type_filter {
         Some(entity_type) => library
             .summaries()
             .filter(|entity| entity.entity_type == entity_type)
-            .cloned()
             .collect(),
-        None => library.summaries().cloned().collect(),
+        None => library.summaries().collect(),
     };
-    let ids: HashSet<_> = summaries.iter().map(|entity| entity.id.clone()).collect();
+    let ids: HashSet<&str> = summaries.iter().map(|entity| entity.id.as_str()).collect();
 
     StatsResponse {
         generated_at: library.generated_at.clone(),
@@ -77,7 +76,7 @@ pub fn build_stats(library: &Library, entity_type: Option<&str>) -> StatsRespons
         relations: library
             .relations
             .iter()
-            .filter(|relation| ids.contains(&relation.source_id))
+            .filter(|relation| ids.contains(relation.source_id.as_str()))
             .count(),
         by_type: count_by_type(library),
         by_canonical_status: count_by_canonical_status(&summaries),
@@ -115,33 +114,24 @@ pub fn build_stats(library: &Library, entity_type: Option<&str>) -> StatsRespons
 /// The full `/analytics` whole-library scan: totals, distributions, the activity
 /// heatmap, and data-quality buckets.
 pub fn build_analytics(library: &Library) -> AnalyticsResponse {
-    // Materialize once for the multiple passes below; freed when the (memoized)
-    // build returns, unlike a resident duplicate.
-    let summaries: Vec<EntitySummary> = library.summaries().cloned().collect();
-    let summaries = &summaries;
     let quality = QualityEligibility::new(library);
     let outgoing = outgoing_relations(library, None);
-    let unresolved: Vec<_> = outgoing
+    let unresolved_relations = outgoing
         .iter()
         .filter(|relation| relation.target_id.is_none())
-        .map(|relation| (*relation).to_owned())
-        .collect();
-    let dated: Vec<_> = summaries
-        .iter()
+        .count();
+    let dated: Vec<(&EntitySummary, ParsedEntityDate)> = library
+        .summaries()
         .flat_map(|entity| {
-            entity
-                .dates
-                .iter()
-                .filter_map(|item| {
-                    parse_entity_date(Some(&item.value)).map(|date| (entity.clone(), date))
-                })
-                .collect::<Vec<_>>()
+            entity.dates.iter().filter_map(move |item| {
+                parse_entity_date(Some(&item.value)).map(|date| (entity, date))
+            })
         })
         .collect();
-    let dated_entity_ids: std::collections::HashSet<_> =
-        dated.iter().map(|(entity, _)| entity.id.clone()).collect();
-    let connected_count = summaries
-        .iter()
+    let dated_entity_ids: HashSet<&str> =
+        dated.iter().map(|(entity, _)| entity.id.as_str()).collect();
+    let connected_count = library
+        .summaries()
         .filter(|entity| quality.requires_relations(entity))
         .filter(|entity| entity.relation_count > 0)
         .count();
@@ -149,9 +139,9 @@ pub fn build_analytics(library: &Library) -> AnalyticsResponse {
     AnalyticsResponse {
         generated_at: library.generated_at.clone(),
         totals: AnalyticsTotals {
-            entities: summaries.len(),
+            entities: library.records.len(),
             relations: outgoing.len(),
-            unresolved_relations: unresolved.len(),
+            unresolved_relations,
             dated_entities: dated_entity_ids.len(),
             connected_entities: connected_count,
         },
@@ -163,24 +153,24 @@ pub fn build_analytics(library: &Library) -> AnalyticsResponse {
                 .collect::<Vec<Count>>(),
             by_source_target_type: relation_type_pairs(library).into_iter().take(16).collect(),
         },
-        activity: build_activity(dated),
+        activity: build_activity(&dated),
         data_quality: AnalyticsDataQuality {
-            missing_cover: summaries
-                .iter()
+            missing_cover: library
+                .summaries()
                 .filter(|entity| quality.requires_cover(entity))
                 .filter(|entity| entity.image.is_none())
                 .take(12)
                 .cloned()
                 .collect(),
-            missing_external_refs: summaries
-                .iter()
+            missing_external_refs: library
+                .summaries()
                 .filter(|entity| quality.requires_external_refs(entity))
                 .filter(|entity| entity.external_refs.is_empty())
                 .take(12)
                 .cloned()
                 .collect(),
-            isolated: summaries
-                .iter()
+            isolated: library
+                .summaries()
                 .filter(|entity| quality.requires_relations(entity))
                 .filter(|entity| entity.relation_count == 0)
                 .take(12)
@@ -199,8 +189,6 @@ pub fn build_cleanup_queues(
     broken_total: usize,
     today: &str,
 ) -> CleanupQueuesResponse {
-    let summaries: Vec<EntitySummary> = library.summaries().cloned().collect();
-    let summaries = &summaries;
     let quality = QualityEligibility::new(library);
     let source_by_id = summary_by_id(library);
     let outgoing = outgoing_relations(library, None);
@@ -216,45 +204,45 @@ pub fn build_cleanup_queues(
                 })
         })
         .collect();
-    let missing_cover: Vec<_> = summaries
-        .iter()
+    let missing_cover: Vec<_> = library
+        .summaries()
         .filter(|entity| quality.requires_cover(entity))
         .filter(|entity| entity.image.is_none())
         .cloned()
         .collect();
-    let cover_total = summaries
-        .iter()
+    let cover_total = library
+        .summaries()
         .filter(|entity| quality.requires_cover(entity))
         .count();
-    let missing_external_refs: Vec<_> = summaries
-        .iter()
+    let missing_external_refs: Vec<_> = library
+        .summaries()
         .filter(|entity| quality.requires_external_refs(entity))
         .filter(|entity| entity.external_refs.is_empty())
         .cloned()
         .collect();
-    let refs_total = summaries
-        .iter()
+    let refs_total = library
+        .summaries()
         .filter(|entity| quality.requires_external_refs(entity))
         .count();
-    let isolated: Vec<_> = summaries
-        .iter()
+    let isolated: Vec<_> = library
+        .summaries()
         .filter(|entity| quality.requires_relations(entity))
         .filter(|entity| entity.relation_count == 0)
         .cloned()
         .collect();
-    let relations_total = summaries
-        .iter()
+    let relations_total = library
+        .summaries()
         .filter(|entity| quality.requires_relations(entity))
         .count();
-    let status_mismatch: Vec<_> = summaries
-        .iter()
+    let status_mismatch: Vec<_> = library
+        .summaries()
         .filter(|entity| status_date_mismatch(library, entity, today))
         .cloned()
         .collect();
     // Denominator: the entities the check even applies to (those with a resolved
     // canonical status), so the ratio reads "N of the status-tracked entities".
-    let status_total = summaries
-        .iter()
+    let status_total = library
+        .summaries()
         .filter(|entity| {
             entity
                 .status
@@ -267,24 +255,25 @@ pub fn build_cleanup_queues(
     // resolves to only one of them (`find_target` picks the first candidate), so
     // the others are silently unreachable. Group entities by the same key the
     // wikilink index uses, then flag every member of a group larger than one.
-    let mut filename_counts: HashMap<String, usize> = HashMap::new();
-    for entity in summaries {
-        *filename_counts
+    let mut by_filename_key: HashMap<String, Vec<&EntitySummary>> = HashMap::new();
+    for entity in library.summaries() {
+        by_filename_key
             .entry(normalize_wikilink_target(&entity.basename))
-            .or_default() += 1;
+            .or_default()
+            .push(entity);
     }
-    let mut duplicate_filenames: Vec<_> = summaries
-        .iter()
-        .filter(|entity| {
-            filename_counts
-                .get(&normalize_wikilink_target(&entity.basename))
-                .is_some_and(|count| *count > 1)
-        })
+    let mut colliding_groups: Vec<(String, Vec<&EntitySummary>)> = by_filename_key
+        .into_iter()
+        .filter(|(_, group)| group.len() > 1)
+        .collect();
+    // Cluster colliding entries so the queue reads as pairs/groups; each bucket
+    // preserves library order.
+    colliding_groups.sort_by(|(a, _), (b, _)| a.cmp(b));
+    let duplicate_filenames: Vec<_> = colliding_groups
+        .into_iter()
+        .flat_map(|(_, group)| group)
         .cloned()
         .collect();
-    // Cluster colliding entries so the queue reads as pairs/groups; a stable sort
-    // keeps each group in library order.
-    duplicate_filenames.sort_by_cached_key(|entity| normalize_wikilink_target(&entity.basename));
     // Queues carry only their stable `id`; each client localizes the display
     // label from that id (the web `review-page` and the iOS `localizedQueueLabel`
     // both do). The core no longer owns any English queue text.
@@ -302,7 +291,7 @@ pub fn build_cleanup_queues(
         (
             "duplicate-filename",
             duplicate_filenames.len(),
-            summaries.len(),
+            library.records.len(),
         ),
     ]);
 
@@ -462,7 +451,7 @@ fn cleanup_queue_summary(id: &str, remaining: usize, total: usize) -> CleanupQue
 /// Buckets dated entities into a year × month matrix (Jan..Dec), with a per-type
 /// breakdown so the client can filter by type. Each parseable date is one
 /// occurrence; year-only dates count toward the year total but no month bucket.
-fn build_activity(dated: Vec<(EntitySummary, ParsedEntityDate)>) -> AnalyticsActivity {
+fn build_activity(dated: &[(&EntitySummary, ParsedEntityDate)]) -> AnalyticsActivity {
     struct TypeAcc {
         total: usize,
         months: [u32; 12],
@@ -481,7 +470,7 @@ fn build_activity(dated: Vec<(EntitySummary, ParsedEntityDate)>) -> AnalyticsAct
 
     let mut years: HashMap<i32, YearAcc> = HashMap::new();
     let mut type_totals: HashMap<String, (String, usize)> = HashMap::new();
-    for (entity, date) in &dated {
+    for (entity, date) in dated {
         let year = years.entry(date.year).or_insert_with(|| YearAcc {
             total: 0,
             months: [0; 12],
@@ -896,7 +885,7 @@ mod tests {
         if let Some(status) = unmapped.status.as_mut() {
             status.canonical = None; // a value with no canonical mapping
         }
-        let summaries = vec![
+        let summaries = [
             with_status("A", Some(CanonicalStatus::Ongoing)),
             with_status("B", Some(CanonicalStatus::Ongoing)),
             with_status("C", Some(CanonicalStatus::Planning)),
@@ -904,7 +893,8 @@ mod tests {
             with_status("E", None), // no status at all
             unmapped,
         ];
-        let counts = count_by_canonical_status(&summaries);
+        let refs: Vec<_> = summaries.iter().collect();
+        let counts = count_by_canonical_status(&refs);
         assert_eq!(counts.planning, 1);
         assert_eq!(counts.ongoing, 2);
         assert_eq!(counts.paused, 0);

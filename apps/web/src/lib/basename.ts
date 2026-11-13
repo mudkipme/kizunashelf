@@ -81,7 +81,8 @@ export function deriveBasenameFromTitle(title: string): string | undefined {
   if (!basename) return undefined;
 
   if (RESERVED_WINDOWS_NAME.test(basename.split(".")[0] ?? basename)) {
-    basename += "-";
+    const dot = basename.indexOf(".");
+    basename = dot === -1 ? `${basename}-` : `${basename.slice(0, dot)}-${basename.slice(dot)}`;
   }
 
   return basenameValidationError(basename) ? undefined : basename;

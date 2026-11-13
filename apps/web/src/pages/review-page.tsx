@@ -27,7 +27,7 @@ import {
   entityTypeOptions,
 } from "@/lib/entity-filters";
 import { useLanguagePreference, useTitleLanguage } from "@/lib/language";
-import { entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
+import { entityFieldLabel, fieldLabelsByType, typeLabelsById } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type {
   CleanupQueueSummary,
@@ -82,7 +82,7 @@ export function ReviewPage() {
 
   // Debounce the search box into the URL without giving the URL its own timer.
   useEffect(() => {
-    if (queryInput === query) {
+    if (queryInput.trim() === query) {
       cancelQueryUpdate();
       return;
     }
@@ -101,6 +101,7 @@ export function ReviewPage() {
   const summaries = cleanup.data?.queues ?? [];
   const activeSummary = summaries.find((queue) => queue.id === activeQueue?.id);
   const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
+  const typeLabels = useMemo(() => typeLabelsById(config.data?.types), [config.data]);
   // The full preference: the comparator derives the title language itself and
   // collates with the full tag (zh-Hant sorts as Traditional).
   const language = useLanguagePreference();
@@ -109,7 +110,10 @@ export function ReviewPage() {
     [cleanup.data, activeQueue],
   );
   const itemEntities = useMemo(() => items.map((item) => item.entity), [items]);
-  const typeOptions = useMemo(() => entityTypeOptions(itemEntities), [itemEntities]);
+  const typeOptions = useMemo(
+    () => entityTypeOptions(itemEntities, language),
+    [itemEntities, language],
+  );
   const dateOptions = useMemo(() => entityDateOptions(itemEntities), [itemEntities]);
   const filteredItems = useMemo(
     () =>
@@ -162,7 +166,7 @@ export function ReviewPage() {
             <section className="flex flex-col gap-3 rounded-md border px-3 py-3">
               <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(220px,1fr)_repeat(2,auto)]">
                 <div className="flex min-w-0 items-center gap-2">
-                  <SearchIcon className="text-muted-foreground" />
+                  <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
                   <Input
                     value={queryInput}
                     onChange={(event) => setQueryInput(event.target.value)}
@@ -223,6 +227,7 @@ export function ReviewPage() {
                         key={`${item.item.relation.sourceId}-${item.item.relation.field}-${item.item.relation.targetTitle}`}
                         item={item.item}
                         labelsByType={labelsByType}
+                        typeLabels={typeLabels}
                       />
                     ),
                   )}
@@ -318,7 +323,7 @@ function ReviewOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
                   <Plural value={summary.remaining} one="# remaining" other="# remaining" />
                 </p>
               </div>
-              <ArrowRightIcon className="text-muted-foreground" />
+              <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" />
             </div>
           </Link>
         );
@@ -346,9 +351,11 @@ function CleanupEntityRow({
 function UnresolvedRelationRow({
   item,
   labelsByType,
+  typeLabels,
 }: {
   item: CleanupUnresolvedRelation;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  typeLabels?: ReadonlyMap<string, string>;
 }) {
   return (
     <div className="min-w-0 border-b px-3 py-2 last:border-b-0">
@@ -358,7 +365,9 @@ function UnresolvedRelationRow({
             {entityFieldLabel(labelsByType, item.source.type, item.relation.field)}
           </Badge>
           {item.relation.targetType ? (
-            <Badge variant="secondary">{item.relation.targetType}</Badge>
+            <Badge variant="secondary">
+              {typeLabels?.get(item.relation.targetType) ?? item.relation.targetType}
+            </Badge>
           ) : null}
           <span className="min-w-0 truncate text-sm font-medium">{item.relation.targetTitle}</span>
         </div>

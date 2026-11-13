@@ -33,9 +33,7 @@ export function FrontmatterPanel({
   typeConfig?: TypeConfig;
 }) {
   const entries = useVisibleFrontmatterEntries(entity, relationGroups, typeConfig);
-  const fieldTypes = new Map(
-    configFields(typeConfig).map((field) => [field.field, field.fieldType]),
-  );
+  const fieldsByName = new Map(configFields(typeConfig).map((field) => [field.field, field]));
 
   // The parent gates this section on the same entries, so empty shouldn't reach
   // here — return nothing rather than an empty shell if it ever does.
@@ -48,16 +46,24 @@ export function FrontmatterPanel({
   // same track; below `sm` each row is its own stacked block instead.
   return (
     <dl className="grid gap-y-3 sm:grid-cols-[minmax(8rem,13rem)_minmax(0,1fr)] sm:gap-x-6 sm:gap-y-2">
-      {entries.map(([key, value]) => (
-        <div key={key} className="grid min-w-0 gap-y-0.5 sm:contents">
-          <dt className="min-w-0 truncate text-xs font-medium text-muted-foreground">
-            {fieldLabelForKey(typeConfig, key)}
-          </dt>
-          <dd className="min-w-0 text-sm">
-            <FrontmatterValueView value={value} depth={0} fieldType={fieldTypes.get(key)} />
-          </dd>
-        </div>
-      ))}
+      {entries.map(([key, value]) => {
+        const fieldConfig = fieldsByName.get(key);
+        return (
+          <div key={key} className="grid min-w-0 gap-y-0.5 sm:contents">
+            <dt className="min-w-0 truncate text-xs font-medium text-muted-foreground">
+              {fieldLabelForKey(typeConfig, key)}
+            </dt>
+            <dd className="min-w-0 text-sm">
+              <FrontmatterValueView
+                value={value}
+                depth={0}
+                fieldType={fieldConfig?.fieldType}
+                ratingMax={fieldConfig?.ratingMax}
+              />
+            </dd>
+          </div>
+        );
+      })}
     </dl>
   );
 }
@@ -119,10 +125,12 @@ function FrontmatterValueView({
   value,
   depth,
   fieldType,
+  ratingMax,
 }: {
   value: FrontmatterValue | undefined;
   depth: number;
   fieldType?: FieldType;
+  ratingMax?: number | null;
 }) {
   if (value === undefined || value === null) {
     return (
@@ -141,13 +149,13 @@ function FrontmatterValueView({
   }
 
   if (typeof value === "number") {
-    if (fieldType === "rating") return <RatingScore value={value} />;
+    if (fieldType === "rating") return <RatingScore value={value} max={ratingMax} />;
     return <span className="tabular-nums">{value}</span>;
   }
 
   if (typeof value === "string") {
     if (fieldType === "rating" && ratingNumber(value) !== undefined)
-      return <RatingScore value={value} />;
+      return <RatingScore value={value} max={ratingMax} />;
     return <StringValue value={value} />;
   }
 
@@ -242,7 +250,7 @@ function StringValue({ value }: { value: string }) {
         className="inline-flex max-w-full items-center gap-1 truncate text-primary hover:underline"
       >
         <span className="truncate">{normalized}</span>
-        <ExternalLinkIcon />
+        <ExternalLinkIcon className="size-3.5 shrink-0" />
       </a>
     );
   }

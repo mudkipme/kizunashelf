@@ -120,7 +120,7 @@ export function SmartListPage() {
     }),
     enabled: editing && debouncedDraft !== null,
   });
-  const results = editing ? previewResults : savedResults;
+  const results = editing && debouncedDraft !== null ? previewResults : savedResults;
 
   const configTypes = config.data?.types;
   const typeConfigs = useMemo(() => configTypes ?? [], [configTypes]);
@@ -490,11 +490,13 @@ function EditPanel({
               disabled={disabled}
               aria-label={t`Limit`}
               className="w-24"
-              onChange={(event) =>
+              onChange={(event) => {
+                const parsed = Number(event.target.value);
                 updateActiveView({
-                  limit: event.target.value ? Math.max(1, Number(event.target.value)) : undefined,
-                })
-              }
+                  limit:
+                    event.target.value && Number.isFinite(parsed) ? Math.max(1, parsed) : undefined,
+                });
+              }}
             />
           </>
         ) : null}

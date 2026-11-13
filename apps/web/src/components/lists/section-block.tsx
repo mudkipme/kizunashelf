@@ -160,9 +160,9 @@ export function SectionBlock({
           )}
         >
           {section.items.length === 0 ? (
-            <span className="pointer-events-none">
+            <li className="pointer-events-none list-none">
               <Trans>Drag items here</Trans>
-            </span>
+            </li>
           ) : (
             section.items.map((item, index) => (
               <SortableRow

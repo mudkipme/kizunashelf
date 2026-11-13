@@ -19,7 +19,7 @@ import {
 } from "@/lib/external-metadata";
 import type { ExternalFieldMapping, ExternalProviderCatalog } from "@/types/api";
 
-import { EmptyConfigLine, IconButton } from "./settings-controls";
+import { EmptyConfigLine, IconButton, UnknownValueOption } from "./settings-controls";
 import { arrayEditor } from "./settings-model";
 
 export function ExternalFieldMappingsEditor({
@@ -71,6 +71,10 @@ export function ExternalFieldMappingsEditor({
                     {option.label}
                   </option>
                 ))}
+                <UnknownValueOption
+                  value={value.source}
+                  known={sourceOptions.map((option) => option.source)}
+                />
               </Select>
               <Select
                 value={value.field}
@@ -83,6 +87,10 @@ export function ExternalFieldMappingsEditor({
                     {option.label}
                   </option>
                 ))}
+                <UnknownValueOption
+                  value={value.field}
+                  known={fieldOptions.map((option) => option.field)}
+                />
               </Select>
               <IconButton
                 label={t`Remove external field mapping`}

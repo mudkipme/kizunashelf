@@ -114,14 +114,20 @@ fn eval_atom(kind: &AtomKind, record: &EntityRecord, ctx: &EvalContext) -> bool 
     match kind {
         AtomKind::InFolder { folder } => {
             let folder = folder.trim_matches('/');
-            folder.is_empty() || record.summary.path.starts_with(&format!("{folder}/"))
+            folder.is_empty()
+                || record
+                    .summary
+                    .path
+                    .strip_prefix(folder)
+                    .is_some_and(|rest| rest.starts_with('/'))
         }
         AtomKind::HasTag { tags } => tags.iter().any(|wanted| {
-            record
-                .summary
-                .tags
-                .iter()
-                .any(|tag| tag == wanted || tag.starts_with(&format!("{wanted}/")))
+            record.summary.tags.iter().any(|tag| {
+                tag == wanted
+                    || tag
+                        .strip_prefix(wanted.as_str())
+                        .is_some_and(|rest| rest.starts_with('/'))
+            })
         }),
         AtomKind::HasLink { field, target } => eval_has_link(field.as_deref(), target, record, ctx),
         AtomKind::Compare { field, op, value } => eval_compare(field, *op, value, record, ctx),

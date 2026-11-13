@@ -534,9 +534,14 @@ pub(super) fn derive_basename(title: &str) -> Option<String> {
     }
 
     // A reserved device name (CON, NUL, …) is refused by the OS regardless of
-    // extension; suffix it so the derived title stays recognizable and valid.
+    // extension; suffix its stem (before any dot) so `CON.2` becomes `CON-.2`
+    // rather than leaving the `CON` stem intact.
     if is_reserved_windows_name(&basename) {
-        basename.push('-');
+        if let Some(dot) = basename.find('.') {
+            basename.insert(dot, '-');
+        } else {
+            basename.push('-');
+        }
     }
 
     // Final assertion: the result must satisfy the strict validator. A title
@@ -959,6 +964,8 @@ mod tests {
     fn derive_basename_suffixes_reserved_windows_names() {
         assert_eq!(derive_basename("CON").unwrap(), "CON-");
         assert_eq!(derive_basename("nul").unwrap(), "nul-");
+        assert_eq!(derive_basename("CON.2").unwrap(), "CON-.2");
+        assert_eq!(derive_basename("nul.tar").unwrap(), "nul-.tar");
         // A colon that composes to a reserved stem is caught after replacement.
         assert_eq!(derive_basename("Console").unwrap(), "Console");
     }

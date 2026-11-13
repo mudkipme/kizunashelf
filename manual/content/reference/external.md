@@ -21,7 +21,7 @@ Credentials are supplied per runtime: the web app reads them from `KIZUNASHELF_*
 - **Discogs** accepts a personal access token **or** an app consumer key + secret (either works; the token wins when both are set). The personal token grants access to *its owner's* account — prefer the consumer pair for anything shared.
 - **Hardcover**'s token is a personal account token (the full `Bearer …` value) — it can read and mutate its owner's Hardcover data, so it's per-user only, never bundled or distributed.
 - **Comic Vine** keys are read-only but rate-limited per key — per-user only.
-- **Google Books** works keyless in principle, but keyless access shares an exhausted quota and returns 429 — a key is effectively required.
+- **Google Books** requires an API key (keyless requests share an exhausted anonymous quota and return 429).
 - **BoardGameGeek** requires a registered application token — BGG returns 401 without one (register at [boardgamegeek.com/using_the_xml_api](https://boardgamegeek.com/using_the_xml_api)).
 
 ```yaml
@@ -132,6 +132,6 @@ Profile imports support **public profiles** only; CSV sources use the file suppl
 
 Import credentials are supplied like provider credentials — `KIZUNASHELF_*` env vars on web, the OS keychain on desktop/iOS (keys `trakt_client_id`, `steam_api_key`). A source with a missing required credential is shown but disabled, with the reason.
 
-**Your data maps through schema roles, not field names.** For each imported item, the source's status is translated to a canonical (`planning`/`ongoing`/`paused`/`completed`/`dropped`) and written to the type's [`enumRole: status`](./titles-dates-status.md#status) field via its `statusValues`; the score goes to the first [`rating`](./field-types.md) field (normalized to 0–10); started/finished dates go to the [`dateRole`](./titles-dates-status.md#dates-and-calendar-design) `started`/`completed` fields; notes become an unmanaged `## Notes` body section; and watched progress ticks the first *N* items of the [episodes](#episodes--tracks--chapters) section. A role you haven't wired is simply skipped. Which of these run is controlled by per-import toggles (import user data, import episodes, mark progress).
+**Your data maps through schema roles, not field names.** For each imported item, the source's status is translated to a canonical (`planning`/`ongoing`/`paused`/`completed`/`dropped`) and written to the type's [`enumRole: status`](./titles-dates-status.md#status) field via its `statusValues`; the score goes to the first [`rating`](./field-types.md) field (normalized to 0–10, or scaled to `0..ratingMax` when `ratingMax` is configured); started/finished dates go to the [`dateRole`](./titles-dates-status.md#dates-and-calendar-design) `started`/`completed` fields; notes become an unmanaged `## Notes` body section; and watched progress ticks the first *N* items of the [episodes](#episodes--tracks--chapters) section. A role you haven't wired is simply skipped. Which of these run is controlled by per-import toggles (import user data, import episodes, mark progress).
 
 Imported image fields keep remote URLs. See [Downloading covers locally](../features/covers.mdx) for the separate download workflow.

@@ -206,9 +206,6 @@ body.home-page {
   font-size: clamp(2.5rem, 6vw, 4.1rem);
   margin-bottom: 0.35em;
 }
-.home-page .hero h1 em {
-  font-style: normal;
-}
 .home-page .hero h1 .stays {
   display: block;
   font-weight: 300;
@@ -550,9 +547,6 @@ body.home-page {
   color: var(--ink);
   white-space: nowrap;
 }
-.home-page .status.soon {
-  border-color: var(--amber);
-}
 .home-page .app-list p {
   margin-bottom: 0.4em;
 }
@@ -664,9 +658,6 @@ body.home-page {
 .home-page .inline-link-example {
   font-family: var(--mono);
   font-size: 0.9em;
-}
-.home-page .filecard figcaption {
-  padding: 0 1.5rem 1rem;
 }
 @media (max-width: 700px) {
   .home-page .source-groups {

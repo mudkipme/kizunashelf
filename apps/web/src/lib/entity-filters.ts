@@ -9,12 +9,16 @@ type EntityFilterOption = {
   count: number;
 };
 
-export function entityTypeOptions(entities: EntitySummary[]): EntityFilterOption[] {
+export function entityTypeOptions(
+  entities: EntitySummary[],
+  language?: string,
+): EntityFilterOption[] {
   const counts = countBy(entities, (entity) => entity.type);
   const labels = new Map(entities.map((entity) => [entity.type, entity.typeLabel]));
+  const locale = language?.trim() ? language : undefined;
   return [...counts.entries()]
     .map(([value, count]) => ({ value, label: labels.get(value) ?? value, count }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .sort((a, b) => a.label.localeCompare(b.label, locale));
 }
 
 export function entityDateOptions(entities: EntitySummary[]): EntityFilterOption[] {

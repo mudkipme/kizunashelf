@@ -892,7 +892,7 @@ pub enum ListKind {
 }
 
 /// One row in the lists index. `description` is the prose above the first list;
-/// `itemCount` and `ordered` summarize the list without its full contents.
+/// `itemCount` and `sectionCount` summarize the list without its full contents.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ListSummary {
@@ -1661,9 +1661,7 @@ pub struct ExistingEntityRef {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalMatch {
-    /// The entity type this candidate was resolved against. Always set — with a
-    /// concrete `type` it echoes that type; in cross-type (`all`) search it is the
-    /// type whose schema produced these field/body previews.
+    /// The entity type this candidate was resolved against.
     pub entity_type: String,
     pub candidate: ExternalCandidate,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

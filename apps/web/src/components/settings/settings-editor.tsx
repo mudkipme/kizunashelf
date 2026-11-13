@@ -2,7 +2,7 @@ import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { SaveIcon } from "lucide-react";
-import { type Ref, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { type Ref, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
@@ -30,7 +30,7 @@ import {
   joinPath,
   normalizeVaultConfig,
 } from "./settings-model";
-import type { SettingsEditorHandle } from "./settings-shared";
+import { type SettingsEditorHandle, useServerDraftSync } from "./settings-shared";
 
 type SettingsEditorProps = {
   ref?: Ref<SettingsEditorHandle>;
@@ -81,7 +81,6 @@ export function SettingsEditor({
   // per-keystroke serialization, and untouched-dialog open/close keeps the same
   // reference (not dirty).
   const [baselineConfig, setBaselineConfig] = useState(config);
-  const [externalChange, setExternalChange] = useState(false);
   const [saving, setSaving] = useState(false);
   const taxonomyBase = joinPath(vaultRoot, config.taxonomyRoot);
   // The server only reports vaultConfigPath once a vault root is saved; during
@@ -126,36 +125,27 @@ export function SettingsEditor({
     },
   ];
 
-  // Seed the editable config from the loaded config exactly once, when it first
-  // arrives. Re-seeding on every prop identity change (e.g. a background refetch
-  // on window focus) would silently discard the user's in-progress schema edits.
-  const seededRef = useRef(false);
-  const seenServerSignatureRef = useRef<string | undefined>(undefined);
-  const loadedRevisionRef = useRef<string | undefined>(undefined);
+  // Seed the editable config from the loaded config, while ignoring background
+  // refetches when nothing changed externally (including our own save echoing back).
   const dirty = config !== baselineConfig;
-  const seedConfig = useCallback(
-    (source: VaultConfig | null | undefined, revision?: string | null) => {
-      const seeded = normalizeVaultConfig(source ?? undefined);
-      setConfig(seeded);
-      setBaselineConfig(seeded);
-      loadedRevisionRef.current = revision ?? undefined;
-      seededRef.current = true;
-      setExternalChange(false);
-    },
-    [],
-  );
+  const applyVault = useCallback((source: VaultConfig | null | undefined) => {
+    const seeded = normalizeVaultConfig(source ?? undefined);
+    setConfig(seeded);
+    setBaselineConfig(seeded);
+  }, []);
+  const {
+    loadedRevisionRef,
+    externalChange,
+    setExternalChange,
+    acceptSave,
+    reloadServer,
+    observeServer,
+  } = useServerDraftSync<VaultConfig | null | undefined>(applyVault);
   useEffect(() => {
     if (initialVault === undefined && initialRevision == null) return;
     const signature = initialRevision ?? JSON.stringify(initialVault ?? null);
-    if (seenServerSignatureRef.current === signature) return;
-    seenServerSignatureRef.current = signature;
-    if (!seededRef.current) {
-      seedConfig(initialVault, initialRevision);
-      return;
-    }
-    if (dirty) setExternalChange(true);
-    else seedConfig(initialVault, initialRevision);
-  }, [dirty, initialRevision, initialVault, seedConfig]);
+    observeServer(initialVault, signature, initialRevision, dirty);
+  }, [dirty, initialRevision, initialVault, observeServer]);
 
   // Dirty once any edit replaces the config object; resets when the baseline is
   // re-pointed at the current draft on seed/save.
@@ -173,7 +163,8 @@ export function SettingsEditor({
         ...request,
         revision: loadedRevisionRef.current,
       });
-      seedConfig(response.vault, response.revision);
+      const savedSignature = response.revision ?? JSON.stringify(response.vault ?? null);
+      acceptSave(response.vault, savedSignature, response.revision);
       if (onboarding) {
         try {
           await addSuggestedSmartLists(language);
@@ -250,7 +241,7 @@ export function SettingsEditor({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => seedConfig(initialVault, initialRevision)}
+            onClick={() => reloadServer(initialVault, initialRevision)}
           >
             <Trans>Reload latest version</Trans>
           </Button>

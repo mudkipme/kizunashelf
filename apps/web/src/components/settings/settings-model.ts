@@ -3,7 +3,6 @@ import {
   externalTypeOptionsForSource,
   externalSourceOptions,
 } from "@/lib/external-metadata";
-import { isIso639TitleLanguage } from "@/lib/title-language";
 import type {
   BodySection,
   DailyNotesConfig,
@@ -132,9 +131,7 @@ export function cleanVaultConfig(
 
 function cleanFilename(filename: FilenameConfig | null | undefined): FilenameConfig | undefined {
   if (!filename) return undefined;
-  const titleLanguage = isIso639TitleLanguage(filename.titleLanguage)
-    ? filename.titleLanguage
-    : undefined;
+  const titleLanguage = emptyToUndefined(filename.titleLanguage);
   const titleRole = filename.titleRole || undefined;
   if (!titleLanguage && !titleRole) return undefined;
   return {
@@ -252,10 +249,7 @@ function cleanField(
     field: key,
     fieldType: field.fieldType,
     displayName: emptyToUndefined(field.displayName),
-    titleLanguage:
-      field.fieldType === "title" && isIso639TitleLanguage(field.titleLanguage)
-        ? field.titleLanguage
-        : undefined,
+    titleLanguage: field.fieldType === "title" ? emptyToUndefined(field.titleLanguage) : undefined,
     titleRole: field.fieldType === "title" ? field.titleRole || undefined : undefined,
     externalFields:
       field.fieldType !== "externalRef"

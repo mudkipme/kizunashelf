@@ -5,7 +5,12 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { SettingsPage } from "@/pages/settings-page";
 import { render } from "@/test/render";
 
-const state = vi.hoisted(() => ({ save: vi.fn(), saveRaw: vi.fn() }));
+const state = vi.hoisted(() => ({
+  save: vi.fn(),
+  saveRaw: vi.fn(),
+  fetchSettings: vi.fn(),
+  fetchRaw: vi.fn(),
+}));
 const vault = {
   taxonomyRoot: "Taxonomy",
   assetRoot: "Assets",
@@ -15,11 +20,11 @@ const vault = {
 vi.mock("@/api/queries", () => ({
   settingsConfigQuery: () => ({
     queryKey: ["settings"],
-    queryFn: async () => ({ vault, revision: "r1" }),
+    queryFn: () => state.fetchSettings(),
   }),
   rawSettingsConfigQuery: () => ({
     queryKey: ["raw-settings"],
-    queryFn: async () => ({ content: "types: []", revision: "r1" }),
+    queryFn: () => state.fetchRaw(),
   }),
   providerCatalogQuery: () => ({
     queryKey: ["providers"],
@@ -53,6 +58,8 @@ vi.mock("@/components/layout/app-frame", () => ({
 }));
 
 beforeEach(() => {
+  state.fetchSettings.mockReset().mockResolvedValue({ vault, revision: "r1" });
+  state.fetchRaw.mockReset().mockResolvedValue({ content: "types: []", revision: "r1" });
   state.save.mockReset().mockResolvedValue({ vault, revision: "r2" });
   state.saveRaw.mockReset().mockResolvedValue({ content: "types: []\n# draft", revision: "r2" });
 });
@@ -190,3 +197,68 @@ it.each(["Form", "YAML"])("allows navigation after a normal %s save", async (mod
     .element(screen.getByText("Location: /library?type=books", { exact: true }))
     .toBeVisible();
 });
+
+it.each(["Form", "YAML"])(
+  "keeps the saved %s state while invalidation refetch is pending and ignores the matching echo",
+  async (mode) => {
+    const { screen, field, draft, save } = await editor(mode);
+    const savedVault = {
+      ...vault,
+      dailyNotes: { ...vault.dailyNotes, log: { section: draft } },
+    };
+    const nextDraft = mode === "YAML" ? "types: []\n# draft 2" : "My log 2";
+    const nextSavedVault = {
+      ...vault,
+      dailyNotes: { ...vault.dailyNotes, log: { section: nextDraft } },
+    };
+
+    let finishRefetch!: (value: unknown) => void;
+    const fetchMock = mode === "YAML" ? state.fetchRaw : state.fetchSettings;
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishRefetch = resolve;
+        }),
+    );
+    save.mockResolvedValueOnce(
+      mode === "YAML" ? { content: draft, revision: "r2" } : { vault: savedVault, revision: "r2" },
+    );
+
+    await field.fill(draft);
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+    await expect.poll(() => save.mock.calls.length).toBe(1);
+
+    // While the post-save refetch is still pending (query cache still holds r1),
+    // the saved draft must not revert to r1.
+    await expect.element(field).toHaveValue(draft);
+    expect(screen.getByRole("button", { name: "Reload latest version" }).query()).toBeNull();
+
+    // Edit again before the r2 refetch lands, then deliver the r2 echo.
+    await field.fill(nextDraft);
+    finishRefetch(
+      mode === "YAML" ? { content: draft, revision: "r2" } : { vault: savedVault, revision: "r2" },
+    );
+    await expect.poll(() => fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+    await expect.element(field).toHaveValue(nextDraft);
+    expect(screen.getByRole("button", { name: "Reload latest version" }).query()).toBeNull();
+
+    // Saving the subsequent edit sends revision r2 (not stale r1).
+    fetchMock.mockResolvedValueOnce(
+      mode === "YAML"
+        ? { content: nextDraft, revision: "r3" }
+        : { vault: nextSavedVault, revision: "r3" },
+    );
+    save.mockResolvedValueOnce(
+      mode === "YAML"
+        ? { content: nextDraft, revision: "r3" }
+        : { vault: nextSavedVault, revision: "r3" },
+    );
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+    await expect.poll(() => save.mock.calls.length).toBe(2);
+    expect(save).toHaveBeenLastCalledWith(
+      mode === "YAML"
+        ? { content: nextDraft, revision: "r2" }
+        : expect.objectContaining({ revision: "r2" }),
+    );
+  },
+);

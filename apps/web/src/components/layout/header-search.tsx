@@ -144,7 +144,7 @@ export function HeaderSearch({
       filter={null}
     >
       <div className={className}>
-        <SearchIcon className="text-muted-foreground" />
+        <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
         <ComboboxRawInput
           placeholder={placeholder}
           aria-label={t`Search library`}

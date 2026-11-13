@@ -233,11 +233,11 @@ fn note_sort_value(field: &str, record: &EntityRecord, ctx: &EvalContext) -> Opt
 }
 
 fn compare_title(a: &EntityRecord, b: &EntityRecord, language: Option<&str>) -> Ordering {
-    let title = |record: &EntityRecord| -> String {
+    fn title_for<'a>(record: &'a EntityRecord, language: Option<&str>) -> &'a str {
         language
             .and_then(|language| record.summary.titles.get(language))
             .unwrap_or(&record.summary.title)
-            .clone()
-    };
-    compare_string_for_title_language(&title(a), &title(b), language)
+            .as_str()
+    }
+    compare_string_for_title_language(title_for(a, language), title_for(b, language), language)
 }

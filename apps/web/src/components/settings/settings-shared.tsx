@@ -3,7 +3,7 @@
 //! type/field dialogs.
 
 import { useLingui } from "@lingui/react/macro";
-import { createContext, type ReactNode } from "react";
+import { createContext, type ReactNode, useCallback, useRef, useState } from "react";
 
 import { Select } from "@/components/ui/select";
 import { titleLanguageLabel } from "@/lib/title-language";
@@ -53,4 +53,73 @@ export function ConfigSubsection({ title, children }: { title: string; children:
       {children}
     </div>
   );
+}
+
+/**
+ * Reconciles incoming query snapshots with an editor's draft without mistaking
+ * our own saves (before query invalidation settles) for on-disk changes, and
+ * without letting stale query data overwrite the saved draft when `dirty` resets.
+ */
+export function useServerDraftSync<T>(onApplyServer: (value: T) => void) {
+  const seededRef = useRef(false);
+  const seenServerSignatureRef = useRef<string | undefined>(undefined);
+  const savedSignaturesRef = useRef<string[]>([]);
+  const loadedRevisionRef = useRef<string | undefined>(undefined);
+  const [externalChange, setExternalChange] = useState(false);
+
+  const applyBaseline = useCallback(
+    (value: T, revision?: string | null) => {
+      onApplyServer(value);
+      loadedRevisionRef.current = revision ?? undefined;
+      seededRef.current = true;
+      setExternalChange(false);
+    },
+    [onApplyServer],
+  );
+
+  const acceptSave = useCallback(
+    (value: T, signature: string, revision?: string | null) => {
+      if (signature !== seenServerSignatureRef.current) {
+        savedSignaturesRef.current.push(signature);
+      }
+      applyBaseline(value, revision);
+    },
+    [applyBaseline],
+  );
+
+  const reloadServer = useCallback(
+    (value: T, revision?: string | null) => {
+      savedSignaturesRef.current = [];
+      applyBaseline(value, revision);
+    },
+    [applyBaseline],
+  );
+
+  const observeServer = useCallback(
+    (value: T, signature: string, revision: string | null | undefined, dirty: boolean) => {
+      if (seenServerSignatureRef.current === signature) return;
+      seenServerSignatureRef.current = signature;
+      const savedIndex = savedSignaturesRef.current.indexOf(signature);
+      if (savedIndex !== -1) {
+        savedSignaturesRef.current.splice(0, savedIndex + 1);
+        return;
+      }
+      savedSignaturesRef.current = [];
+      if (!seededRef.current || !dirty) {
+        applyBaseline(value, revision);
+        return;
+      }
+      setExternalChange(true);
+    },
+    [applyBaseline],
+  );
+
+  return {
+    loadedRevisionRef,
+    externalChange,
+    setExternalChange,
+    acceptSave,
+    reloadServer,
+    observeServer,
+  };
 }

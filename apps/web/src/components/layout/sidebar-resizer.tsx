@@ -81,7 +81,9 @@ export function SidebarResizer({
       onPointerUp={(event) => {
         drag.current = null;
         onResizingChange?.(false);
-        event.currentTarget.releasePointerCapture(event.pointerId);
+        if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }
       }}
       onPointerCancel={() => {
         drag.current = null;

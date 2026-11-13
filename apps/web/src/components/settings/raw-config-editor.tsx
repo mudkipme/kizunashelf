@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SaveIcon } from "lucide-react";
-import { type Ref, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { type Ref, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
 import { Textarea } from "@/components/ui/textarea";
 
-import type { SettingsEditorHandle } from "./settings-shared";
+import { type SettingsEditorHandle, useServerDraftSync } from "./settings-shared";
 
 type RawConfigEditorProps = {
   ref?: Ref<SettingsEditorHandle>;
@@ -41,38 +41,32 @@ export function RawConfigEditor({
   const [content, setContent] = useState("");
   // The last saved/loaded text; the editor is "dirty" when `content` differs.
   const [baseline, setBaseline] = useState("");
-  const [externalChange, setExternalChange] = useState(false);
   const [saving, setSaving] = useState(false);
   // Save failures here are the server's strict YAML validation output — often
   // multi-line (which field, what was wrong). That needs a persistent, full-width
   // surface, so it stays inline rather than becoming an ephemeral toast.
   const [error, setError] = useState<string>();
 
-  // Seed the editable text from the loaded file exactly once, so a background
-  // refetch (e.g. on window focus) never discards in-progress edits.
-  const seededRef = useRef(false);
-  const seenServerSignatureRef = useRef<string | undefined>(undefined);
-  const loadedRevisionRef = useRef<string | undefined>(undefined);
-  const dirty = seededRef.current && content !== baseline;
-  const seedContent = useCallback((next: string, revision?: string | null) => {
+  // Seed the editable text from the loaded file, ignoring background refetches
+  // when nothing changed externally (including our own save echoing back).
+  const dirty = content !== baseline;
+  const applyRawContent = useCallback((next: string) => {
     setContent(next);
     setBaseline(next);
-    loadedRevisionRef.current = revision ?? undefined;
-    seededRef.current = true;
-    setExternalChange(false);
   }, []);
+  const {
+    loadedRevisionRef,
+    externalChange,
+    setExternalChange,
+    acceptSave,
+    reloadServer,
+    observeServer,
+  } = useServerDraftSync<string>(applyRawContent);
   useEffect(() => {
     if (raw.data === undefined) return;
     const signature = raw.data.revision ?? raw.data.content;
-    if (seenServerSignatureRef.current === signature) return;
-    seenServerSignatureRef.current = signature;
-    if (!seededRef.current) {
-      seedContent(raw.data.content, raw.data.revision);
-      return;
-    }
-    if (dirty) setExternalChange(true);
-    else seedContent(raw.data.content, raw.data.revision);
-  }, [dirty, raw.data, seedContent]);
+    observeServer(raw.data.content, signature, raw.data.revision, dirty);
+  }, [dirty, observeServer, raw.data]);
 
   // Dirty only once the seeded text is actually edited — not on mount, and not
   // after the seed echoes the loaded file back into both `content` and `baseline`.
@@ -91,7 +85,7 @@ export function RawConfigEditor({
         revision: loadedRevisionRef.current,
       });
       // Echo back exactly what the server stored, and reset the dirty baseline.
-      seedContent(response.content, response.revision);
+      acceptSave(response.content, response.revision ?? response.content, response.revision);
       toast.success(t`Settings saved`);
       // The schema every other query derives from just changed.
       void queryClient.invalidateQueries();
@@ -159,7 +153,7 @@ export function RawConfigEditor({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => raw.data && seedContent(raw.data.content, raw.data.revision)}
+            onClick={() => raw.data && reloadServer(raw.data.content, raw.data.revision)}
           >
             <Trans>Reload latest version</Trans>
           </Button>

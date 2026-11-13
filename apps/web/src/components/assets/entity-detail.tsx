@@ -15,6 +15,7 @@ import {
 import { LightboxProvider } from "@/components/assets/image-lightbox";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { EntityRatings } from "@/components/entities/entity-ratings";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { StatusBadge } from "@/components/entities/status-badge";
 import { CONTENT_MEASURE } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
@@ -180,7 +181,12 @@ export function EntityDetail({
                           <dt className="shrink-0 text-muted-foreground">{item.label}</dt>
                           {/* Wrap the full alternate title on mobile; truncate to
                               one line only once there's room beside the cover. */}
-                          <dd className="min-w-0 break-words sm:truncate">{item.title}</dd>
+                          <dd
+                            className="min-w-0 break-words sm:truncate"
+                            lang={item.key !== language ? item.key : undefined}
+                          >
+                            {item.title}
+                          </dd>
                         </div>
                       ))}
                     </dl>
@@ -570,7 +576,15 @@ function RelationGridItem({
           />
         }
       />
-      <span className="line-clamp-2 text-xs leading-4">{label}</span>
+      {summary ? (
+        <EntityTitle
+          entity={summary}
+          language={language}
+          className="line-clamp-2 text-xs leading-4"
+        />
+      ) : (
+        <span className="line-clamp-2 text-xs leading-4">{label}</span>
+      )}
     </>
   );
 
@@ -624,7 +638,7 @@ function RelationChip({
           "hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         )}
       >
-        {label}
+        <EntityTitle entity={summary} language={language} />
       </Link>
     );
   }

@@ -53,7 +53,7 @@ msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, other {找到 # 项}}"
 
 #. placeholder {0}: health.diagnosticCount
-#: src/pages/review-page.tsx:254
+#: src/pages/review-page.tsx:259
 msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, other {# 个问题}}"
 
@@ -81,8 +81,8 @@ msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 项待检查}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
-#: src/components/settings/settings-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:302
+#: src/components/settings/settings-editor.tsx:113
+#: src/components/settings/settings-editor.tsx:293
 msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, other {# 个路径}}"
 
@@ -93,8 +93,8 @@ msgstr "{0, plural, other {# 个数据源}}"
 
 #. placeholder {0}: activeSummary.remaining
 #. placeholder {0}: summary.remaining
-#: src/pages/review-page.tsx:141
-#: src/pages/review-page.tsx:318
+#: src/pages/review-page.tsx:145
+#: src/pages/review-page.tsx:323
 msgid "{0, plural, one {# remaining} other {# remaining}}"
 msgstr "{0, plural, other {剩余 # 项}}"
 
@@ -116,8 +116,8 @@ msgstr "{0, plural, other {待创建 # 项}}"
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
 #: src/components/settings/preset-picker.tsx:130
-#: src/components/settings/settings-editor.tsx:125
-#: src/components/settings/settings-editor.tsx:378
+#: src/components/settings/settings-editor.tsx:124
+#: src/components/settings/settings-editor.tsx:369
 msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, other {# 个类型}}"
 
@@ -171,7 +171,7 @@ msgstr "已选择 {0} / {1}"
 
 #. placeholder {0}: filteredItems.length
 #. placeholder {1}: items.length
-#: src/pages/review-page.tsx:199
+#: src/pages/review-page.tsx:203
 msgid "{0} of {1} shown"
 msgstr "显示 {0} 项，共 {1} 项"
 
@@ -194,7 +194,7 @@ msgstr ""
 msgid "{ariaLabel} year"
 msgstr ""
 
-#: src/components/settings/settings-editor.tsx:380
+#: src/components/settings/settings-editor.tsx:371
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 个数据源}}"
 
@@ -228,7 +228,7 @@ msgstr "{total, plural, other {# 条}}"
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 项匹配}}"
 
-#: src/components/settings/settings-editor.tsx:379
+#: src/components/settings/settings-editor.tsx:370
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 个字段}}"
 
@@ -270,7 +270,7 @@ msgstr "≤"
 msgid "≥"
 msgstr "≥"
 
-#: src/pages/activity-page.tsx:283
+#: src/pages/activity-page.tsx:284
 msgid "✅ Completed"
 msgstr "✅ 已完成"
 
@@ -278,7 +278,7 @@ msgstr "✅ 已完成"
 msgid "✨ Pairs well with your picks"
 msgstr "✨ 与你的选择很搭"
 
-#: src/pages/activity-page.tsx:283
+#: src/pages/activity-page.tsx:284
 msgid "📅 Scheduled"
 msgstr "📅 已排期"
 
@@ -287,7 +287,7 @@ msgstr "📅 已排期"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "已存在以此标题命名的文件，因此保存为「{0}」。"
 
-#: src/pages/smart-list-page.tsx:554
+#: src/pages/smart-list-page.tsx:556
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名列表已存在，或文件已在磁盘上被修改。"
 
@@ -363,7 +363,7 @@ msgstr "添加内置类型"
 msgid "Add custom type"
 msgstr "添加自定义类型"
 
-#: src/components/settings/settings-field-form.tsx:391
+#: src/components/settings/settings-field-form.tsx:403
 msgid "Add enum options above to map them to statuses."
 msgstr "在上方添加枚举选项以将其映射到状态。"
 
@@ -468,7 +468,7 @@ msgstr "高级：编辑完整 schema"
 msgid "All"
 msgstr "全部"
 
-#: src/pages/review-page.tsx:187
+#: src/pages/review-page.tsx:191
 msgid "All dates"
 msgstr "所有日期"
 
@@ -487,7 +487,7 @@ msgstr "所有数据源"
 #: src/pages/activity-page.tsx:128
 #: src/pages/calendar-page.tsx:112
 #: src/pages/lists-page.tsx:214
-#: src/pages/review-page.tsx:176
+#: src/pages/review-page.tsx:180
 #: src/pages/smart-list-page.tsx:465
 msgid "All types"
 msgstr "所有类型"
@@ -548,19 +548,19 @@ msgstr "正在应用…"
 msgid "Ascending"
 msgstr "升序"
 
-#: src/components/settings/settings-editor.tsx:286
+#: src/components/settings/settings-editor.tsx:277
 msgid "Asset root"
 msgstr "资源根目录"
 
 #. placeholder {0}: config.assetRoot || "Assets"
-#: src/components/settings/settings-editor.tsx:276
+#: src/components/settings/settings-editor.tsx:267
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
 #: src/components/layout/app-frame.tsx:212
 #: src/components/settings/preset-picker.tsx:197
 #: src/components/settings/settings-dialogs.tsx:75
-#: src/components/settings/settings-editor.tsx:218
+#: src/components/settings/settings-editor.tsx:209
 msgid "Back"
 msgstr "返回"
 
@@ -641,7 +641,7 @@ msgstr "补上进度"
 msgid "Change completion date"
 msgstr "更改完成日期"
 
-#: src/components/settings/raw-config-editor.tsx:187
+#: src/components/settings/raw-config-editor.tsx:181
 msgid "Changes are validated before saving. Comments and formatting are preserved."
 msgstr "保存前会验证更改，并保留注释和格式。"
 
@@ -653,7 +653,7 @@ msgstr "更改将随整个结构配置一起保存。"
 msgid "Checklist (per-item checkboxes)"
 msgstr "清单（逐项复选框）"
 
-#: src/components/settings/settings-field-form.tsx:235
+#: src/components/settings/settings-field-form.tsx:241
 msgid "Chinese"
 msgstr "中文"
 
@@ -666,7 +666,7 @@ msgid "Choose a type"
 msgstr "选择一个类型"
 
 #: src/pages/library-page.tsx:319
-#: src/pages/smart-list-page.tsx:504
+#: src/pages/smart-list-page.tsx:506
 msgid "Choose a type to filter by its fields."
 msgstr "选择类型以按其字段筛选。"
 
@@ -682,7 +682,7 @@ msgstr "选择图标"
 msgid "Choose lists to add to Home. Existing lists keep their changes."
 msgstr "选择要添加到首页的列表。已有列表的修改会保留。"
 
-#: src/components/settings/settings-editor.tsx:340
+#: src/components/settings/settings-editor.tsx:331
 msgid "Choose the frontmatter key used for tags."
 msgstr "选择用于存储标签的 frontmatter 键。"
 
@@ -719,9 +719,9 @@ msgstr ""
 #: src/components/assets/asset-download-panel.tsx:153
 #: src/components/assets/quick-log-dialog.tsx:31
 #: src/components/import/import-labels.ts:34
-#: src/components/settings/settings-field-form.tsx:179
-#: src/components/settings/settings-field-form.tsx:214
-#: src/components/settings/settings-field-form.tsx:295
+#: src/components/settings/settings-field-form.tsx:181
+#: src/components/settings/settings-field-form.tsx:216
+#: src/components/settings/settings-field-form.tsx:306
 #: src/pages/activity-page.tsx:42
 #: src/pages/entity-page.tsx:415
 msgid "Completed"
@@ -732,7 +732,7 @@ msgid "Completed date"
 msgstr "完成日期"
 
 #. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
-#: src/components/settings/raw-config-editor.tsx:154
+#: src/components/settings/raw-config-editor.tsx:148
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml 已在磁盘上更改。你未保存的编辑仍保留在这里。"
 
@@ -740,7 +740,7 @@ msgstr "config.yaml 已在磁盘上更改。你未保存的编辑仍保留在这
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "配置新字段，然后选择「完成」以添加。返回将丢弃它。"
 
-#: src/components/settings/settings-editor.tsx:212
+#: src/components/settings/settings-editor.tsx:203
 msgid "Configure Vault"
 msgstr "配置保管库"
 
@@ -752,7 +752,7 @@ msgstr "已连接"
 msgid "Connection Fields"
 msgstr "连接字段"
 
-#: src/components/assets/entity-detail.tsx:249
+#: src/components/assets/entity-detail.tsx:255
 #: src/pages/statistics-page.tsx:53
 msgid "Connections"
 msgstr "连接"
@@ -812,7 +812,7 @@ msgstr ""
 msgid "Could not read this CSV file."
 msgstr "无法读取此 CSV 文件。"
 
-#: src/components/settings/settings-editor.tsx:181
+#: src/components/settings/settings-editor.tsx:172
 #: src/pages/onboarding-page.tsx:203
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "无法添加推荐列表。你可以在首页重试。"
@@ -840,7 +840,7 @@ msgid "Create new vault"
 msgstr "新建保管库"
 
 #: src/components/desktop/vault-manager.tsx:135
-#: src/components/settings/settings-editor.tsx:227
+#: src/components/settings/settings-editor.tsx:218
 #: src/pages/onboarding-page.tsx:257
 msgid "Create vault"
 msgstr "创建保管库"
@@ -874,12 +874,12 @@ msgstr "自定义字段"
 msgid "Custom field name"
 msgstr "自定义字段名"
 
-#: src/components/settings/settings-editor.tsx:332
+#: src/components/settings/settings-editor.tsx:323
 msgid "Daily note indexing is disabled."
 msgstr "每日笔记索引已禁用。"
 
-#: src/components/settings/settings-editor.tsx:112
-#: src/components/settings/settings-editor.tsx:296
+#: src/components/settings/settings-editor.tsx:111
+#: src/components/settings/settings-editor.tsx:287
 #: src/pages/statistics-page.tsx:36
 msgid "Daily Notes"
 msgstr "每日笔记"
@@ -896,7 +896,7 @@ msgstr "深色主题"
 msgid "Dark theme. Switch to system theme."
 msgstr "深色主题。切换到跟随系统。"
 
-#: src/pages/activity-page.tsx:261
+#: src/pages/activity-page.tsx:262
 msgid "date"
 msgstr "日期"
 
@@ -904,7 +904,7 @@ msgstr "日期"
 #: src/components/smart-lists/rule-value-input.tsx:71
 #: src/lib/type-config.ts:173
 #: src/lib/type-config.ts:204
-#: src/pages/activity-page.tsx:260
+#: src/pages/activity-page.tsx:261
 msgid "Date"
 msgstr "日期"
 
@@ -916,7 +916,7 @@ msgstr "日期格式"
 msgid "Dated"
 msgstr "有日期"
 
-#: src/components/assets/entity-detail.tsx:323
+#: src/components/assets/entity-detail.tsx:329
 msgid "Dates"
 msgstr "日期"
 
@@ -961,7 +961,7 @@ msgstr "描述"
 msgid "Deselect group"
 msgstr "取消选择分组"
 
-#: src/components/assets/entity-detail.tsx:204
+#: src/components/assets/entity-detail.tsx:210
 msgid "Details"
 msgstr "详情"
 
@@ -989,7 +989,7 @@ msgstr "放弃并切换"
 msgid "Discard unsaved changes?"
 msgstr "丢弃未保存的更改？"
 
-#: src/components/settings/settings-field-form.tsx:74
+#: src/components/settings/settings-field-form.tsx:75
 msgid "Display name"
 msgstr "显示名称"
 
@@ -1039,7 +1039,7 @@ msgid "Drop an image or choose from your device"
 msgstr "拖入图片或从设备选择"
 
 #: src/components/import/import-labels.ts:35
-#: src/components/settings/settings-field-form.tsx:296
+#: src/components/settings/settings-field-form.tsx:307
 msgid "Dropped"
 msgstr "弃坑"
 
@@ -1071,8 +1071,8 @@ msgstr "编辑 {0}"
 msgid "Edit as JSON to preserve nested values and their types."
 msgstr "以 JSON 格式编辑，保留嵌套值及其类型。"
 
-#: src/components/settings/raw-config-editor.tsx:123
-#: src/components/settings/raw-config-editor.tsx:175
+#: src/components/settings/raw-config-editor.tsx:117
+#: src/components/settings/raw-config-editor.tsx:169
 msgid "Edit config.yaml"
 msgstr "编辑 config.yaml"
 
@@ -1092,19 +1092,19 @@ msgstr "编辑已保存的条目"
 msgid "Edit structured value"
 msgstr "编辑结构化值"
 
-#: src/components/assets/frontmatter-panel.tsx:130
-#: src/components/assets/frontmatter-panel.tsx:232
-#: src/components/assets/frontmatter-panel.tsx:254
+#: src/components/assets/frontmatter-panel.tsx:138
+#: src/components/assets/frontmatter-panel.tsx:240
+#: src/components/assets/frontmatter-panel.tsx:262
 #: src/components/entities/metadata-inputs.tsx:81
 #: src/components/entities/metadata-inputs.tsx:124
 msgid "Empty"
 msgstr "空"
 
-#: src/components/assets/frontmatter-panel.tsx:158
+#: src/components/assets/frontmatter-panel.tsx:166
 msgid "Empty list"
 msgstr "空列表"
 
-#: src/components/assets/frontmatter-panel.tsx:199
+#: src/components/assets/frontmatter-panel.tsx:207
 msgid "Empty object"
 msgstr "空对象"
 
@@ -1119,7 +1119,7 @@ msgstr "启用"
 msgid "ends with"
 msgstr "结尾为:"
 
-#: src/components/settings/settings-field-form.tsx:237
+#: src/components/settings/settings-field-form.tsx:243
 msgid "English"
 msgstr "英语"
 
@@ -1154,7 +1154,7 @@ msgstr "单选"
 msgid "Enum list"
 msgstr "多选"
 
-#: src/components/settings/settings-field-form.tsx:177
+#: src/components/settings/settings-field-form.tsx:179
 msgid "Enum options"
 msgstr "枚举选项"
 
@@ -1163,7 +1163,7 @@ msgid "Episode"
 msgstr "剧集"
 
 #: src/components/import/import-status.tsx:36
-#: src/pages/activity-page.tsx:289
+#: src/pages/activity-page.tsx:290
 msgid "Episodes"
 msgstr "剧集"
 
@@ -1171,7 +1171,7 @@ msgstr "剧集"
 msgid "esc to close"
 msgstr ""
 
-#: src/components/settings/settings-field-form.tsx:215
+#: src/components/settings/settings-field-form.tsx:217
 #: src/pages/activity-page.tsx:44
 msgid "Event"
 msgstr "事件"
@@ -1185,7 +1185,7 @@ msgstr "活动日期"
 msgid "Exact score"
 msgstr "精确评分"
 
-#: src/components/settings/settings-external-mappings.tsx:78
+#: src/components/settings/settings-external-mappings.tsx:82
 msgid "External field"
 msgstr "外部字段"
 
@@ -1209,8 +1209,8 @@ msgstr "外部引用"
 msgid "External reference"
 msgstr "外部引用"
 
-#: src/components/settings/settings-external-mappings.tsx:120
-#: src/components/settings/settings-external-mappings.tsx:127
+#: src/components/settings/settings-external-mappings.tsx:128
+#: src/components/settings/settings-external-mappings.tsx:135
 msgid "External types"
 msgstr "外部类型"
 
@@ -1244,7 +1244,7 @@ msgid "Fields"
 msgstr "字段"
 
 #: src/pages/entity-create-page.tsx:203
-#: src/pages/review-page.tsx:276
+#: src/pages/review-page.tsx:281
 msgid "File"
 msgstr "文件"
 
@@ -1274,7 +1274,7 @@ msgstr "文件名标题 — 用作"
 msgid "Filename title language"
 msgstr "文件名标题语言"
 
-#: src/pages/review-page.tsx:250
+#: src/pages/review-page.tsx:255
 msgid "Files the library could not parse cleanly."
 msgstr "库无法正常解析的文件。"
 
@@ -1307,11 +1307,11 @@ msgstr "表单"
 msgid "Forward"
 msgstr ""
 
-#: src/pages/review-page.tsx:274
+#: src/pages/review-page.tsx:279
 msgid "Frontmatter"
 msgstr "前置元数据"
 
-#: src/components/settings/settings-editor.tsx:357
+#: src/components/settings/settings-editor.tsx:348
 msgid "Frontmatter key"
 msgstr "前置元数据键"
 
@@ -1351,7 +1351,7 @@ msgstr "有值"
 msgid "has any of"
 msgstr "含有以下任一"
 
-#: src/pages/review-page.tsx:188
+#: src/pages/review-page.tsx:192
 msgid "Has date"
 msgstr "有日期"
 
@@ -1533,7 +1533,7 @@ msgid "is yes"
 msgstr "为是"
 
 #. placeholder {0}: index + 1
-#: src/components/assets/frontmatter-panel.tsx:186
+#: src/components/assets/frontmatter-panel.tsx:194
 msgid "Item {0}"
 msgstr "第 {0} 项"
 
@@ -1549,7 +1549,7 @@ msgstr "项目"
 msgid "Items <0>({totalItems})</0>"
 msgstr "项目 <0>（{totalItems}）</0>"
 
-#: src/components/settings/settings-field-form.tsx:236
+#: src/components/settings/settings-field-form.tsx:242
 msgid "Japanese"
 msgstr "日语"
 
@@ -1602,7 +1602,7 @@ msgstr "稍后"
 msgid "Latest version"
 msgstr "最新版本"
 
-#: src/components/settings/settings-field-form.tsx:94
+#: src/components/settings/settings-field-form.tsx:95
 msgid "Leave blank for raw scores. Changing the scale does not convert existing ratings."
 msgstr "留空则不指定评分上限。更改上限不会换算已有评分。"
 
@@ -1614,7 +1614,7 @@ msgstr "收起"
 msgid "Library"
 msgstr "库"
 
-#: src/pages/review-page.tsx:247
+#: src/pages/review-page.tsx:252
 msgid "Library Issues"
 msgstr "库问题"
 
@@ -1647,11 +1647,11 @@ msgstr "链接目标"
 msgid "Link your new types"
 msgstr "关联你的新类型"
 
-#: src/components/assets/entity-detail.tsx:259
+#: src/components/assets/entity-detail.tsx:265
 msgid "Linked from"
 msgstr "被以下引用"
 
-#: src/components/assets/entity-detail.tsx:294
+#: src/components/assets/entity-detail.tsx:300
 msgid "Links"
 msgstr "关联"
 
@@ -1662,7 +1662,7 @@ msgstr "关联"
 msgid "links to"
 msgstr "链接到:"
 
-#: src/components/assets/entity-detail.tsx:252
+#: src/components/assets/entity-detail.tsx:258
 msgid "Links to"
 msgstr "关联到"
 
@@ -1719,7 +1719,7 @@ msgstr "正在加载类型…"
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/entities/entity-ratings.tsx:184
 #: src/components/lists/add-items-dialog.tsx:75
-#: src/components/settings/raw-config-editor.tsx:171
+#: src/components/settings/raw-config-editor.tsx:165
 #: src/components/smart-lists/suggested-lists-dialog.tsx:73
 #: src/pages/activity-page.tsx:180
 #: src/pages/entity-edit-page.tsx:257
@@ -1730,7 +1730,7 @@ msgstr "正在加载类型…"
 #: src/pages/list-detail-page.tsx:359
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:87
-#: src/pages/review-page.tsx:148
+#: src/pages/review-page.tsx:152
 #: src/pages/settings-page.tsx:135
 #: src/pages/smart-list-page.tsx:227
 #: src/pages/statistics-page.tsx:45
@@ -1769,7 +1769,7 @@ msgstr "管理列表"
 msgid "Manage vaults…"
 msgstr "管理保管库…"
 
-#: src/components/settings/settings-field-form.tsx:364
+#: src/components/settings/settings-field-form.tsx:376
 msgid "Map each option to a status"
 msgstr "将每个选项映射到状态"
 
@@ -1807,7 +1807,7 @@ msgstr "匹配方式"
 msgid "Metadata"
 msgstr "元数据"
 
-#: src/pages/activity-page.tsx:275
+#: src/pages/activity-page.tsx:276
 msgid "Missed?"
 msgstr "错过了？"
 
@@ -1908,8 +1908,8 @@ msgstr "下个月"
 msgid "no"
 msgstr "否"
 
-#: src/components/assets/frontmatter-panel.tsx:138
-#: src/components/assets/frontmatter-panel.tsx:255
+#: src/components/assets/frontmatter-panel.tsx:146
+#: src/components/assets/frontmatter-panel.tsx:263
 #: src/components/entities/metadata-inputs.tsx:126
 msgid "No"
 msgstr "否"
@@ -1930,7 +1930,7 @@ msgstr "没有候选字段或正文板块与此类型 schema 匹配。"
 msgid "No criteria — everything in the library matches."
 msgstr "没有条件 — 匹配库中的所有内容。"
 
-#: src/pages/review-page.tsx:189
+#: src/pages/review-page.tsx:193
 msgid "No date"
 msgstr "无日期"
 
@@ -1960,7 +1960,7 @@ msgstr "无条目"
 msgid "No entries match the criteria"
 msgstr "没有符合条件的条目"
 
-#: src/components/settings/settings-external-mappings.tsx:96
+#: src/components/settings/settings-external-mappings.tsx:104
 msgid "No external mappings."
 msgstr "无外部映射。"
 
@@ -2026,7 +2026,7 @@ msgstr "无匹配的条目。"
 msgid "No matching type"
 msgstr "无匹配的类型"
 
-#: src/pages/review-page.tsx:260
+#: src/pages/review-page.tsx:265
 msgid "No parsing issues found."
 msgstr "未发现解析问题。"
 
@@ -2038,7 +2038,7 @@ msgstr "无数据源"
 msgid "No provider with a list is linked on this entity."
 msgstr "此条目上未关联任何带列表的数据源。"
 
-#: src/pages/review-page.tsx:208
+#: src/pages/review-page.tsx:212
 msgid "No queue items match the current filters"
 msgstr "没有队列项目与当前筛选条件匹配"
 
@@ -2058,7 +2058,7 @@ msgstr "当前类型没有推荐列表。你可以在「列表」中创建智能
 msgid "No supported providers"
 msgstr "无支持的数据源"
 
-#: src/components/settings/settings-external-mappings.tsx:132
+#: src/components/settings/settings-external-mappings.tsx:140
 msgid "No type options."
 msgstr "无类型选项。"
 
@@ -2084,9 +2084,9 @@ msgid "Non-conflicting changes are combined. Choose which value to keep where bo
 msgstr "不冲突的更改已合并。对于两边都修改过的内容，请选择要保留的值。点击“保存”后才会写入。"
 
 #: src/components/settings/settings-entity-type.tsx:130
-#: src/components/settings/settings-field-form.tsx:165
-#: src/components/settings/settings-field-form.tsx:211
-#: src/components/settings/settings-field-form.tsx:258
+#: src/components/settings/settings-field-form.tsx:166
+#: src/components/settings/settings-field-form.tsx:213
+#: src/components/settings/settings-field-form.tsx:265
 #: src/components/settings/settings-shared.tsx:38
 #: src/components/smart-lists/rule-subgroup.tsx:99
 msgid "None"
@@ -2114,7 +2114,7 @@ msgstr "笔记 <0>（可选）</0>"
 msgid "notes"
 msgstr "笔记"
 
-#: src/components/assets/entity-detail.tsx:270
+#: src/components/assets/entity-detail.tsx:276
 #: src/components/entities/edit-conflict-review.tsx:88
 #: src/components/entities/metadata-editor.tsx:187
 #: src/components/entities/metadata-editor.tsx:194
@@ -2141,13 +2141,13 @@ msgstr "数字"
 msgid "of the following match:"
 msgstr "满足以下条件:"
 
-#: src/components/settings/settings-editor.tsx:307
-#: src/components/settings/settings-editor.tsx:342
+#: src/components/settings/settings-editor.tsx:298
+#: src/components/settings/settings-editor.tsx:333
 msgid "off"
 msgstr "关"
 
-#: src/components/settings/settings-editor.tsx:115
-#: src/components/settings/settings-editor.tsx:120
+#: src/components/settings/settings-editor.tsx:114
+#: src/components/settings/settings-editor.tsx:119
 msgid "Off"
 msgstr "关"
 
@@ -2156,16 +2156,16 @@ msgstr "关"
 msgid "older than"
 msgstr "早于过去"
 
-#: src/components/settings/settings-editor.tsx:342
+#: src/components/settings/settings-editor.tsx:333
 msgid "on"
 msgstr "开"
 
-#: src/components/settings/settings-editor.tsx:120
+#: src/components/settings/settings-editor.tsx:119
 msgid "On"
 msgstr "开"
 
 #: src/components/import/import-labels.ts:32
-#: src/components/settings/settings-field-form.tsx:293
+#: src/components/settings/settings-field-form.tsx:304
 msgid "Ongoing"
 msgstr "进行中"
 
@@ -2215,7 +2215,7 @@ msgstr "运算符"
 msgid "Ordered"
 msgstr "有序"
 
-#: src/components/settings/settings-field-form.tsx:166
+#: src/components/settings/settings-field-form.tsx:167
 msgid "Original"
 msgstr "原始"
 
@@ -2228,7 +2228,7 @@ msgstr "原始（文件名即标题）"
 msgid "Original title: {0}"
 msgstr "原始标题：{0}"
 
-#: src/components/settings/settings-editor.tsx:408
+#: src/components/settings/settings-editor.tsx:399
 msgid "Overview"
 msgstr "概览"
 
@@ -2259,7 +2259,7 @@ msgid "Paths"
 msgstr "路径"
 
 #: src/components/import/import-labels.ts:33
-#: src/components/settings/settings-field-form.tsx:294
+#: src/components/settings/settings-field-form.tsx:305
 msgid "Paused"
 msgstr "暂停"
 
@@ -2272,8 +2272,8 @@ msgid "Planned"
 msgstr "计划中"
 
 #: src/components/import/import-labels.ts:31
-#: src/components/settings/settings-field-form.tsx:212
-#: src/components/settings/settings-field-form.tsx:292
+#: src/components/settings/settings-field-form.tsx:214
+#: src/components/settings/settings-field-form.tsx:303
 msgid "Planning"
 msgstr "计划中"
 
@@ -2305,7 +2305,7 @@ msgstr "上一页"
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:132
 #: src/components/settings/settings-external-mappings.tsx:67
-#: src/components/settings/settings-field-form.tsx:246
+#: src/components/settings/settings-field-form.tsx:253
 #: src/pages/quick-capture-page.tsx:290
 msgid "Provider"
 msgstr "数据源"
@@ -2352,7 +2352,7 @@ msgstr "评分"
 msgid "Rating cleared"
 msgstr "已清除评分"
 
-#: src/components/settings/settings-field-form.tsx:79
+#: src/components/settings/settings-field-form.tsx:80
 msgid "Rating maximum"
 msgstr "评分上限"
 
@@ -2377,7 +2377,7 @@ msgstr "最近"
 msgid "Refresh {0}"
 msgstr "刷新 {0}"
 
-#: src/components/settings/settings-field-form.tsx:356
+#: src/components/settings/settings-field-form.tsx:367
 msgid "Regular enum"
 msgstr "常规枚举"
 
@@ -2385,7 +2385,7 @@ msgstr "常规枚举"
 msgid "Relation"
 msgstr "关联"
 
-#: src/components/settings/settings-field-form.tsx:281
+#: src/components/settings/settings-field-form.tsx:292
 msgid "Relation type"
 msgstr "关联类型"
 
@@ -2398,8 +2398,8 @@ msgstr "相关度"
 msgid "Reload"
 msgstr "重新加载"
 
-#: src/components/settings/raw-config-editor.tsx:164
-#: src/components/settings/settings-editor.tsx:255
+#: src/components/settings/raw-config-editor.tsx:158
+#: src/components/settings/settings-editor.tsx:246
 #: src/pages/list-detail-page.tsx:421
 #: src/pages/smart-list-page.tsx:335
 msgid "Reload latest version"
@@ -2428,7 +2428,7 @@ msgstr "移除 {label}"
 msgid "Remove body section"
 msgstr "移除正文板块"
 
-#: src/components/settings/settings-external-mappings.tsx:88
+#: src/components/settings/settings-external-mappings.tsx:96
 msgid "Remove external field mapping"
 msgstr "移除外部字段映射"
 
@@ -2488,7 +2488,7 @@ msgstr "重命名"
 msgid "Rename list"
 msgstr "重命名列表"
 
-#: src/pages/smart-list-page.tsx:564
+#: src/pages/smart-list-page.tsx:566
 msgid "Rename smart list"
 msgstr "重命名智能列表"
 
@@ -2577,8 +2577,8 @@ msgid "Running…"
 msgstr "运行中…"
 
 #: src/components/entities/entity-ratings.tsx:244
-#: src/components/settings/raw-config-editor.tsx:134
-#: src/components/settings/settings-editor.tsx:227
+#: src/components/settings/raw-config-editor.tsx:128
+#: src/components/settings/settings-editor.tsx:218
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/list-detail-page.tsx:400
 #: src/pages/smart-list-page.tsx:264
@@ -2622,8 +2622,8 @@ msgstr "将当前类型、条件和排序保存为智能列表。搜索内容不
 
 #: src/components/assets/quick-log-dialog.tsx:271
 #: src/components/settings/provider-credentials.tsx:83
-#: src/components/settings/raw-config-editor.tsx:134
-#: src/components/settings/settings-editor.tsx:227
+#: src/components/settings/raw-config-editor.tsx:128
+#: src/components/settings/settings-editor.tsx:218
 #: src/pages/entity-create-page.tsx:164
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/entity-edit-page.tsx:329
@@ -2633,8 +2633,8 @@ msgstr "将当前类型、条件和排序保存为智能列表。搜索内容不
 msgid "Saving…"
 msgstr "正在保存…"
 
-#: src/components/settings/raw-config-editor.tsx:141
-#: src/components/settings/settings-editor.tsx:234
+#: src/components/settings/raw-config-editor.tsx:135
+#: src/components/settings/settings-editor.tsx:225
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "此实例已禁用 schema 编辑（只读）。设置 <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> 以启用。"
 
@@ -2685,7 +2685,7 @@ msgstr "搜索或添加 {relationType}"
 msgid "Search or add relation"
 msgstr "搜索或添加关联"
 
-#: src/pages/review-page.tsx:169
+#: src/pages/review-page.tsx:173
 msgid "Search queue"
 msgstr "搜索队列"
 
@@ -2705,7 +2705,7 @@ msgstr "季度"
 msgid "season {0}"
 msgstr "季 {0}"
 
-#: src/components/settings/settings-field-form.tsx:227
+#: src/components/settings/settings-field-form.tsx:233
 msgid "Season language"
 msgstr "季语言"
 
@@ -2742,7 +2742,7 @@ msgstr "查看“{query}”的全部结果"
 msgid "Select all"
 msgstr "全选"
 
-#: src/components/settings/settings-external-mappings.tsx:80
+#: src/components/settings/settings-external-mappings.tsx:84
 msgid "Select field"
 msgstr "选择字段"
 
@@ -2758,7 +2758,7 @@ msgstr "选择分组"
 msgid "Select parent folder"
 msgstr "选择父文件夹"
 
-#: src/components/settings/settings-external-mappings.tsx:126
+#: src/components/settings/settings-external-mappings.tsx:134
 msgid "Select type"
 msgstr "选择类型"
 
@@ -2777,12 +2777,12 @@ msgid "Set {0} to {1}"
 msgstr "将{0}设为{1}"
 
 #: src/components/layout/nav-destinations.ts:46
-#: src/components/settings/settings-editor.tsx:212
+#: src/components/settings/settings-editor.tsx:203
 msgid "Settings"
 msgstr "设置"
 
-#: src/components/settings/raw-config-editor.tsx:95
-#: src/components/settings/settings-editor.tsx:185
+#: src/components/settings/raw-config-editor.tsx:89
+#: src/components/settings/settings-editor.tsx:176
 msgid "Settings saved"
 msgstr "设置已保存"
 
@@ -2795,7 +2795,7 @@ msgid "Show sidebar"
 msgstr ""
 
 #. placeholder {0}: health.diagnosticCount
-#: src/pages/review-page.tsx:290
+#: src/pages/review-page.tsx:295
 msgid "Showing {shownCount} of {0} issues."
 msgstr "正在显示 {0} 个问题中的 {shownCount} 个。"
 
@@ -2825,7 +2825,7 @@ msgstr "已删除智能列表"
 msgid "Smart list not found"
 msgstr "未找到智能列表"
 
-#: src/pages/smart-list-page.tsx:545
+#: src/pages/smart-list-page.tsx:547
 msgid "Smart list renamed"
 msgstr "已重命名智能列表"
 
@@ -2841,7 +2841,7 @@ msgstr "部分图片无法下载"
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "部分图片无法下载：{reasons}"
 
-#: src/pages/smart-list-page.tsx:582
+#: src/pages/smart-list-page.tsx:584
 msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "此文件的部分语法不受支持，将被忽略:"
 
@@ -2878,7 +2878,7 @@ msgid "Start over"
 msgstr "重新开始"
 
 #: src/components/assets/quick-log-dialog.tsx:30
-#: src/components/settings/settings-field-form.tsx:213
+#: src/components/settings/settings-field-form.tsx:215
 #: src/pages/activity-page.tsx:41
 msgid "Started"
 msgstr "已开始"
@@ -2906,7 +2906,7 @@ msgstr "统计"
 msgid "status"
 msgstr "状态"
 
-#: src/components/settings/settings-field-form.tsx:357
+#: src/components/settings/settings-field-form.tsx:368
 msgid "Status field"
 msgstr "状态字段"
 
@@ -2918,11 +2918,11 @@ msgstr "状态不匹配"
 msgid "Status, score & dates"
 msgstr "状态、评分和日期"
 
-#: src/components/settings/settings-editor.tsx:273
+#: src/components/settings/settings-editor.tsx:264
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "存储在 {vaultPath} 的仓库中。分类、资源、日记和类型随仓库同步。"
 
-#: src/components/settings/settings-editor.tsx:274
+#: src/components/settings/settings-editor.tsx:265
 msgid "Stored in the vault. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "存储在仓库中。分类、资源、日记和类型随仓库同步。"
 
@@ -2961,13 +2961,13 @@ msgstr "跟随系统主题。切换到浅色主题。"
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:85
-#: src/components/settings/settings-editor.tsx:119
-#: src/components/settings/settings-editor.tsx:339
+#: src/components/settings/settings-editor.tsx:118
+#: src/components/settings/settings-editor.tsx:330
 #: src/components/smart-lists/rule-field-meta.ts:64
 msgid "Tags"
 msgstr "标签"
 
-#: src/components/settings/settings-editor.tsx:367
+#: src/components/settings/settings-editor.tsx:358
 msgid "Tags are disabled."
 msgstr "标签已禁用。"
 
@@ -2975,12 +2975,12 @@ msgstr "标签已禁用。"
 msgid "Task"
 msgstr "任务"
 
-#: src/components/settings/settings-editor.tsx:280
+#: src/components/settings/settings-editor.tsx:271
 msgid "Taxonomy root"
 msgstr "分类根目录"
 
 #. placeholder {0}: config.taxonomyRoot || "Taxonomy"
-#: src/components/settings/settings-editor.tsx:108
+#: src/components/settings/settings-editor.tsx:107
 msgid "taxonomy: {0}"
 msgstr "分类：{0}"
 
@@ -3017,7 +3017,7 @@ msgid "The schema draft changed. Close this dialog and duplicate the type again.
 msgstr "架构草稿已更改。请关闭此对话框，然后重新复制该类型。"
 
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
-#: src/components/settings/settings-editor.tsx:245
+#: src/components/settings/settings-editor.tsx:236
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
 msgstr "保管库 schema 已在磁盘上更改。你未保存的编辑仍保留在这里。"
 
@@ -3087,7 +3087,7 @@ msgstr "本周"
 msgid "Title"
 msgstr "标题"
 
-#: src/components/settings/settings-field-form.tsx:145
+#: src/components/settings/settings-field-form.tsx:146
 msgid "Title language"
 msgstr "标题语言"
 
@@ -3133,8 +3133,8 @@ msgid "Type Distribution"
 msgstr "类型分布"
 
 #: src/components/settings/settings-dialogs.tsx:225
-#: src/components/settings/settings-editor.tsx:124
-#: src/components/settings/settings-editor.tsx:374
+#: src/components/settings/settings-editor.tsx:123
+#: src/components/settings/settings-editor.tsx:365
 msgid "Types"
 msgstr "类型"
 
@@ -3158,7 +3158,7 @@ msgstr "单位"
 msgid "Unlinked entities"
 msgstr "未关联的条目"
 
-#: src/components/settings/settings-field-form.tsx:379
+#: src/components/settings/settings-field-form.tsx:391
 msgid "Unmapped"
 msgstr "未映射"
 
@@ -3193,7 +3193,7 @@ msgstr "未解析的关联"
 msgid "Unsaved changes"
 msgstr "未保存的更改"
 
-#: src/components/settings/settings-field-form.tsx:84
+#: src/components/settings/settings-field-form.tsx:85
 msgid "Unscaled"
 msgstr "无上限"
 
@@ -3238,9 +3238,9 @@ msgstr "输入路径或网址"
 msgid "Use reviewed draft"
 msgstr "使用确认后的草稿"
 
-#: src/components/settings/settings-field-form.tsx:154
-#: src/components/settings/settings-field-form.tsx:200
-#: src/components/settings/settings-field-form.tsx:343
+#: src/components/settings/settings-field-form.tsx:155
+#: src/components/settings/settings-field-form.tsx:202
+#: src/components/settings/settings-field-form.tsx:354
 msgid "Used as"
 msgstr "用作"
 
@@ -3255,8 +3255,8 @@ msgstr "值"
 msgid "Values"
 msgstr "值"
 
-#: src/components/settings/settings-editor.tsx:107
-#: src/components/settings/settings-editor.tsx:270
+#: src/components/settings/settings-editor.tsx:106
+#: src/components/settings/settings-editor.tsx:261
 msgid "Vault"
 msgstr "保管库"
 
@@ -3335,8 +3335,8 @@ msgstr "年"
 msgid "yes"
 msgstr "是"
 
-#: src/components/assets/frontmatter-panel.tsx:138
-#: src/components/assets/frontmatter-panel.tsx:255
+#: src/components/assets/frontmatter-panel.tsx:146
+#: src/components/assets/frontmatter-panel.tsx:263
 #: src/components/entities/metadata-inputs.tsx:125
 msgid "Yes"
 msgstr "是"

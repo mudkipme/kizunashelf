@@ -193,6 +193,7 @@ export function useExternalMatch({
     setSelectedFields(new Set());
     setSelectedBodySections(new Set());
     setReview(undefined);
+    setDownloadAfterApply(false);
   }, []);
 
   // Dropping the active query detaches its observer and aborts the request.

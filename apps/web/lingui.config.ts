@@ -1,9 +1,8 @@
 import { defineConfig } from "@lingui/cli";
 
 /**
- * UI-string catalogs. The locale set mirrors the core's `uiSupported` user
- * languages (`crates/kizunashelf/src/languages.rs`) — the UI ships exactly
- * these four; every other language preference falls back to the English UI.
+ * UI-string catalogs (`UI_LOCALES` in `src/lib/i18n.ts`). The UI ships exactly
+ * these four locales; every other language preference falls back to English.
  * `pnpm i18n:extract` regenerates the catalogs; CI diffs them like the
  * generated API contract.
  */

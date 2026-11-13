@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { basenameValidationError } from "./basename";
+import { basenameValidationError, deriveBasenameFromTitle } from "./basename";
 
 describe("basenameValidationError", () => {
   it("accepts a plain basename", () => {
@@ -34,5 +34,14 @@ describe("basenameValidationError", () => {
       expect(basenameValidationError(bad)).toMatch(/cannot contain/);
     }
     expect(basenameValidationError("ab")).toMatch(/cannot contain/);
+  });
+});
+
+describe("deriveBasenameFromTitle", () => {
+  it("suffixes the stem of reserved Windows names even when dotted", () => {
+    expect(deriveBasenameFromTitle("CON")).toBe("CON-");
+    expect(deriveBasenameFromTitle("nul")).toBe("nul-");
+    expect(deriveBasenameFromTitle("CON.2")).toBe("CON-.2");
+    expect(deriveBasenameFromTitle("nul.tar")).toBe("nul-.tar");
   });
 });

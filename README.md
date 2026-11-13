@@ -66,10 +66,10 @@ For richer metadata searches on web and desktop, configure your own IGDB credent
 
 External metadata matching is available for:
 
-- **Film, television, and anime:** TMDB, TheTVDB, MyAnimeList, and Bangumi.
-- **Games and board games:** IGDB, Steam, and BoardGameGeek.
-- **Books, manga, and comics:** Google Books, Open Library, Hardcover, MangaUpdates, and Comic Vine.
-- **Music and podcasts:** MusicBrainz, Apple Music, Discogs, and Apple Podcasts.
+- **Film, television, and anime:** TMDB, TheTVDB, MyAnimeList, AniList, Bangumi, and NeoDB.
+- **Games and board games:** IGDB, Steam, BoardGameGeek, and NeoDB.
+- **Books, manga, and comics:** Google Books, Open Library, Hardcover, MangaUpdates, Comic Vine, AniList, and NeoDB.
+- **Music and podcasts:** MusicBrainz, Apple Music, Discogs, Apple Podcasts, and NeoDB.
 
 KizunaShelf can import a library from MyAnimeList, AniList, Kitsu, Trakt, Steam, and public Bangumi profiles, or from IMDb, Goodreads, and Yamtrack CSV exports. Before anything is written, the import plan shows what will be created, what needs review, and what is already present.
 

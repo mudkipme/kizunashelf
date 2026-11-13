@@ -53,7 +53,7 @@ msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, one {# found} other {# found}}"
 
 #. placeholder {0}: health.diagnosticCount
-#: src/pages/review-page.tsx:254
+#: src/pages/review-page.tsx:259
 msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, one {# issue} other {# issues}}"
 
@@ -81,8 +81,8 @@ msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, one {# needs review} other {# need review}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
-#: src/components/settings/settings-editor.tsx:114
-#: src/components/settings/settings-editor.tsx:302
+#: src/components/settings/settings-editor.tsx:113
+#: src/components/settings/settings-editor.tsx:293
 msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, one {# path} other {# paths}}"
 
@@ -93,8 +93,8 @@ msgstr "{0, plural, one {# provider} other {# providers}}"
 
 #. placeholder {0}: activeSummary.remaining
 #. placeholder {0}: summary.remaining
-#: src/pages/review-page.tsx:141
-#: src/pages/review-page.tsx:318
+#: src/pages/review-page.tsx:145
+#: src/pages/review-page.tsx:323
 msgid "{0, plural, one {# remaining} other {# remaining}}"
 msgstr "{0, plural, one {# remaining} other {# remaining}}"
 
@@ -116,8 +116,8 @@ msgstr "{0, plural, one {# to create} other {# to create}}"
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
 #: src/components/settings/preset-picker.tsx:130
-#: src/components/settings/settings-editor.tsx:125
-#: src/components/settings/settings-editor.tsx:378
+#: src/components/settings/settings-editor.tsx:124
+#: src/components/settings/settings-editor.tsx:369
 msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, one {# type} other {# types}}"
 
@@ -171,7 +171,7 @@ msgstr "{0} of {1} selected"
 
 #. placeholder {0}: filteredItems.length
 #. placeholder {1}: items.length
-#: src/pages/review-page.tsx:199
+#: src/pages/review-page.tsx:203
 msgid "{0} of {1} shown"
 msgstr "{0} of {1} shown"
 
@@ -194,7 +194,7 @@ msgstr "{ariaLabel} season"
 msgid "{ariaLabel} year"
 msgstr "{ariaLabel} year"
 
-#: src/components/settings/settings-editor.tsx:380
+#: src/components/settings/settings-editor.tsx:371
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 
@@ -228,7 +228,7 @@ msgstr "{total, plural, one {# entry} other {# entries}}"
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, one {# match} other {# matches}}"
 
-#: src/components/settings/settings-editor.tsx:379
+#: src/components/settings/settings-editor.tsx:370
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, one {# field} other {# fields}}"
 
@@ -270,7 +270,7 @@ msgstr "≤"
 msgid "≥"
 msgstr "≥"
 
-#: src/pages/activity-page.tsx:283
+#: src/pages/activity-page.tsx:284
 msgid "✅ Completed"
 msgstr "✅ Completed"
 
@@ -278,7 +278,7 @@ msgstr "✅ Completed"
 msgid "✨ Pairs well with your picks"
 msgstr "✨ Pairs well with your picks"
 
-#: src/pages/activity-page.tsx:283
+#: src/pages/activity-page.tsx:284
 msgid "📅 Scheduled"
 msgstr "📅 Scheduled"
 
@@ -287,7 +287,7 @@ msgstr "📅 Scheduled"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "A file named for this title already existed, so it was saved as “{0}”."
 
-#: src/pages/smart-list-page.tsx:554
+#: src/pages/smart-list-page.tsx:556
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "A list with this name already exists, or the file changed on disk."
 
@@ -363,7 +363,7 @@ msgstr "Add built-in types"
 msgid "Add custom type"
 msgstr "Add custom type"
 
-#: src/components/settings/settings-field-form.tsx:391
+#: src/components/settings/settings-field-form.tsx:403
 msgid "Add enum options above to map them to statuses."
 msgstr "Add enum options above to map them to statuses."
 
@@ -468,7 +468,7 @@ msgstr "Advanced: edit full schema"
 msgid "All"
 msgstr "All"
 
-#: src/pages/review-page.tsx:187
+#: src/pages/review-page.tsx:191
 msgid "All dates"
 msgstr "All dates"
 
@@ -487,7 +487,7 @@ msgstr "All providers"
 #: src/pages/activity-page.tsx:128
 #: src/pages/calendar-page.tsx:112
 #: src/pages/lists-page.tsx:214
-#: src/pages/review-page.tsx:176
+#: src/pages/review-page.tsx:180
 #: src/pages/smart-list-page.tsx:465
 msgid "All types"
 msgstr "All types"
@@ -548,19 +548,19 @@ msgstr "Applying…"
 msgid "Ascending"
 msgstr "Ascending"
 
-#: src/components/settings/settings-editor.tsx:286
+#: src/components/settings/settings-editor.tsx:277
 msgid "Asset root"
 msgstr "Asset root"
 
 #. placeholder {0}: config.assetRoot || "Assets"
-#: src/components/settings/settings-editor.tsx:276
+#: src/components/settings/settings-editor.tsx:267
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
 #: src/components/layout/app-frame.tsx:212
 #: src/components/settings/preset-picker.tsx:197
 #: src/components/settings/settings-dialogs.tsx:75
-#: src/components/settings/settings-editor.tsx:218
+#: src/components/settings/settings-editor.tsx:209
 msgid "Back"
 msgstr "Back"
 
@@ -641,7 +641,7 @@ msgstr "Catch up"
 msgid "Change completion date"
 msgstr "Change completion date"
 
-#: src/components/settings/raw-config-editor.tsx:187
+#: src/components/settings/raw-config-editor.tsx:181
 msgid "Changes are validated before saving. Comments and formatting are preserved."
 msgstr "Changes are validated before saving. Comments and formatting are preserved."
 
@@ -653,7 +653,7 @@ msgstr "Changes save with the rest of the schema."
 msgid "Checklist (per-item checkboxes)"
 msgstr "Checklist (per-item checkboxes)"
 
-#: src/components/settings/settings-field-form.tsx:235
+#: src/components/settings/settings-field-form.tsx:241
 msgid "Chinese"
 msgstr "Chinese"
 
@@ -666,7 +666,7 @@ msgid "Choose a type"
 msgstr "Choose a type"
 
 #: src/pages/library-page.tsx:319
-#: src/pages/smart-list-page.tsx:504
+#: src/pages/smart-list-page.tsx:506
 msgid "Choose a type to filter by its fields."
 msgstr "Choose a type to filter by its fields."
 
@@ -682,7 +682,7 @@ msgstr "Choose icon"
 msgid "Choose lists to add to Home. Existing lists keep their changes."
 msgstr "Choose lists to add to Home. Existing lists keep their changes."
 
-#: src/components/settings/settings-editor.tsx:340
+#: src/components/settings/settings-editor.tsx:331
 msgid "Choose the frontmatter key used for tags."
 msgstr "Choose the frontmatter key used for tags."
 
@@ -719,9 +719,9 @@ msgstr "Command palette"
 #: src/components/assets/asset-download-panel.tsx:153
 #: src/components/assets/quick-log-dialog.tsx:31
 #: src/components/import/import-labels.ts:34
-#: src/components/settings/settings-field-form.tsx:179
-#: src/components/settings/settings-field-form.tsx:214
-#: src/components/settings/settings-field-form.tsx:295
+#: src/components/settings/settings-field-form.tsx:181
+#: src/components/settings/settings-field-form.tsx:216
+#: src/components/settings/settings-field-form.tsx:306
 #: src/pages/activity-page.tsx:42
 #: src/pages/entity-page.tsx:415
 msgid "Completed"
@@ -732,7 +732,7 @@ msgid "Completed date"
 msgstr "Completed date"
 
 #. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
-#: src/components/settings/raw-config-editor.tsx:154
+#: src/components/settings/raw-config-editor.tsx:148
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml changed on disk. Your unsaved edits are still here."
 
@@ -740,7 +740,7 @@ msgstr "config.yaml changed on disk. Your unsaved edits are still here."
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "Configure the new field, then choose Done to add it. Going back discards it."
 
-#: src/components/settings/settings-editor.tsx:212
+#: src/components/settings/settings-editor.tsx:203
 msgid "Configure Vault"
 msgstr "Configure Vault"
 
@@ -752,7 +752,7 @@ msgstr "Connected"
 msgid "Connection Fields"
 msgstr "Connection Fields"
 
-#: src/components/assets/entity-detail.tsx:249
+#: src/components/assets/entity-detail.tsx:255
 #: src/pages/statistics-page.tsx:53
 msgid "Connections"
 msgstr "Connections"
@@ -812,7 +812,7 @@ msgstr "Could not load options."
 msgid "Could not read this CSV file."
 msgstr "Could not read this CSV file."
 
-#: src/components/settings/settings-editor.tsx:181
+#: src/components/settings/settings-editor.tsx:172
 #: src/pages/onboarding-page.tsx:203
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "Couldn't add suggested lists. You can retry from Home."
@@ -840,7 +840,7 @@ msgid "Create new vault"
 msgstr "Create new vault"
 
 #: src/components/desktop/vault-manager.tsx:135
-#: src/components/settings/settings-editor.tsx:227
+#: src/components/settings/settings-editor.tsx:218
 #: src/pages/onboarding-page.tsx:257
 msgid "Create vault"
 msgstr "Create vault"
@@ -874,12 +874,12 @@ msgstr "Custom field"
 msgid "Custom field name"
 msgstr "Custom field name"
 
-#: src/components/settings/settings-editor.tsx:332
+#: src/components/settings/settings-editor.tsx:323
 msgid "Daily note indexing is disabled."
 msgstr "Daily note indexing is disabled."
 
-#: src/components/settings/settings-editor.tsx:112
-#: src/components/settings/settings-editor.tsx:296
+#: src/components/settings/settings-editor.tsx:111
+#: src/components/settings/settings-editor.tsx:287
 #: src/pages/statistics-page.tsx:36
 msgid "Daily Notes"
 msgstr "Daily Notes"
@@ -896,7 +896,7 @@ msgstr "Dark theme"
 msgid "Dark theme. Switch to system theme."
 msgstr "Dark theme. Switch to system theme."
 
-#: src/pages/activity-page.tsx:261
+#: src/pages/activity-page.tsx:262
 msgid "date"
 msgstr "date"
 
@@ -904,7 +904,7 @@ msgstr "date"
 #: src/components/smart-lists/rule-value-input.tsx:71
 #: src/lib/type-config.ts:173
 #: src/lib/type-config.ts:204
-#: src/pages/activity-page.tsx:260
+#: src/pages/activity-page.tsx:261
 msgid "Date"
 msgstr "Date"
 
@@ -916,7 +916,7 @@ msgstr "Date format"
 msgid "Dated"
 msgstr "Dated"
 
-#: src/components/assets/entity-detail.tsx:323
+#: src/components/assets/entity-detail.tsx:329
 msgid "Dates"
 msgstr "Dates"
 
@@ -961,7 +961,7 @@ msgstr "Description"
 msgid "Deselect group"
 msgstr "Deselect group"
 
-#: src/components/assets/entity-detail.tsx:204
+#: src/components/assets/entity-detail.tsx:210
 msgid "Details"
 msgstr "Details"
 
@@ -989,7 +989,7 @@ msgstr "Discard and switch"
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
-#: src/components/settings/settings-field-form.tsx:74
+#: src/components/settings/settings-field-form.tsx:75
 msgid "Display name"
 msgstr "Display name"
 
@@ -1039,7 +1039,7 @@ msgid "Drop an image or choose from your device"
 msgstr "Drop an image or choose from your device"
 
 #: src/components/import/import-labels.ts:35
-#: src/components/settings/settings-field-form.tsx:296
+#: src/components/settings/settings-field-form.tsx:307
 msgid "Dropped"
 msgstr "Dropped"
 
@@ -1071,8 +1071,8 @@ msgstr "Edit {0}"
 msgid "Edit as JSON to preserve nested values and their types."
 msgstr "Edit as JSON to preserve nested values and their types."
 
-#: src/components/settings/raw-config-editor.tsx:123
-#: src/components/settings/raw-config-editor.tsx:175
+#: src/components/settings/raw-config-editor.tsx:117
+#: src/components/settings/raw-config-editor.tsx:169
 msgid "Edit config.yaml"
 msgstr "Edit config.yaml"
 
@@ -1092,19 +1092,19 @@ msgstr "Edit saved entry"
 msgid "Edit structured value"
 msgstr "Edit structured value"
 
-#: src/components/assets/frontmatter-panel.tsx:130
-#: src/components/assets/frontmatter-panel.tsx:232
-#: src/components/assets/frontmatter-panel.tsx:254
+#: src/components/assets/frontmatter-panel.tsx:138
+#: src/components/assets/frontmatter-panel.tsx:240
+#: src/components/assets/frontmatter-panel.tsx:262
 #: src/components/entities/metadata-inputs.tsx:81
 #: src/components/entities/metadata-inputs.tsx:124
 msgid "Empty"
 msgstr "Empty"
 
-#: src/components/assets/frontmatter-panel.tsx:158
+#: src/components/assets/frontmatter-panel.tsx:166
 msgid "Empty list"
 msgstr "Empty list"
 
-#: src/components/assets/frontmatter-panel.tsx:199
+#: src/components/assets/frontmatter-panel.tsx:207
 msgid "Empty object"
 msgstr "Empty object"
 
@@ -1119,7 +1119,7 @@ msgstr "Enable"
 msgid "ends with"
 msgstr "ends with"
 
-#: src/components/settings/settings-field-form.tsx:237
+#: src/components/settings/settings-field-form.tsx:243
 msgid "English"
 msgstr "English"
 
@@ -1154,7 +1154,7 @@ msgstr "Enum"
 msgid "Enum list"
 msgstr "Enum list"
 
-#: src/components/settings/settings-field-form.tsx:177
+#: src/components/settings/settings-field-form.tsx:179
 msgid "Enum options"
 msgstr "Enum options"
 
@@ -1163,7 +1163,7 @@ msgid "Episode"
 msgstr "Episode"
 
 #: src/components/import/import-status.tsx:36
-#: src/pages/activity-page.tsx:289
+#: src/pages/activity-page.tsx:290
 msgid "Episodes"
 msgstr "Episodes"
 
@@ -1171,7 +1171,7 @@ msgstr "Episodes"
 msgid "esc to close"
 msgstr "esc to close"
 
-#: src/components/settings/settings-field-form.tsx:215
+#: src/components/settings/settings-field-form.tsx:217
 #: src/pages/activity-page.tsx:44
 msgid "Event"
 msgstr "Event"
@@ -1185,7 +1185,7 @@ msgstr "Event date"
 msgid "Exact score"
 msgstr "Exact score"
 
-#: src/components/settings/settings-external-mappings.tsx:78
+#: src/components/settings/settings-external-mappings.tsx:82
 msgid "External field"
 msgstr "External field"
 
@@ -1209,8 +1209,8 @@ msgstr "external ref"
 msgid "External reference"
 msgstr "External reference"
 
-#: src/components/settings/settings-external-mappings.tsx:120
-#: src/components/settings/settings-external-mappings.tsx:127
+#: src/components/settings/settings-external-mappings.tsx:128
+#: src/components/settings/settings-external-mappings.tsx:135
 msgid "External types"
 msgstr "External types"
 
@@ -1244,7 +1244,7 @@ msgid "Fields"
 msgstr "Fields"
 
 #: src/pages/entity-create-page.tsx:203
-#: src/pages/review-page.tsx:276
+#: src/pages/review-page.tsx:281
 msgid "File"
 msgstr "File"
 
@@ -1274,7 +1274,7 @@ msgstr "Filename title — used as"
 msgid "Filename title language"
 msgstr "Filename title language"
 
-#: src/pages/review-page.tsx:250
+#: src/pages/review-page.tsx:255
 msgid "Files the library could not parse cleanly."
 msgstr "Files the library could not parse cleanly."
 
@@ -1307,11 +1307,11 @@ msgstr "Form"
 msgid "Forward"
 msgstr "Forward"
 
-#: src/pages/review-page.tsx:274
+#: src/pages/review-page.tsx:279
 msgid "Frontmatter"
 msgstr "Frontmatter"
 
-#: src/components/settings/settings-editor.tsx:357
+#: src/components/settings/settings-editor.tsx:348
 msgid "Frontmatter key"
 msgstr "Frontmatter key"
 
@@ -1351,7 +1351,7 @@ msgstr "has a value"
 msgid "has any of"
 msgstr "has any of"
 
-#: src/pages/review-page.tsx:188
+#: src/pages/review-page.tsx:192
 msgid "Has date"
 msgstr "Has date"
 
@@ -1533,7 +1533,7 @@ msgid "is yes"
 msgstr "is yes"
 
 #. placeholder {0}: index + 1
-#: src/components/assets/frontmatter-panel.tsx:186
+#: src/components/assets/frontmatter-panel.tsx:194
 msgid "Item {0}"
 msgstr "Item {0}"
 
@@ -1549,7 +1549,7 @@ msgstr "Items"
 msgid "Items <0>({totalItems})</0>"
 msgstr "Items <0>({totalItems})</0>"
 
-#: src/components/settings/settings-field-form.tsx:236
+#: src/components/settings/settings-field-form.tsx:242
 msgid "Japanese"
 msgstr "Japanese"
 
@@ -1602,7 +1602,7 @@ msgstr "Later"
 msgid "Latest version"
 msgstr "Latest version"
 
-#: src/components/settings/settings-field-form.tsx:94
+#: src/components/settings/settings-field-form.tsx:95
 msgid "Leave blank for raw scores. Changing the scale does not convert existing ratings."
 msgstr "Leave blank for raw scores. Changing the scale does not convert existing ratings."
 
@@ -1614,7 +1614,7 @@ msgstr "less"
 msgid "Library"
 msgstr "Library"
 
-#: src/pages/review-page.tsx:247
+#: src/pages/review-page.tsx:252
 msgid "Library Issues"
 msgstr "Library Issues"
 
@@ -1647,11 +1647,11 @@ msgstr "Link target"
 msgid "Link your new types"
 msgstr "Link your new types"
 
-#: src/components/assets/entity-detail.tsx:259
+#: src/components/assets/entity-detail.tsx:265
 msgid "Linked from"
 msgstr "Linked from"
 
-#: src/components/assets/entity-detail.tsx:294
+#: src/components/assets/entity-detail.tsx:300
 msgid "Links"
 msgstr "Links"
 
@@ -1662,7 +1662,7 @@ msgstr "Links"
 msgid "links to"
 msgstr "links to"
 
-#: src/components/assets/entity-detail.tsx:252
+#: src/components/assets/entity-detail.tsx:258
 msgid "Links to"
 msgstr "Links to"
 
@@ -1719,7 +1719,7 @@ msgstr "Loading type…"
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/entities/entity-ratings.tsx:184
 #: src/components/lists/add-items-dialog.tsx:75
-#: src/components/settings/raw-config-editor.tsx:171
+#: src/components/settings/raw-config-editor.tsx:165
 #: src/components/smart-lists/suggested-lists-dialog.tsx:73
 #: src/pages/activity-page.tsx:180
 #: src/pages/entity-edit-page.tsx:257
@@ -1730,7 +1730,7 @@ msgstr "Loading type…"
 #: src/pages/list-detail-page.tsx:359
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:87
-#: src/pages/review-page.tsx:148
+#: src/pages/review-page.tsx:152
 #: src/pages/settings-page.tsx:135
 #: src/pages/smart-list-page.tsx:227
 #: src/pages/statistics-page.tsx:45
@@ -1769,7 +1769,7 @@ msgstr "Manage lists"
 msgid "Manage vaults…"
 msgstr "Manage vaults…"
 
-#: src/components/settings/settings-field-form.tsx:364
+#: src/components/settings/settings-field-form.tsx:376
 msgid "Map each option to a status"
 msgstr "Map each option to a status"
 
@@ -1807,7 +1807,7 @@ msgstr "Match mode"
 msgid "Metadata"
 msgstr "Metadata"
 
-#: src/pages/activity-page.tsx:275
+#: src/pages/activity-page.tsx:276
 msgid "Missed?"
 msgstr "Missed?"
 
@@ -1908,8 +1908,8 @@ msgstr "Next"
 msgid "no"
 msgstr "no"
 
-#: src/components/assets/frontmatter-panel.tsx:138
-#: src/components/assets/frontmatter-panel.tsx:255
+#: src/components/assets/frontmatter-panel.tsx:146
+#: src/components/assets/frontmatter-panel.tsx:263
 #: src/components/entities/metadata-inputs.tsx:126
 msgid "No"
 msgstr "No"
@@ -1930,7 +1930,7 @@ msgstr "No candidate fields or body sections match this type schema."
 msgid "No criteria — everything in the library matches."
 msgstr "No criteria — everything in the library matches."
 
-#: src/pages/review-page.tsx:189
+#: src/pages/review-page.tsx:193
 msgid "No date"
 msgstr "No date"
 
@@ -1960,7 +1960,7 @@ msgstr "No entries"
 msgid "No entries match the criteria"
 msgstr "No entries match the criteria"
 
-#: src/components/settings/settings-external-mappings.tsx:96
+#: src/components/settings/settings-external-mappings.tsx:104
 msgid "No external mappings."
 msgstr "No external mappings."
 
@@ -2026,7 +2026,7 @@ msgstr "No matching entities."
 msgid "No matching type"
 msgstr "No matching type"
 
-#: src/pages/review-page.tsx:260
+#: src/pages/review-page.tsx:265
 msgid "No parsing issues found."
 msgstr "No parsing issues found."
 
@@ -2038,7 +2038,7 @@ msgstr "no provider"
 msgid "No provider with a list is linked on this entity."
 msgstr "No provider with a list is linked on this entity."
 
-#: src/pages/review-page.tsx:208
+#: src/pages/review-page.tsx:212
 msgid "No queue items match the current filters"
 msgstr "No queue items match the current filters"
 
@@ -2058,7 +2058,7 @@ msgstr "No suggestions for your current types. You can create a smart list in Li
 msgid "No supported providers"
 msgstr "No supported providers"
 
-#: src/components/settings/settings-external-mappings.tsx:132
+#: src/components/settings/settings-external-mappings.tsx:140
 msgid "No type options."
 msgstr "No type options."
 
@@ -2084,9 +2084,9 @@ msgid "Non-conflicting changes are combined. Choose which value to keep where bo
 msgstr "Non-conflicting changes are combined. Choose which value to keep where both versions changed. Nothing is saved until you press Save."
 
 #: src/components/settings/settings-entity-type.tsx:130
-#: src/components/settings/settings-field-form.tsx:165
-#: src/components/settings/settings-field-form.tsx:211
-#: src/components/settings/settings-field-form.tsx:258
+#: src/components/settings/settings-field-form.tsx:166
+#: src/components/settings/settings-field-form.tsx:213
+#: src/components/settings/settings-field-form.tsx:265
 #: src/components/settings/settings-shared.tsx:38
 #: src/components/smart-lists/rule-subgroup.tsx:99
 msgid "None"
@@ -2114,7 +2114,7 @@ msgstr "Note <0>(optional)</0>"
 msgid "notes"
 msgstr "notes"
 
-#: src/components/assets/entity-detail.tsx:270
+#: src/components/assets/entity-detail.tsx:276
 #: src/components/entities/edit-conflict-review.tsx:88
 #: src/components/entities/metadata-editor.tsx:187
 #: src/components/entities/metadata-editor.tsx:194
@@ -2141,13 +2141,13 @@ msgstr "Number"
 msgid "of the following match:"
 msgstr "of the following match:"
 
-#: src/components/settings/settings-editor.tsx:307
-#: src/components/settings/settings-editor.tsx:342
+#: src/components/settings/settings-editor.tsx:298
+#: src/components/settings/settings-editor.tsx:333
 msgid "off"
 msgstr "off"
 
-#: src/components/settings/settings-editor.tsx:115
-#: src/components/settings/settings-editor.tsx:120
+#: src/components/settings/settings-editor.tsx:114
+#: src/components/settings/settings-editor.tsx:119
 msgid "Off"
 msgstr "Off"
 
@@ -2156,16 +2156,16 @@ msgstr "Off"
 msgid "older than"
 msgstr "older than"
 
-#: src/components/settings/settings-editor.tsx:342
+#: src/components/settings/settings-editor.tsx:333
 msgid "on"
 msgstr "on"
 
-#: src/components/settings/settings-editor.tsx:120
+#: src/components/settings/settings-editor.tsx:119
 msgid "On"
 msgstr "On"
 
 #: src/components/import/import-labels.ts:32
-#: src/components/settings/settings-field-form.tsx:293
+#: src/components/settings/settings-field-form.tsx:304
 msgid "Ongoing"
 msgstr "Ongoing"
 
@@ -2215,7 +2215,7 @@ msgstr "Operator"
 msgid "Ordered"
 msgstr "Ordered"
 
-#: src/components/settings/settings-field-form.tsx:166
+#: src/components/settings/settings-field-form.tsx:167
 msgid "Original"
 msgstr "Original"
 
@@ -2228,7 +2228,7 @@ msgstr "Original (filename is the title)"
 msgid "Original title: {0}"
 msgstr "Original title: {0}"
 
-#: src/components/settings/settings-editor.tsx:408
+#: src/components/settings/settings-editor.tsx:399
 msgid "Overview"
 msgstr "Overview"
 
@@ -2259,7 +2259,7 @@ msgid "Paths"
 msgstr "Paths"
 
 #: src/components/import/import-labels.ts:33
-#: src/components/settings/settings-field-form.tsx:294
+#: src/components/settings/settings-field-form.tsx:305
 msgid "Paused"
 msgstr "Paused"
 
@@ -2272,8 +2272,8 @@ msgid "Planned"
 msgstr "Planned"
 
 #: src/components/import/import-labels.ts:31
-#: src/components/settings/settings-field-form.tsx:212
-#: src/components/settings/settings-field-form.tsx:292
+#: src/components/settings/settings-field-form.tsx:214
+#: src/components/settings/settings-field-form.tsx:303
 msgid "Planning"
 msgstr "Planning"
 
@@ -2305,7 +2305,7 @@ msgstr "Previous"
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:132
 #: src/components/settings/settings-external-mappings.tsx:67
-#: src/components/settings/settings-field-form.tsx:246
+#: src/components/settings/settings-field-form.tsx:253
 #: src/pages/quick-capture-page.tsx:290
 msgid "Provider"
 msgstr "Provider"
@@ -2352,7 +2352,7 @@ msgstr "Rating"
 msgid "Rating cleared"
 msgstr "Rating cleared"
 
-#: src/components/settings/settings-field-form.tsx:79
+#: src/components/settings/settings-field-form.tsx:80
 msgid "Rating maximum"
 msgstr "Rating maximum"
 
@@ -2377,7 +2377,7 @@ msgstr "Recent"
 msgid "Refresh {0}"
 msgstr "Refresh {0}"
 
-#: src/components/settings/settings-field-form.tsx:356
+#: src/components/settings/settings-field-form.tsx:367
 msgid "Regular enum"
 msgstr "Regular enum"
 
@@ -2385,7 +2385,7 @@ msgstr "Regular enum"
 msgid "Relation"
 msgstr "Relation"
 
-#: src/components/settings/settings-field-form.tsx:281
+#: src/components/settings/settings-field-form.tsx:292
 msgid "Relation type"
 msgstr "Relation type"
 
@@ -2398,8 +2398,8 @@ msgstr "Relevance"
 msgid "Reload"
 msgstr "Reload"
 
-#: src/components/settings/raw-config-editor.tsx:164
-#: src/components/settings/settings-editor.tsx:255
+#: src/components/settings/raw-config-editor.tsx:158
+#: src/components/settings/settings-editor.tsx:246
 #: src/pages/list-detail-page.tsx:421
 #: src/pages/smart-list-page.tsx:335
 msgid "Reload latest version"
@@ -2428,7 +2428,7 @@ msgstr "Remove {label}"
 msgid "Remove body section"
 msgstr "Remove body section"
 
-#: src/components/settings/settings-external-mappings.tsx:88
+#: src/components/settings/settings-external-mappings.tsx:96
 msgid "Remove external field mapping"
 msgstr "Remove external field mapping"
 
@@ -2488,7 +2488,7 @@ msgstr "Rename"
 msgid "Rename list"
 msgstr "Rename list"
 
-#: src/pages/smart-list-page.tsx:564
+#: src/pages/smart-list-page.tsx:566
 msgid "Rename smart list"
 msgstr "Rename smart list"
 
@@ -2577,8 +2577,8 @@ msgid "Running…"
 msgstr "Running…"
 
 #: src/components/entities/entity-ratings.tsx:244
-#: src/components/settings/raw-config-editor.tsx:134
-#: src/components/settings/settings-editor.tsx:227
+#: src/components/settings/raw-config-editor.tsx:128
+#: src/components/settings/settings-editor.tsx:218
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/list-detail-page.tsx:400
 #: src/pages/smart-list-page.tsx:264
@@ -2622,8 +2622,8 @@ msgstr "Saves the current type, criteria, and sort as a smart list. Your search 
 
 #: src/components/assets/quick-log-dialog.tsx:271
 #: src/components/settings/provider-credentials.tsx:83
-#: src/components/settings/raw-config-editor.tsx:134
-#: src/components/settings/settings-editor.tsx:227
+#: src/components/settings/raw-config-editor.tsx:128
+#: src/components/settings/settings-editor.tsx:218
 #: src/pages/entity-create-page.tsx:164
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/entity-edit-page.tsx:329
@@ -2633,8 +2633,8 @@ msgstr "Saves the current type, criteria, and sort as a smart list. Your search 
 msgid "Saving…"
 msgstr "Saving…"
 
-#: src/components/settings/raw-config-editor.tsx:141
-#: src/components/settings/settings-editor.tsx:234
+#: src/components/settings/raw-config-editor.tsx:135
+#: src/components/settings/settings-editor.tsx:225
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 
@@ -2685,7 +2685,7 @@ msgstr "Search or add {relationType}"
 msgid "Search or add relation"
 msgstr "Search or add relation"
 
-#: src/pages/review-page.tsx:169
+#: src/pages/review-page.tsx:173
 msgid "Search queue"
 msgstr "Search queue"
 
@@ -2705,7 +2705,7 @@ msgstr "Season"
 msgid "season {0}"
 msgstr "season {0}"
 
-#: src/components/settings/settings-field-form.tsx:227
+#: src/components/settings/settings-field-form.tsx:233
 msgid "Season language"
 msgstr "Season language"
 
@@ -2742,7 +2742,7 @@ msgstr "See all results for “{query}”"
 msgid "Select all"
 msgstr "Select all"
 
-#: src/components/settings/settings-external-mappings.tsx:80
+#: src/components/settings/settings-external-mappings.tsx:84
 msgid "Select field"
 msgstr "Select field"
 
@@ -2758,7 +2758,7 @@ msgstr "Select group"
 msgid "Select parent folder"
 msgstr "Select parent folder"
 
-#: src/components/settings/settings-external-mappings.tsx:126
+#: src/components/settings/settings-external-mappings.tsx:134
 msgid "Select type"
 msgstr "Select type"
 
@@ -2777,12 +2777,12 @@ msgid "Set {0} to {1}"
 msgstr "Set {0} to {1}"
 
 #: src/components/layout/nav-destinations.ts:46
-#: src/components/settings/settings-editor.tsx:212
+#: src/components/settings/settings-editor.tsx:203
 msgid "Settings"
 msgstr "Settings"
 
-#: src/components/settings/raw-config-editor.tsx:95
-#: src/components/settings/settings-editor.tsx:185
+#: src/components/settings/raw-config-editor.tsx:89
+#: src/components/settings/settings-editor.tsx:176
 msgid "Settings saved"
 msgstr "Settings saved"
 
@@ -2795,7 +2795,7 @@ msgid "Show sidebar"
 msgstr "Show sidebar"
 
 #. placeholder {0}: health.diagnosticCount
-#: src/pages/review-page.tsx:290
+#: src/pages/review-page.tsx:295
 msgid "Showing {shownCount} of {0} issues."
 msgstr "Showing {shownCount} of {0} issues."
 
@@ -2825,7 +2825,7 @@ msgstr "Smart list deleted"
 msgid "Smart list not found"
 msgstr "Smart list not found"
 
-#: src/pages/smart-list-page.tsx:545
+#: src/pages/smart-list-page.tsx:547
 msgid "Smart list renamed"
 msgstr "Smart list renamed"
 
@@ -2841,7 +2841,7 @@ msgstr "Some images could not be downloaded"
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "Some images could not be downloaded: {reasons}"
 
-#: src/pages/smart-list-page.tsx:582
+#: src/pages/smart-list-page.tsx:584
 msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "Some of this file's syntax isn't supported here and is ignored:"
 
@@ -2878,7 +2878,7 @@ msgid "Start over"
 msgstr "Start over"
 
 #: src/components/assets/quick-log-dialog.tsx:30
-#: src/components/settings/settings-field-form.tsx:213
+#: src/components/settings/settings-field-form.tsx:215
 #: src/pages/activity-page.tsx:41
 msgid "Started"
 msgstr "Started"
@@ -2906,7 +2906,7 @@ msgstr "Statistics"
 msgid "status"
 msgstr "status"
 
-#: src/components/settings/settings-field-form.tsx:357
+#: src/components/settings/settings-field-form.tsx:368
 msgid "Status field"
 msgstr "Status field"
 
@@ -2918,11 +2918,11 @@ msgstr "Status Mismatch"
 msgid "Status, score & dates"
 msgstr "Status, score & dates"
 
-#: src/components/settings/settings-editor.tsx:273
+#: src/components/settings/settings-editor.tsx:264
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, and types — synced with the vault."
 
-#: src/components/settings/settings-editor.tsx:274
+#: src/components/settings/settings-editor.tsx:265
 msgid "Stored in the vault. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "Stored in the vault. Taxonomy, assets, daily notes, and types — synced with the vault."
 
@@ -2961,13 +2961,13 @@ msgstr "System theme. Switch to light theme."
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:85
-#: src/components/settings/settings-editor.tsx:119
-#: src/components/settings/settings-editor.tsx:339
+#: src/components/settings/settings-editor.tsx:118
+#: src/components/settings/settings-editor.tsx:330
 #: src/components/smart-lists/rule-field-meta.ts:64
 msgid "Tags"
 msgstr "Tags"
 
-#: src/components/settings/settings-editor.tsx:367
+#: src/components/settings/settings-editor.tsx:358
 msgid "Tags are disabled."
 msgstr "Tags are disabled."
 
@@ -2975,12 +2975,12 @@ msgstr "Tags are disabled."
 msgid "Task"
 msgstr "Task"
 
-#: src/components/settings/settings-editor.tsx:280
+#: src/components/settings/settings-editor.tsx:271
 msgid "Taxonomy root"
 msgstr "Taxonomy root"
 
 #. placeholder {0}: config.taxonomyRoot || "Taxonomy"
-#: src/components/settings/settings-editor.tsx:108
+#: src/components/settings/settings-editor.tsx:107
 msgid "taxonomy: {0}"
 msgstr "taxonomy: {0}"
 
@@ -3017,7 +3017,7 @@ msgid "The schema draft changed. Close this dialog and duplicate the type again.
 msgstr "The schema draft changed. Close this dialog and duplicate the type again."
 
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
-#: src/components/settings/settings-editor.tsx:245
+#: src/components/settings/settings-editor.tsx:236
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
 msgstr "The vault schema changed on disk. Your unsaved edits are still here."
 
@@ -3087,7 +3087,7 @@ msgstr "This week"
 msgid "Title"
 msgstr "Title"
 
-#: src/components/settings/settings-field-form.tsx:145
+#: src/components/settings/settings-field-form.tsx:146
 msgid "Title language"
 msgstr "Title language"
 
@@ -3133,8 +3133,8 @@ msgid "Type Distribution"
 msgstr "Type Distribution"
 
 #: src/components/settings/settings-dialogs.tsx:225
-#: src/components/settings/settings-editor.tsx:124
-#: src/components/settings/settings-editor.tsx:374
+#: src/components/settings/settings-editor.tsx:123
+#: src/components/settings/settings-editor.tsx:365
 msgid "Types"
 msgstr "Types"
 
@@ -3158,7 +3158,7 @@ msgstr "Unit"
 msgid "Unlinked entities"
 msgstr "Unlinked entities"
 
-#: src/components/settings/settings-field-form.tsx:379
+#: src/components/settings/settings-field-form.tsx:391
 msgid "Unmapped"
 msgstr "Unmapped"
 
@@ -3193,7 +3193,7 @@ msgstr "Unresolved Relations"
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
-#: src/components/settings/settings-field-form.tsx:84
+#: src/components/settings/settings-field-form.tsx:85
 msgid "Unscaled"
 msgstr "Unscaled"
 
@@ -3238,9 +3238,9 @@ msgstr "Use a path or URL"
 msgid "Use reviewed draft"
 msgstr "Use reviewed draft"
 
-#: src/components/settings/settings-field-form.tsx:154
-#: src/components/settings/settings-field-form.tsx:200
-#: src/components/settings/settings-field-form.tsx:343
+#: src/components/settings/settings-field-form.tsx:155
+#: src/components/settings/settings-field-form.tsx:202
+#: src/components/settings/settings-field-form.tsx:354
 msgid "Used as"
 msgstr "Used as"
 
@@ -3255,8 +3255,8 @@ msgstr "Value"
 msgid "Values"
 msgstr "Values"
 
-#: src/components/settings/settings-editor.tsx:107
-#: src/components/settings/settings-editor.tsx:270
+#: src/components/settings/settings-editor.tsx:106
+#: src/components/settings/settings-editor.tsx:261
 msgid "Vault"
 msgstr "Vault"
 
@@ -3335,8 +3335,8 @@ msgstr "years"
 msgid "yes"
 msgstr "yes"
 
-#: src/components/assets/frontmatter-panel.tsx:138
-#: src/components/assets/frontmatter-panel.tsx:255
+#: src/components/assets/frontmatter-panel.tsx:146
+#: src/components/assets/frontmatter-panel.tsx:263
 #: src/components/entities/metadata-inputs.tsx:125
 msgid "Yes"
 msgstr "Yes"

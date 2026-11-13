@@ -196,6 +196,7 @@ export function ActivityCard({
 }) {
   const language = useTitleLanguage();
   const href = `/entities/${encodeURIComponent(item.entity.id)}`;
+  const today = todayLocal();
   return (
     <article className="flex items-start gap-3 rounded-md border p-3">
       {/* Cover only for types with an image field; a placeholder fills the slot
@@ -231,7 +232,7 @@ export function ActivityCard({
               missed={
                 entry.source === "taxonomy" &&
                 entry.role === "event" &&
-                item.date < todayLocal() &&
+                item.date < today &&
                 item.entity.status?.canonical === "planning"
               }
             />

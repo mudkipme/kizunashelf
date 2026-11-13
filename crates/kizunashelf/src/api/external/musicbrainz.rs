@@ -475,7 +475,7 @@ fn artist_alias_titles(item: &Value) -> BTreeMap<String, String> {
         let Some(locale) = alias
             .get("locale")
             .and_then(Value::as_str)
-            .map(str::trim)
+            .map(crate::languages::primary_language)
             .filter(|value| !value.is_empty())
         else {
             continue;
@@ -486,9 +486,7 @@ fn artist_alias_titles(item: &Value) -> BTreeMap<String, String> {
             .map(str::trim)
             .filter(|value| !value.is_empty())
         {
-            titles
-                .entry(locale.to_string())
-                .or_insert_with(|| name.to_string());
+            titles.entry(locale).or_insert_with(|| name.to_string());
         }
     }
     titles
@@ -660,6 +658,8 @@ mod tests {
             "life-span": { "begin": "1991" },
             "aliases": [
                 { "type": "Artist name", "locale": "ja", "name": "レディオヘッド" },
+                { "type": "Artist name", "locale": "zh_Hans", "name": "电台司令" },
+                { "type": "Artist name", "locale": "zh_TW", "name": "電台司令" },
                 { "type": "Sort name", "locale": "en", "name": "Radiohead" }
             ],
             "relations": [
@@ -671,7 +671,7 @@ mod tests {
         assert_eq!(candidate.metadata.get("type"), Some(&json!("Group")));
         assert_eq!(candidate.metadata.get("release_date"), Some(&json!("1991")));
         // url-rels official homepage → official_site; only display aliases with a
-        // locale feed the title map (the "Sort name" alias is excluded).
+        // locale feed the title map (normalized to primary subtag, "Sort name" excluded).
         assert_eq!(
             candidate.metadata.get("official_site"),
             Some(&json!("https://radiohead.com"))
@@ -680,6 +680,8 @@ mod tests {
             candidate.titles.get("ja"),
             Some(&"レディオヘッド".to_string())
         );
+        assert_eq!(candidate.titles.get("zh"), Some(&"电台司令".to_string()));
+        assert_eq!(candidate.titles.get("zh_Hans"), None);
         assert_eq!(candidate.titles.get("en"), None);
     }
 

@@ -111,7 +111,7 @@ export function QuickLogDialog({
       draftRevision,
       writesNote,
     ],
-    queryFn: () => postLogActivity(entityId, request, true),
+    queryFn: ({ signal }) => postLogActivity(entityId, request, true, { signal }),
     enabled: open && Boolean(activeKind) && Boolean(date.trim()),
     retry: false,
   });

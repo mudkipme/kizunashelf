@@ -12,7 +12,6 @@ use crate::dates::{is_in_month, normalize_date, parse_exact_date, season_span};
 use crate::library::{
     compare_string, parse_daily_note_source_id, wikilink_regex, DAILY_NOTE_RELATION_FIELD,
 };
-use crate::relations::summary_by_id;
 use crate::types::{CanonicalStatus, DateRole, EntitySummary, EpisodeDateRole, FieldType, Library};
 use crate::vfs::Vfs;
 use anyhow::Result;
@@ -684,7 +683,6 @@ fn taxonomy_calendar_entries(
     library: &Library,
     options: &CalendarBuildOptions,
 ) -> Vec<CalendarEntry> {
-    let summaries = summary_by_id(library);
     let mut entries = Vec::new();
     for record in &library.records {
         let entity = &record.summary;
@@ -723,10 +721,7 @@ fn taxonomy_calendar_entries(
                     id: format!("taxonomy:{}:{date}:{}", item.field, entity.id),
                     date,
                     source: CalendarEntrySource::Taxonomy,
-                    entity: summaries
-                        .get(entity.id.as_str())
-                        .map(|summary| (*summary).clone())
-                        .unwrap_or_else(|| entity.clone()),
+                    entity: entity.clone(),
                     date_field: Some(item.field),
                     raw_date: Some(item.value),
                     note_path: None,
@@ -737,17 +732,10 @@ fn taxonomy_calendar_entries(
             }
         }
     }
-    let mut seen = Vec::<String>::new();
+    let mut seen = HashSet::<String>::new();
     entries
         .into_iter()
-        .filter(|entry| {
-            if seen.contains(&entry.id) {
-                false
-            } else {
-                seen.push(entry.id.clone());
-                true
-            }
-        })
+        .filter(|entry| seen.insert(entry.id.clone()))
         .collect()
 }
 
@@ -758,7 +746,6 @@ fn episode_calendar_entries(
     library: &Library,
     options: &CalendarBuildOptions,
 ) -> Vec<CalendarEntry> {
-    let summaries = summary_by_id(library);
     let mut entries = Vec::new();
     for record in &library.records {
         let entity = &record.summary;
@@ -789,10 +776,7 @@ fn episode_calendar_entries(
                 id: format!("episode:{role}:{}:{}:{}", item.key, item.date, entity.id),
                 date: item.date.clone(),
                 source: CalendarEntrySource::Episode,
-                entity: summaries
-                    .get(entity.id.as_str())
-                    .map(|summary| (*summary).clone())
-                    .unwrap_or_else(|| entity.clone()),
+                entity: entity.clone(),
                 date_field: None,
                 raw_date: None,
                 note_path: None,
