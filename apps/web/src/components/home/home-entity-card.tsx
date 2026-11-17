@@ -1,4 +1,3 @@
-import { Plural } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
@@ -36,17 +35,14 @@ export function HomeEntityCard({
           language={language}
           className="line-clamp-2 text-sm leading-5 font-medium"
         />
-        <div className="mt-auto flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          <span className="min-w-0 truncate">
-            {entity.dates.length > 0 ? (
-              <EntityDateList entity={entity} labelsByType={labelsByType} />
-            ) : (
-              entity.basename
-            )}
-          </span>
-          <span className="ml-auto shrink-0 tabular-nums">
-            <Plural value={entity.relationCount} one="# link" other="# links" />
-          </span>
+        {/* Dates only; a link count here (usually "0 links") was noise, and the
+            library's list and grid views already drop it. */}
+        <div className="mt-auto flex min-w-0 text-xs text-muted-foreground">
+          {entity.dates.length > 0 ? (
+            <EntityDateList entity={entity} labelsByType={labelsByType} />
+          ) : (
+            <span className="min-w-0 truncate">{entity.basename}</span>
+          )}
         </div>
       </div>
     </Link>

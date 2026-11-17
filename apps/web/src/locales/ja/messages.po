@@ -66,7 +66,6 @@ msgstr "{0, plural, other {# 件のアイテム}}"
 #. placeholder {0}: entity.relationCount
 #: src/components/assets/entity-grid-item.tsx:82
 #: src/components/assets/entity-list-item.tsx:65
-#: src/components/home/home-entity-card.tsx:48
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 件のリンク}}"
 
@@ -317,9 +316,9 @@ msgstr "アクティビティの操作"
 #: src/components/settings/settings-controls.tsx:65
 #: src/components/settings/settings-dialogs.tsx:409
 #: src/components/settings/settings-external-mappings.tsx:51
-#: src/pages/home-page.tsx:39
-#: src/pages/home-page.tsx:45
-#: src/pages/home-page.tsx:50
+#: src/pages/home-page.tsx:51
+#: src/pages/home-page.tsx:57
+#: src/pages/home-page.tsx:62
 #: src/pages/library-page.tsx:352
 #: src/pages/library-page.tsx:358
 #: src/pages/library-page.tsx:363
@@ -381,6 +380,7 @@ msgid "Add items"
 msgstr "アイテムを追加"
 
 #: src/pages/entity-create-page.tsx:198
+#: src/pages/home-page.tsx:155
 #: src/pages/quick-capture-page.tsx:232
 msgid "Add manually"
 msgstr "手動で追加"
@@ -411,7 +411,7 @@ msgstr "セクションを追加"
 msgid "Add suggested lists"
 msgstr "おすすめリストを追加"
 
-#: src/pages/home-page.tsx:75
+#: src/pages/home-page.tsx:89
 msgid "Add suggested lists, or open a smart list and choose Add to Home."
 msgstr "おすすめリストを追加するか、スマートリストを開いて「ホームに追加」を選んでください。"
 
@@ -584,11 +584,11 @@ msgstr "書籍"
 msgid "Broken Assets"
 msgstr "壊れたアセット"
 
-#: src/pages/home-page.tsx:81
+#: src/pages/home-page.tsx:95
 msgid "Browse library"
 msgstr "ライブラリを閲覧"
 
-#: src/pages/home-page.tsx:86
+#: src/pages/home-page.tsx:100
 msgid "Browse lists"
 msgstr "リストを見る"
 
@@ -1377,7 +1377,7 @@ msgid "Hide sidebar"
 msgstr ""
 
 #: src/components/layout/nav-destinations.ts:38
-#: src/pages/home-page.tsx:31
+#: src/pages/home-page.tsx:43
 msgid "Home"
 msgstr "ホーム"
 
@@ -1432,6 +1432,10 @@ msgstr ""
 #: src/components/import/import-status.tsx:60
 msgid "Import complete"
 msgstr "インポート完了"
+
+#: src/pages/home-page.tsx:149
+msgid "Import from another service"
+msgstr "他のサービスからインポート"
 
 #: src/pages/import-wizard-page.tsx:203
 msgid "Importing creates files, so it is unavailable here."
@@ -1733,7 +1737,7 @@ msgstr "タイプを読み込み中…"
 #: src/pages/entity-edit-page.tsx:261
 #: src/pages/entity-page.tsx:308
 #: src/pages/entity-page.tsx:666
-#: src/pages/home-page.tsx:58
+#: src/pages/home-page.tsx:70
 #: src/pages/import-wizard-page.tsx:231
 #: src/pages/list-detail-page.tsx:367
 #: src/pages/lists-page.tsx:54
@@ -2054,7 +2058,7 @@ msgstr "現在のフィルターに一致するキューアイテムがありま
 msgid "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
 msgstr "このタイプで有効な検索プロバイダーがありません — 設定でプロバイダーの認証情報を確認するか、手動で追加してください。"
 
-#: src/pages/home-page.tsx:72
+#: src/pages/home-page.tsx:86
 msgid "No smart lists on Home yet"
 msgstr "ホームにスマートリストはまだありません"
 
@@ -2663,6 +2667,14 @@ msgstr "検索"
 msgid "Search {activeTypeLabel}"
 msgstr "{activeTypeLabel} を検索"
 
+#: src/pages/home-page.tsx:129
+msgid "Search a catalog to add your first entry with its cover and details, or bring in what you already track elsewhere."
+msgstr "カタログを検索して、カバーや詳細付きで最初の項目を追加しましょう。他のサービスで記録しているものを取り込むこともできます。"
+
+#: src/pages/home-page.tsx:143
+msgid "Search and add"
+msgstr "検索して追加"
+
 #: src/components/layout/command-palette.tsx:247
 msgid "Search entities, pages and commands"
 msgstr ""
@@ -2886,6 +2898,10 @@ msgstr "開始"
 #: src/pages/import-wizard-page.tsx:239
 msgid "Start over"
 msgstr "最初からやり直す"
+
+#: src/pages/home-page.tsx:125
+msgid "Start your library"
+msgstr "ライブラリを始めましょう"
 
 #: src/components/assets/quick-log-dialog.tsx:30
 #: src/components/settings/settings-field-form.tsx:214

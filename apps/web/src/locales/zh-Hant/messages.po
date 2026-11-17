@@ -66,7 +66,6 @@ msgstr "{0, plural, other {# 個項目}}"
 #. placeholder {0}: entity.relationCount
 #: src/components/assets/entity-grid-item.tsx:82
 #: src/components/assets/entity-list-item.tsx:65
-#: src/components/home/home-entity-card.tsx:48
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 個連結}}"
 
@@ -317,9 +316,9 @@ msgstr "活動操作"
 #: src/components/settings/settings-controls.tsx:65
 #: src/components/settings/settings-dialogs.tsx:409
 #: src/components/settings/settings-external-mappings.tsx:51
-#: src/pages/home-page.tsx:39
-#: src/pages/home-page.tsx:45
-#: src/pages/home-page.tsx:50
+#: src/pages/home-page.tsx:51
+#: src/pages/home-page.tsx:57
+#: src/pages/home-page.tsx:62
 #: src/pages/library-page.tsx:352
 #: src/pages/library-page.tsx:358
 #: src/pages/library-page.tsx:363
@@ -381,6 +380,7 @@ msgid "Add items"
 msgstr "新增項目"
 
 #: src/pages/entity-create-page.tsx:198
+#: src/pages/home-page.tsx:155
 #: src/pages/quick-capture-page.tsx:232
 msgid "Add manually"
 msgstr "手動新增"
@@ -411,7 +411,7 @@ msgstr "新增版塊"
 msgid "Add suggested lists"
 msgstr "加入建議清單"
 
-#: src/pages/home-page.tsx:75
+#: src/pages/home-page.tsx:89
 msgid "Add suggested lists, or open a smart list and choose Add to Home."
 msgstr "加入建議清單，或開啟智慧清單並選擇「加入首頁」。"
 
@@ -584,11 +584,11 @@ msgstr "書籍"
 msgid "Broken Assets"
 msgstr "毀損的資產"
 
-#: src/pages/home-page.tsx:81
+#: src/pages/home-page.tsx:95
 msgid "Browse library"
 msgstr "瀏覽庫"
 
-#: src/pages/home-page.tsx:86
+#: src/pages/home-page.tsx:100
 msgid "Browse lists"
 msgstr "瀏覽清單"
 
@@ -1377,7 +1377,7 @@ msgid "Hide sidebar"
 msgstr ""
 
 #: src/components/layout/nav-destinations.ts:38
-#: src/pages/home-page.tsx:31
+#: src/pages/home-page.tsx:43
 msgid "Home"
 msgstr "首頁"
 
@@ -1432,6 +1432,10 @@ msgstr ""
 #: src/components/import/import-status.tsx:60
 msgid "Import complete"
 msgstr "匯入完成"
+
+#: src/pages/home-page.tsx:149
+msgid "Import from another service"
+msgstr "從其他服務匯入"
 
 #: src/pages/import-wizard-page.tsx:203
 msgid "Importing creates files, so it is unavailable here."
@@ -1733,7 +1737,7 @@ msgstr "正在載入類型…"
 #: src/pages/entity-edit-page.tsx:261
 #: src/pages/entity-page.tsx:308
 #: src/pages/entity-page.tsx:666
-#: src/pages/home-page.tsx:58
+#: src/pages/home-page.tsx:70
 #: src/pages/import-wizard-page.tsx:231
 #: src/pages/list-detail-page.tsx:367
 #: src/pages/lists-page.tsx:54
@@ -2054,7 +2058,7 @@ msgstr "沒有佇列項目符合目前的篩選條件"
 msgid "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
 msgstr "此類型沒有可用的搜尋資料來源 — 請在設定中檢查資料來源憑證，或手動新增條目。"
 
-#: src/pages/home-page.tsx:72
+#: src/pages/home-page.tsx:86
 msgid "No smart lists on Home yet"
 msgstr "首頁還沒有智慧清單"
 
@@ -2663,6 +2667,14 @@ msgstr "搜尋"
 msgid "Search {activeTypeLabel}"
 msgstr "搜尋 {activeTypeLabel}"
 
+#: src/pages/home-page.tsx:129
+msgid "Search a catalog to add your first entry with its cover and details, or bring in what you already track elsewhere."
+msgstr "搜尋目錄，新增附有封面與詳細資訊的第一個項目；也可以匯入你在其他地方記錄的內容。"
+
+#: src/pages/home-page.tsx:143
+msgid "Search and add"
+msgstr "搜尋並新增"
+
 #: src/components/layout/command-palette.tsx:247
 msgid "Search entities, pages and commands"
 msgstr ""
@@ -2886,6 +2898,10 @@ msgstr "開始"
 #: src/pages/import-wizard-page.tsx:239
 msgid "Start over"
 msgstr "重新開始"
+
+#: src/pages/home-page.tsx:125
+msgid "Start your library"
+msgstr "開始建立你的庫"
 
 #: src/components/assets/quick-log-dialog.tsx:30
 #: src/components/settings/settings-field-form.tsx:214

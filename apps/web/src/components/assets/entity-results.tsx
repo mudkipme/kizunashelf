@@ -50,7 +50,9 @@ export function EntityResults({
     <div className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", className)}>
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto">
         {layout === "grid" ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 p-3">
+          // Two columns on a phone: one 220px+ card per row filled the whole
+          // screen with a single cover.
+          <div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] sm:gap-3 sm:p-3">
             {entities.map((entity) => (
               <EntityGridItem
                 key={entity.id}

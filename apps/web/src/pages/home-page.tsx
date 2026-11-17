@@ -1,11 +1,18 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { LayoutGridIcon, PlusIcon } from "lucide-react";
+import {
+  DownloadIcon,
+  LayoutGridIcon,
+  LibraryIcon,
+  PencilLineIcon,
+  PlusIcon,
+  SearchIcon,
+} from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { configQuery, homeQuery } from "@/api/queries";
+import { configQuery, homeQuery, statsQuery } from "@/api/queries";
 import { ComingUpSection } from "@/components/home/coming-up-section";
 import { HomeSmartList } from "@/components/home/home-smart-list";
 import { AppFrame } from "@/components/layout/app-frame";
@@ -21,7 +28,12 @@ export function HomePage() {
   const home = useQuery(homeQuery(language));
   const config = useQuery(configQuery());
   const capabilities = useCapabilities();
-  const loading = home.isPending || config.isPending || capabilities.isPending;
+  // Shared with the sidebar's per-type counts, so this is normally cached.
+  const stats = useQuery(statsQuery());
+  const loading = home.isPending || config.isPending || capabilities.isPending || stats.isPending;
+  // A brand-new vault: every shelf would be empty, so lead with how to add
+  // something instead of a stack of "Nothing here yet" boxes.
+  const libraryEmpty = stats.data?.total === 0;
   const error = home.error ?? config.error ?? capabilities.error;
   const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
 
@@ -57,6 +69,8 @@ export function HomePage() {
           <div className="p-8 text-center text-sm text-muted-foreground">
             <Trans>Loading…</Trans>
           </div>
+        ) : libraryEmpty ? (
+          <EmptyLibraryWelcome contentWritable={capabilities.contentWritable} />
         ) : (
           <div className="flex flex-1 flex-col gap-6 p-4">
             <ComingUpSection />
@@ -93,5 +107,57 @@ export function HomePage() {
         )}
       </div>
     </AppFrame>
+  );
+}
+
+/// First-run Home: the library has no entries yet. Offers the three ways in —
+/// search a catalog, import from another service, or write an entry by hand.
+function EmptyLibraryWelcome({ contentWritable }: { contentWritable: boolean }) {
+  return (
+    <div className="flex flex-1 items-start justify-center p-4 sm:items-center">
+      <section
+        aria-labelledby="empty-library-title"
+        className="flex w-full max-w-lg flex-col items-center gap-5 rounded-xl border border-dashed px-6 py-12 text-center"
+      >
+        <LibraryIcon className="size-10 text-muted-foreground" aria-hidden />
+        <div className="flex flex-col gap-2">
+          <h2 id="empty-library-title" className="text-lg font-semibold">
+            <Trans>Start your library</Trans>
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {contentWritable ? (
+              <Trans>
+                Search a catalog to add your first entry with its cover and details, or bring in
+                what you already track elsewhere.
+              </Trans>
+            ) : (
+              contentWritesDisabled()
+            )}
+          </p>
+        </div>
+        {contentWritable ? (
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-center">
+            <Button asChild>
+              <Link to="/entities/new">
+                <SearchIcon data-icon="inline-start" />
+                <Trans>Search and add</Trans>
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/entities/import">
+                <DownloadIcon data-icon="inline-start" />
+                <Trans>Import from another service</Trans>
+              </Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link to="/entities/new/manual">
+                <PencilLineIcon data-icon="inline-start" />
+                <Trans>Add manually</Trans>
+              </Link>
+            </Button>
+          </div>
+        ) : null}
+      </section>
+    </div>
   );
 }
