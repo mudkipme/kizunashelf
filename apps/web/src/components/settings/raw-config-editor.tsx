@@ -159,7 +159,12 @@ export function RawConfigEditor({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => raw.data && seedContent(raw.data.content, raw.data.revision)}
+            onClick={async () => {
+              const latest = await raw.refetch();
+              if (!latest.data) return;
+              seenServerSignatureRef.current = latest.data.revision ?? latest.data.content;
+              seedContent(latest.data.content, latest.data.revision);
+            }}
           >
             <Trans>Reload latest version</Trans>
           </Button>

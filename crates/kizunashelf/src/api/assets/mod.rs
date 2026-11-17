@@ -343,26 +343,19 @@ pub(crate) async fn upload_entity_asset(
     let entity_id = entity.summary.id.clone();
     let entity_path = entity.summary.path.clone();
     let asset_root = library.config.resolved_asset_root().to_string();
-    let all_local = all_local_asset_paths(&library);
+    let empty_paths = std::collections::HashSet::new();
 
     // Serialize placement with other content writes. Upload paths are immutable
     // and never replace a saved cover, even when the editor is later discarded.
     let mutation = state.content_mutation_lock().await;
-    // Read current frontmatter without rewriting the entity.
     let vfs = state.vault_vfs(&library.config.vault_root);
     let asset_dir = resolve_entity_asset_dir(vfs.as_ref(), &asset_root, &entity_path).await;
-    let raw = vfs
-        .read_to_string(&entity_path)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to read entity {entity_path}: {error}"))?;
-    let document = split_markdown_document(&raw);
-    let owned = entity_local_asset_paths(&document.frontmatter, type_config);
 
     let ctx = DownloadContext {
         vfs: vfs.as_ref(),
         asset_dir: &asset_dir,
-        referenced: &all_local,
-        owned: &owned,
+        referenced: &empty_paths,
+        owned: &empty_paths,
         entity_id: &entity_id,
     };
     let content_type = request.content_type.unwrap_or_default();

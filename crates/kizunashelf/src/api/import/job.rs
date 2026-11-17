@@ -318,6 +318,10 @@ pub(super) async fn run_commit_job(
     // Retain in-batch dedup even when a custom mapping does not index the
     // external reference on the created file.
     let saved = state.import_jobs().lock().await.get(&job_id).cloned();
+    let import_language = saved
+        .as_ref()
+        .and_then(|record| record.input.as_ref())
+        .and_then(|input| input.language.clone());
     let mut created_refs: HashSet<(String, String)> = saved
         .as_ref()
         .into_iter()
@@ -427,7 +431,13 @@ pub(super) async fn run_commit_job(
         });
         if needs_detail_fetch(candidate.as_ref(), &type_config, &provider) {
             let resolved = tokio::select! {
-                result = resolve_candidate(&state, &provider, &ref_url, std::slice::from_ref(&planned_item.item.bucket), None) => result,
+                result = resolve_candidate(
+                    &state,
+                    &provider,
+                    &ref_url,
+                    std::slice::from_ref(&planned_item.item.bucket),
+                    import_language.as_deref(),
+                ) => result,
                 _ = super::import_cancelled(&cancel) => { finish_cancelled(&state, &job_id).await; return; }
             };
             match resolved {
@@ -687,6 +697,9 @@ pub(super) async fn run_commit_job(
                 )
                 .await
                 {
+                    if cancel.load(Ordering::Relaxed) {
+                        break;
+                    }
                     if let Some(error) = result.error {
                         if !record_episode_error(&state, &job_id, format!("episodes: {error}"))
                             .await
@@ -695,6 +708,9 @@ pub(super) async fn run_commit_job(
                         }
                     }
                 }
+            }
+            if cancel.load(Ordering::Relaxed) {
+                break;
             }
             let mut jobs = state.import_jobs().lock().await;
             if let Some(record) = jobs.get_mut(&job_id) {

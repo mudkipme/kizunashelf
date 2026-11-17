@@ -19,7 +19,7 @@ import {
 } from "@/lib/external-metadata";
 import type { ExternalFieldMapping, ExternalProviderCatalog } from "@/types/api";
 
-import { EmptyConfigLine, IconButton } from "./settings-controls";
+import { EmptyConfigLine, IconButton, UnknownValueOption } from "./settings-controls";
 import { arrayEditor } from "./settings-model";
 
 export function ExternalFieldMappingsEditor({
@@ -71,6 +71,10 @@ export function ExternalFieldMappingsEditor({
                     {option.label}
                   </option>
                 ))}
+                <UnknownValueOption
+                  value={value.source}
+                  known={sourceOptions.map((option) => option.source)}
+                />
               </Select>
               <Select
                 value={value.field}
@@ -83,6 +87,10 @@ export function ExternalFieldMappingsEditor({
                     {option.label}
                   </option>
                 ))}
+                <UnknownValueOption
+                  value={value.field}
+                  known={fieldOptions.map((option) => option.field)}
+                />
               </Select>
               <IconButton
                 label={t`Remove external field mapping`}
@@ -114,15 +122,22 @@ export function ExternalTypesEditor({
 }) {
   const { t } = useLingui();
   const options = externalTypeOptionsForSource(providerCatalog, source);
+  const optionSet = new Set(options.map((option) => option.value));
+  const mergedOptions = [
+    ...options.map((option) => ({ value: option.value, label: option.label })),
+    ...values
+      .filter((value) => value && !optionSet.has(value))
+      .map((value) => ({ value, label: value })),
+  ];
   return (
     <div className="flex flex-col gap-2">
       <span className="text-xs font-medium text-muted-foreground">
         <Trans>External types</Trans>
       </span>
-      {options.length > 0 ? (
+      {mergedOptions.length > 0 ? (
         <MultiValueCombobox
           values={values}
-          options={options.map((option) => ({ value: option.value, label: option.label }))}
+          options={mergedOptions}
           placeholder={t`Select type`}
           ariaLabel={t`External types`}
           onChange={onChange}

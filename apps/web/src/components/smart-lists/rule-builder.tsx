@@ -7,6 +7,7 @@
 
 import { Trans } from "@lingui/react/macro";
 import { CopyPlusIcon, PlusIcon } from "lucide-react";
+import { useRef } from "react";
 
 import { defaultRuleFor } from "@/components/smart-lists/rule-editor-state";
 import type { RuleFieldMeta } from "@/components/smart-lists/rule-field-meta";
@@ -28,12 +29,21 @@ export function RuleBuilder({
 }) {
   const rules = value.rules ?? [];
   const groups = value.groups ?? [];
+  const keySeq = useRef(0);
+  const ruleKeys = useRef<number[]>([]);
+  const groupKeys = useRef<number[]>([]);
+  while (ruleKeys.current.length < rules.length) ruleKeys.current.push((keySeq.current += 1));
+  if (ruleKeys.current.length > rules.length) ruleKeys.current.length = rules.length;
+  while (groupKeys.current.length < groups.length) groupKeys.current.push((keySeq.current += 1));
+  if (groupKeys.current.length > groups.length) groupKeys.current.length = groups.length;
 
   const replaceRule = (index: number, rule: SmartFilterRule | null) => {
+    if (!rule) ruleKeys.current.splice(index, 1);
     const next = rules.flatMap((existing, i) => (i === index ? (rule ? [rule] : []) : [existing]));
     onChange({ ...value, rules: next });
   };
   const replaceGroup = (index: number, group: SmartFilterSubgroup | null) => {
+    if (!group) groupKeys.current.splice(index, 1);
     const next = groups.flatMap((existing, i) =>
       i === index ? (group ? [group] : []) : [existing],
     );
@@ -54,7 +64,7 @@ export function RuleBuilder({
       </div>
       {rules.map((rule, index) => (
         <RuleRow
-          key={index}
+          key={ruleKeys.current[index]}
           rule={rule}
           fieldMetas={fieldMetas}
           disabled={disabled}
@@ -63,7 +73,7 @@ export function RuleBuilder({
       ))}
       {groups.map((group, index) => (
         <SubgroupBox
-          key={index}
+          key={groupKeys.current[index]}
           group={group}
           fieldMetas={fieldMetas}
           disabled={disabled}

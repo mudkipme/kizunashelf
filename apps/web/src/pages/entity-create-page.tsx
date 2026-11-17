@@ -209,7 +209,10 @@ export function EntityCreatePage() {
                   <Select
                     aria-label={t`Type`}
                     value={typeId}
-                    onChange={(event) => setTypeId(event.target.value)}
+                    onChange={(event) => {
+                      setTypeId(event.target.value);
+                      setFrontmatter({});
+                    }}
                     disabled={
                       !contentWritable ||
                       creating ||

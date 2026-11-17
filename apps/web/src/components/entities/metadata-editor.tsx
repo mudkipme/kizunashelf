@@ -128,11 +128,12 @@ export function MetadataEditor({
 
   function renameField(oldKey: string, nextKey: string) {
     const key = nextKey.trim();
-    if (!key || key === oldKey || key in frontmatter) return;
+    if (!key || key === oldKey || key in frontmatter) return false;
     const next = { ...frontmatter };
     next[key] = next[oldKey];
     delete next[oldKey];
     onFrontmatterChange(next);
+    return true;
   }
 
   function addCustomField() {
@@ -215,7 +216,7 @@ function EditableFieldRow({
   onPickImage?: PickImage;
   onChange: (value: FrontmatterValue) => void;
   onRemove?: () => void;
-  onRename?: (key: string) => void;
+  onRename?: (key: string) => boolean;
 }) {
   const { t } = useLingui();
   const [keyDraft, setKeyDraft] = useState(field.key);
@@ -233,7 +234,9 @@ function EditableFieldRow({
           <Input
             value={keyDraft}
             onChange={(event) => setKeyDraft(event.target.value)}
-            onBlur={() => onRename(keyDraft)}
+            onBlur={() => {
+              if (!onRename(keyDraft)) setKeyDraft(field.key);
+            }}
             className="h-(--control-height-sm) min-w-0 font-mono text-code"
             aria-label={t`Custom field name`}
             disabled={disabled}

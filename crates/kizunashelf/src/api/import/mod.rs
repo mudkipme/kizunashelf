@@ -384,11 +384,11 @@ pub(crate) async fn commit_import_job(
         record
             .cancel
             .store(false, std::sync::atomic::Ordering::Relaxed);
+        record.job.finished_at = None;
         if let Err(error) = state.import_recovery().save(record).await {
             *record = previous;
             return Err(error);
         }
-        record.job.finished_at = None;
         (record.items.clone(), Arc::clone(&record.cancel))
     };
 
@@ -418,16 +418,23 @@ pub(crate) async fn cancel_import_job(
     AxumPath(path): AxumPath<ImportJobPath>,
 ) -> ApiResult<ImportJob> {
     use std::sync::atomic::Ordering;
+    state.import_recovery().check()?;
     let mut jobs = state.import_jobs().lock().await;
     let Some(record) = jobs.get_mut(&path.id) else {
         return Err(ApiError::not_found("Import job not found"));
     };
+    let previous = record.clone();
+    let previous_cancel = record.cancel.load(Ordering::Relaxed);
     record.cancel.store(true, Ordering::Relaxed);
     if !record.state().is_terminal() {
         record.set_state(ImportState::Cancelled);
         record.job.finished_at = Some(now_iso());
     }
-    state.import_recovery().save(record).await?;
+    if let Err(error) = state.import_recovery().save(record).await {
+        *record = previous;
+        record.cancel.store(previous_cancel, Ordering::Relaxed);
+        return Err(error);
+    }
     Ok(Json(record.job.clone()))
 }
 
@@ -437,6 +444,7 @@ pub(crate) async fn pause_import_job(
     State(state): State<AppState>,
     AxumPath(path): AxumPath<ImportJobPath>,
 ) -> ApiResult<ImportJob> {
+    use std::sync::atomic::Ordering;
     crate::api::state::require_host_asset_ingest(&state)?;
     state.import_recovery().check()?;
     let mut jobs = state.import_jobs().lock().await;
@@ -444,11 +452,15 @@ pub(crate) async fn pause_import_job(
         .get_mut(&path.id)
         .ok_or_else(|| ApiError::not_found("Import job not found"))?;
     if let Some(phase) = record.state().resumable_phase() {
-        record
-            .cancel
-            .store(true, std::sync::atomic::Ordering::Relaxed);
+        let previous = record.clone();
+        let previous_cancel = record.cancel.load(Ordering::Relaxed);
+        record.cancel.store(true, Ordering::Relaxed);
         record.set_state(ImportState::Paused(phase));
-        state.import_recovery().save(record).await?;
+        if let Err(error) = state.import_recovery().save(record).await {
+            *record = previous;
+            record.cancel.store(previous_cancel, Ordering::Relaxed);
+            return Err(error);
+        }
     }
     Ok(Json(record.job.clone()))
 }

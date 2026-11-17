@@ -127,7 +127,13 @@ export function ExternalMatchDialog({
         </DialogHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end">
+          <form
+            className="flex flex-col gap-2 md:flex-row md:items-end"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!searching && externalSearchEnabled) onSearch();
+            }}
+          >
             <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-medium">
               <Trans>Search</Trans>
               <Input value={query} onChange={(event) => onQueryChange(event.target.value)} />
@@ -149,16 +155,11 @@ export function ExternalMatchDialog({
                 </option>
               ))}
             </Select>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onSearch}
-              disabled={searching || !externalSearchEnabled}
-            >
+            <Button type="submit" variant="outline" disabled={searching || !externalSearchEnabled}>
               <SearchIcon data-icon="inline-start" />
               {searching ? t`Searching…` : t`Search`}
             </Button>
-          </div>
+          </form>
 
           <ExternalSearchErrors providers={providers} />
 

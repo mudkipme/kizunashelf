@@ -257,35 +257,10 @@ pub fn duplicate_entity_type(
         .map(|t| duplicate_type_path(&t.path))
         .collect::<Result<Vec<_>, _>>()?;
     let mut copy = source.clone();
-    copy.id = unique_key(&source.id, &ids, |base, n| format!("{base}-{n}"));
-    copy.label = unique_key(&source.label, &labels, |base, n| format!("{base} {n}"));
-    // Library reads are recursive: a copy must not overlap another type's
-    // folder, including nested folders and case/./ variations.
-    let paths: Vec<String> = paths.iter().map(|p| p.to_lowercase()).collect();
-    let mut n = 2;
-    loop {
-        let candidate = format!("{path} {n}");
-        let lower = candidate.to_lowercase();
-        if paths.iter().all(|taken| {
-            *taken != lower
-                && !lower.starts_with(&format!("{taken}/"))
-                && !taken.starts_with(&format!("{lower}/"))
-        }) {
-            copy.path = candidate;
-            break;
-        }
-        // An ancestor of the source also contains every suffixed sibling.
-        if paths
-            .iter()
-            .any(|taken| path.to_lowercase().starts_with(&format!("{taken}/")))
-        {
-            return Err("The source folder is inside another entity type's folder. Choose separate folders before duplicating.".to_string());
-        }
-        n += 1;
-    }
-    if let Some(id) = &request.new_id {
-        copy.id = id.trim().to_string();
-    }
+    copy.id = match &request.new_id {
+        Some(id) => id.trim().to_string(),
+        None => unique_key(&source.id, &ids, |base, n| format!("{base}-{n}")),
+    };
     if copy.id.is_empty() || copy.id.contains(['/', '\\']) {
         return Err("The new type ID must be non-empty and cannot contain a slash.".to_string());
     }
@@ -296,14 +271,40 @@ pub fn duplicate_entity_type(
     {
         return Err("An entity type with this ID already exists.".to_string());
     }
-    if let Some(label) = &request.new_label {
-        copy.label = label.trim().to_string();
-    }
+    copy.label = match &request.new_label {
+        Some(label) => label.trim().to_string(),
+        None => unique_key(&source.label, &labels, |base, n| format!("{base} {n}")),
+    };
     if copy.label.is_empty() {
         return Err("The new type must have a label.".to_string());
     }
-    if let Some(path) = &request.new_path {
-        copy.path = duplicate_type_path(path)?;
+    let paths: Vec<String> = paths.iter().map(|p| p.to_lowercase()).collect();
+    if let Some(new_path) = &request.new_path {
+        copy.path = duplicate_type_path(new_path)?;
+    } else {
+        // Library reads are recursive: a copy must not overlap another type's
+        // folder, including nested folders and case/./ variations.
+        let mut n = 2;
+        loop {
+            let candidate = format!("{path} {n}");
+            let lower = candidate.to_lowercase();
+            if paths.iter().all(|taken| {
+                *taken != lower
+                    && !lower.starts_with(&format!("{taken}/"))
+                    && !taken.starts_with(&format!("{lower}/"))
+            }) {
+                copy.path = candidate;
+                break;
+            }
+            // An ancestor of the source also contains every suffixed sibling.
+            if paths
+                .iter()
+                .any(|taken| path.to_lowercase().starts_with(&format!("{taken}/")))
+            {
+                return Err("The source folder is inside another entity type's folder. Choose separate folders before duplicating.".to_string());
+            }
+            n += 1;
+        }
     }
     let lower = copy.path.to_lowercase();
     if paths.iter().any(|taken| {

@@ -195,24 +195,14 @@ fn thetvdb_series_ref(ref_value: &str) -> Option<RecordLocator> {
     }
 }
 
-/// A bearer GET against the TheTVDB v4 API returning the parsed JSON.
-async fn thetvdb_get(client: &reqwest::Client, token: &str, url: &str) -> Result<Value, ApiError> {
-    send_limited(client.get(url).bearer_auth(token))
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)
-}
-
 /// One parsed episode row: `(season, number-key, title)`.
 type EpisodeRow = (i64, String, String, Option<String>);
 
 /// Paginates an `episodes/{season-type}[/{lang}]` endpoint into ordered rows.
 async fn thetvdb_episode_pages(
+    state: &AppState,
     client: &reqwest::Client,
+    login: &Map<String, Value>,
     token: &str,
     start_url: &str,
 ) -> Result<Vec<EpisodeRow>, ApiError> {
@@ -220,7 +210,7 @@ async fn thetvdb_episode_pages(
     let mut url = start_url.to_string();
     let mut pages = 0;
     loop {
-        let value = thetvdb_get(client, token, &url).await?;
+        let value = thetvdb_get_with_retry(state, client, login, token, &url).await?;
         if let Some(episodes) = value.pointer("/data/episodes").and_then(Value::as_array) {
             for episode in episodes {
                 let season = episode
@@ -272,23 +262,24 @@ async fn fetch_thetvdb_episodes(
     let series_id = match series_ref {
         RecordLocator::Id(id) => id,
         RecordLocator::Slug(slug) => {
-            let value = thetvdb_get(
+            let value = thetvdb_get_with_retry(
+                state,
                 client,
+                &login,
                 &token,
                 &format!("https://api4.thetvdb.com/v4/series/slug/{slug}"),
             )
             .await?;
             value
                 .pointer("/data/id")
-                .and_then(Value::as_i64)
-                .map(|id| id.to_string())
+                .and_then(non_empty_string_or_integer)
                 .ok_or_else(|| ApiError::bad_request("TheTVDB series not found"))?
         }
     };
 
     let base_url =
         format!("https://api4.thetvdb.com/v4/series/{series_id}/episodes/official?page=0");
-    let mut rows = thetvdb_episode_pages(client, &token, &base_url).await?;
+    let mut rows = thetvdb_episode_pages(state, client, &login, &token, &base_url).await?;
 
     // Overlay translated titles when a supported language is requested. Best-effort:
     // a failed/empty translation leaves the default-language titles in place.
@@ -296,7 +287,9 @@ async fn fetch_thetvdb_episodes(
         let translated_url = format!(
             "https://api4.thetvdb.com/v4/series/{series_id}/episodes/official/{language}?page=0"
         );
-        if let Ok(translated) = thetvdb_episode_pages(client, &token, &translated_url).await {
+        if let Ok(translated) =
+            thetvdb_episode_pages(state, client, &login, &token, &translated_url).await
+        {
             let by_key: HashMap<(i64, &str), &str> = translated
                 .iter()
                 .filter(|(_, _, title, _)| !title.is_empty())
@@ -795,11 +788,15 @@ fn thetvdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCan
     let url = item
         .get("url")
         .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
         .map(|value| {
             if value.starts_with("http") {
                 value.to_string()
-            } else {
+            } else if value.starts_with('/') {
                 format!("https://thetvdb.com{value}")
+            } else {
+                format!("https://thetvdb.com/{value}")
             }
         })
         .or_else(|| {

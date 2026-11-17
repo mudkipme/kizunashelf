@@ -11,7 +11,7 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -84,6 +84,10 @@ export function SmartListPage() {
   // preview endpoint so results track the rules live, before anything is saved.
   const [draft, setDraft] = useState<Draft | null>(null);
   const [draftRevision, setDraftRevision] = useState<string | null>(null);
+  useEffect(() => {
+    setDraft(null);
+    setDraftRevision(null);
+  }, [id]);
   const editing = draft !== null;
   const externalChange = Boolean(editing && data && draftRevision !== data.revision);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -308,8 +312,15 @@ export function SmartListPage() {
                       size="sm"
                       variant={view.name === activeView?.name ? "secondary" : "ghost"}
                       onClick={() => {
-                        setParam("page", undefined);
-                        setParam("view", view.name);
+                        setSearchParams(
+                          (params) => {
+                            const next = new URLSearchParams(params);
+                            next.delete("page");
+                            next.set("view", view.name);
+                            return next;
+                          },
+                          { replace: true },
+                        );
                       }}
                     >
                       {view.layout === "grid" ? (

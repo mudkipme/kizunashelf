@@ -160,7 +160,7 @@ async fn search_bgg(
     ids.dedup();
     let page_ids: Vec<String> = ids
         .into_iter()
-        .skip((page - 1) * page_size)
+        .skip(page.saturating_sub(1).saturating_mul(page_size))
         .take(page_size)
         .collect();
     if page_ids.is_empty() {

@@ -20,7 +20,12 @@ import { CONTENT_MEASURE } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
 import { useTitleLanguage } from "@/lib/language";
 import { relationKey } from "@/lib/relations";
-import { entityTitle, entityTitleParts, titleLanguageLabel } from "@/lib/title-language";
+import {
+  entityTitle,
+  entityTitleParts,
+  iso639TitleLanguage,
+  titleLanguageLabel,
+} from "@/lib/title-language";
 import {
   entityFieldLabel,
   fieldLabelForKey,
@@ -180,7 +185,12 @@ export function EntityDetail({
                           <dt className="shrink-0 text-muted-foreground">{item.label}</dt>
                           {/* Wrap the full alternate title on mobile; truncate to
                               one line only once there's room beside the cover. */}
-                          <dd className="min-w-0 break-words sm:truncate">{item.title}</dd>
+                          <dd
+                            className="min-w-0 break-words sm:truncate"
+                            lang={iso639TitleLanguage(item.key)}
+                          >
+                            {item.title}
+                          </dd>
                         </div>
                       ))}
                     </dl>

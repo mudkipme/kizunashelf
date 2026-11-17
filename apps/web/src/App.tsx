@@ -140,12 +140,13 @@ function ConfigGate() {
   // Initial failures route to setup. Once opened, keep the mounted screens and
   // drafts through background failures; their reads/writes surface the problem.
   // A vault switch resets this gate through the session key above.
+  if (settings.isPending) {
+    return <AppShellFallback />;
+  }
   if (isDesktopRuntime()) {
     if (!settings.data) {
       return pathname === "/onboarding" ? <AppRoutes /> : <Navigate to="/onboarding" replace />;
     }
-  } else if (settings.isPending) {
-    return <AppShellFallback />;
   } else if (settings.error && !settings.data) {
     // On the web a settings error is a real server error → settings page.
     return pathname === "/settings" ? <AppRoutes /> : <Navigate to="/settings" replace />;

@@ -4,7 +4,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { entitiesQuery } from "@/api/queries";
 import { EntityCover } from "@/components/assets/entity-cover";
@@ -40,6 +40,10 @@ export function AddItemsDialog({
   const [query, setQuery] = useState("");
   const [pendingId, setPendingId] = useState<string>();
   const debouncedQuery = useDebouncedValue(query.trim(), 250);
+
+  useEffect(() => {
+    if (!open) setQuery("");
+  }, [open]);
   const search = useQuery({
     ...entitiesQuery({ q: debouncedQuery || undefined, pageSize: 20, titleLanguage: language }),
     enabled: open,

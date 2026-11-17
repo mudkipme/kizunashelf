@@ -19,6 +19,7 @@ use anyhow::Result;
 use chrono::Datelike;
 use mentions::{clean_mention_snippet, mention_blocks, MarkdownMentionBlock};
 use std::collections::{HashMap, HashSet};
+use unicode_normalization::UnicodeNormalization;
 
 /// Maximum character length of the cleaned context preview shown for a
 /// daily-note mention before it is truncated with an ellipsis.
@@ -916,7 +917,7 @@ fn metadata_date_entries(
     let mut seen = Vec::<String>::new();
     let mut entries = Vec::new();
     for item in &entity.dates {
-        if !fields.is_empty() && !fields.contains(&item.field) {
+        if !fields.contains(&item.field) {
             continue;
         }
         let key = format!("{}\0{}", item.field, item.value);
@@ -1145,8 +1146,7 @@ fn daily_note_entries_from_files(
         let Some(file_date) = file.date.as_ref() else {
             continue;
         };
-        let raw = file.contents.clone();
-        for block in mention_blocks(&strip_frontmatter(&raw)) {
+        for block in mention_blocks(&strip_frontmatter(&file.contents)) {
             for captures in wikilink_regex().captures_iter(&block.text) {
                 let Some(target) = captures.get(1) else {
                     continue;
@@ -1195,6 +1195,9 @@ fn daily_note_entries_from_files(
 }
 
 fn calendar_days(year: i32, month: u32, items: &[ActivityItem]) -> Vec<CalendarDay> {
+    if !(1..=12).contains(&month) {
+        return Vec::new();
+    }
     let count = chrono::NaiveDate::from_ymd_opt(year, month + 1, 1)
         .and_then(|date| date.pred_opt())
         .or_else(|| {
@@ -1277,11 +1280,12 @@ fn find_entity_for_wikilink(
         None
     };
     if let Some(type_path) = type_path {
+        let type_path_nfc: String = type_path.nfc().collect();
         if let Some(entity_type) = library
             .config
             .types
             .iter()
-            .find(|item| item.path == *type_path)
+            .find(|item| item.path.nfc().collect::<String>() == type_path_nfc)
         {
             if let Some(typed) = candidates
                 .iter()

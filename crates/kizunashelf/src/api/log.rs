@@ -59,11 +59,9 @@ pub(crate) async fn log_activity(
 
     let type_config = library.config.type_config(&entity_type);
     let stamp_field = stamp_target_field(type_config, kind).map(str::to_string);
-    // A `started`/`completed` log also promotes the entity's status (schema-gated,
-    // monotonic). Only `add` flips — `remove` has no safe inverse and leaves status
-    // alone. Computed from the resident status; the entity write is revision-guarded,
-    // so the fresh frontmatter matches what we planned against.
-    let status_flip = if op == LogOp::Add {
+    // Dry-run previews against resident status; actual writes re-plan against
+    // freshly read frontmatter under the mutation lock.
+    let mut status_flip = if op == LogOp::Add {
         plan_status_flip(type_config, record.summary.status.as_ref(), kind)
     } else {
         None
@@ -172,52 +170,63 @@ pub(crate) async fn log_activity(
             &source_rel,
             revision,
             |document| {
+                let fresh_flip = if op == LogOp::Add {
+                    let current = type_config.and_then(|config| {
+                        crate::status::resolve_status(config, &document.frontmatter)
+                    });
+                    plan_status_flip(type_config, current.as_ref(), kind)
+                } else {
+                    None
+                };
                 stamp_entity_date(
                     document,
                     stamp_field.as_deref(),
                     &date,
                     op,
-                    status_flip.as_ref(),
+                    fresh_flip.as_ref(),
                 );
-                Ok(())
+                Ok(fresh_flip)
             },
         )
         .await;
-        if let Err(error) = stamped {
-            if line_applied {
-                if let (Some(line), Some(heading)) = (&line, &log_section) {
-                    let undone = match op {
-                        LogOp::Add => remove_log_line(
-                            &library.config,
-                            vfs.as_ref(),
-                            &date,
-                            heading,
-                            line,
-                            false,
-                        )
-                        .await
-                        .map(drop),
-                        LogOp::Remove => write_log_line(
-                            &library.config,
-                            vfs.as_ref(),
-                            &date,
-                            heading,
-                            line,
-                            false,
-                        )
-                        .await
-                        .map(drop),
-                    };
-                    state.invalidate_cache().await;
-                    if undone.is_err() {
-                        return Err(anyhow::anyhow!(
-                            "The date stamp failed and the daily-note line couldn't be undone — the log is partially applied; re-check the entity and the daily note."
-                        )
-                        .into());
+        match stamped {
+            Ok((fresh_flip, _)) => status_flip = fresh_flip,
+            Err(error) => {
+                if line_applied {
+                    if let (Some(line), Some(heading)) = (&line, &log_section) {
+                        let undone = match op {
+                            LogOp::Add => remove_log_line(
+                                &library.config,
+                                vfs.as_ref(),
+                                &date,
+                                heading,
+                                line,
+                                false,
+                            )
+                            .await
+                            .map(drop),
+                            LogOp::Remove => write_log_line(
+                                &library.config,
+                                vfs.as_ref(),
+                                &date,
+                                heading,
+                                line,
+                                false,
+                            )
+                            .await
+                            .map(drop),
+                        };
+                        state.invalidate_cache().await;
+                        if undone.is_err() {
+                            return Err(anyhow::anyhow!(
+                                "The date stamp failed and the daily-note line couldn't be undone — the log is partially applied; re-check the entity and the daily note."
+                            )
+                            .into());
+                        }
                     }
                 }
+                return Err(error);
             }
-            return Err(error);
         }
 
         state.invalidate_cache().await;

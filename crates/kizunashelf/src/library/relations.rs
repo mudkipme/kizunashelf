@@ -7,6 +7,7 @@ use crate::vfs::Vfs;
 use anyhow::Result;
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use unicode_normalization::UnicodeNormalization;
 
 use super::frontmatter::{strip_wikilink, wikilink_regex};
 use super::index_cache::{fingerprint_hit, CachedDailyNote};
@@ -66,7 +67,7 @@ pub(super) fn build_relations(
     // Resolve each daily note's wikilinks against the current entity set.
     for (source_id, links) in daily_note_links {
         for target_title in links {
-            let Some(target) = find_target_for_wikilink(target_title, &by_basename) else {
+            let Some(target) = find_target(target_title, None, &by_basename) else {
                 continue;
             };
             relations.push(Relation {
@@ -284,14 +285,6 @@ pub fn normalized_entity_basename_index(
     by_basename
 }
 
-fn find_target_for_wikilink<'a>(
-    target_title: &str,
-    by_basename: &HashMap<String, Vec<&'a EntityRecord>>,
-) -> Option<&'a EntityRecord> {
-    let candidates = by_basename.get(&normalize_wikilink_target(target_title))?;
-    candidates.first().copied()
-}
-
 fn relation_values(value: Option<&Value>) -> Vec<String> {
     match value {
         Some(Value::Array(values)) => values
@@ -346,12 +339,13 @@ pub fn find_target<'a>(
         None
     };
     if let Some(type_path) = type_path {
+        let type_path_nfc: String = type_path.nfc().collect();
         if let Some(candidate) = candidates.iter().find(|candidate| {
             candidate
                 .summary
                 .path
                 .split('/')
-                .any(|part| part == *type_path)
+                .any(|part| part.nfc().collect::<String>() == type_path_nfc)
         }) {
             return Some(*candidate);
         }

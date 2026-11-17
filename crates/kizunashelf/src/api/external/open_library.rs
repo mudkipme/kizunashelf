@@ -90,7 +90,7 @@ async fn search_open_library(
     if let Some(olid) = open_library_olid(q) {
         return resolve_open_library(client, &olid).await;
     }
-    let offset = (page - 1) * page_size;
+    let offset = page.saturating_sub(1).saturating_mul(page_size);
     let response = send_limited(client
         .get("https://openlibrary.org/search.json")
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -332,7 +332,7 @@ fn open_library_search_doc(doc: &Value) -> Option<ExternalCandidate> {
         .get("cover_edition_key")
         .and_then(Value::as_str)
         .map(str::to_string);
-    let olid = edition_key.clone().or_else(|| cover_edition.clone());
+    let olid = edition_key.or(cover_edition);
     let (source_id, url, cover_url) = match &olid {
         Some(olid) => (
             olid.clone(),

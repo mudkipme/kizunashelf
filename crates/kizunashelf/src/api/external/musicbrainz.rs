@@ -218,7 +218,7 @@ async fn search_musicbrainz(
         }
         return resolve_musicbrainz(client, entity, &mbid).await;
     }
-    let offset = (page - 1) * page_size;
+    let offset = page.saturating_sub(1).saturating_mul(page_size);
     let mut items = Vec::new();
     for entity in entities {
         let plural = format!("{entity}s");
@@ -475,7 +475,7 @@ fn artist_alias_titles(item: &Value) -> BTreeMap<String, String> {
         let Some(locale) = alias
             .get("locale")
             .and_then(Value::as_str)
-            .map(str::trim)
+            .map(crate::languages::primary_language)
             .filter(|value| !value.is_empty())
         else {
             continue;

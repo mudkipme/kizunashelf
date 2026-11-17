@@ -233,8 +233,10 @@ fn note_sort_value(field: &str, record: &EntityRecord, ctx: &EvalContext) -> Opt
 }
 
 fn compare_title(a: &EntityRecord, b: &EntityRecord, language: Option<&str>) -> Ordering {
+    let title_language = language.map(crate::languages::primary_language);
     let title = |record: &EntityRecord| -> String {
-        language
+        title_language
+            .as_deref()
             .and_then(|language| record.summary.titles.get(language))
             .unwrap_or(&record.summary.title)
             .clone()

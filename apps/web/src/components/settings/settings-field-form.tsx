@@ -22,7 +22,7 @@ import type {
   SeasonLanguage,
 } from "@/types/api";
 
-import { Field, StringListEditor, TextField } from "./settings-controls";
+import { Field, StringListEditor, TextField, UnknownValueOption } from "./settings-controls";
 import { ExternalFieldMappingsEditor, ExternalTypesEditor } from "./settings-external-mappings";
 import {
   fieldOptionKeys,
@@ -68,6 +68,7 @@ export function FieldForm({
               {fieldTypeLabel(option)}
             </option>
           ))}
+          <UnknownValueOption value={field.fieldType} known={fieldTypeOptions} />
         </Select>
       </Field>
       <TextField
@@ -213,6 +214,10 @@ function FieldOptionEditor({
           <option value="started">{t`Started`}</option>
           <option value="completed">{t`Completed`}</option>
           <option value="event">{t`Event`}</option>
+          <UnknownValueOption
+            value={field.dateRole ?? ""}
+            known={["planning", "started", "completed", "event"]}
+          />
         </Select>
       </Field>
     );
@@ -235,12 +240,14 @@ function FieldOptionEditor({
           <option value="zh">{t`Chinese`}</option>
           <option value="ja">{t`Japanese`}</option>
           <option value="en">{t`English`}</option>
+          <UnknownValueOption value={field.seasonLanguage ?? "zh"} known={["zh", "ja", "en"]} />
         </Select>
       </Field>
     );
   }
 
   if (optionKey === "externalRef") {
+    const sourceOptions = externalSourceOptions(providerCatalog);
     return (
       <>
         <Field label={t`Provider`}>
@@ -256,11 +263,15 @@ function FieldOptionEditor({
             className="w-full"
           >
             <option value="">{t`None`}</option>
-            {externalSourceOptions(providerCatalog).map((option) => (
+            {sourceOptions.map((option) => (
               <option key={option.source} value={option.source}>
                 {option.label}
               </option>
             ))}
+            <UnknownValueOption
+              value={field.externalRef ?? ""}
+              known={sourceOptions.map((option) => option.source)}
+            />
           </Select>
         </Field>
         <div className="lg:col-span-2">
@@ -355,6 +366,7 @@ function StatusRoleEditor({
         >
           <option value="">{t`Regular enum`}</option>
           <option value="status">{t`Status field`}</option>
+          <UnknownValueOption value={field.enumRole ?? ""} known={["status"]} />
         </Select>
       </Field>
       {isStatus ? (
@@ -367,6 +379,7 @@ function StatusRoleEditor({
               <div key={option} className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm">{option}</span>
                 <Select
+                  aria-label={option}
                   value={canonicalOf.get(option) ?? ""}
                   onChange={(event) =>
                     setOptionCanonical(

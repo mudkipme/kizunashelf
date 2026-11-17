@@ -3,7 +3,7 @@ import { msg } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRightIcon, SearchIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -75,20 +75,29 @@ export function ReviewPage() {
     setQueryInput(query);
   }, [query]);
 
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
+
   const { schedule: scheduleQueryUpdate, cancel: cancelQueryUpdate } = useDebouncedCallback(
-    (value: string) => setFilter("q", value, allEntityFilter, true),
+    (value: string) => {
+      const next = new URLSearchParams(searchParamsRef.current);
+      if (!value) next.delete("q");
+      else next.set("q", value);
+      setSearchParams(next, { replace: true });
+    },
     180,
   );
 
   // Debounce the search box into the URL without giving the URL its own timer.
   useEffect(() => {
-    if (queryInput === query) {
+    const trimmed = queryInput.trim();
+    if (trimmed === query) {
       cancelQueryUpdate();
       return;
     }
-    scheduleQueryUpdate(queryInput.trim());
+    scheduleQueryUpdate(trimmed);
     return cancelQueryUpdate;
-  }, [queryInput, query, searchParams, scheduleQueryUpdate, cancelQueryUpdate]);
+  }, [queryInput, query, scheduleQueryUpdate, cancelQueryUpdate]);
 
   function setFilter(key: string, value: string, defaultValue = allEntityFilter, replace = false) {
     const next = new URLSearchParams(searchParams);
@@ -167,11 +176,13 @@ export function ReviewPage() {
                     value={queryInput}
                     onChange={(event) => setQueryInput(event.target.value)}
                     placeholder={t`Search queue`}
+                    aria-label={t`Search queue`}
                   />
                 </div>
                 <Select
                   value={selectedType}
                   onChange={(event) => setFilter("type", event.target.value)}
+                  aria-label={t`Type`}
                 >
                   <option value={allEntityFilter}>{t`All types`}</option>
                   {typeOptions.map((option) => (
@@ -183,6 +194,7 @@ export function ReviewPage() {
                 <Select
                   value={selectedDate}
                   onChange={(event) => setFilter("date", event.target.value)}
+                  aria-label={t`Date`}
                 >
                   <option value={allEntityFilter}>{t`All dates`}</option>
                   <option value="dated">{t`Has date`}</option>

@@ -354,10 +354,13 @@ async fn read_entities_for_type(
     // One batched read for the changed/new files only, rather than a read (and a
     // stat) per file — the per-call FFI + file-coordination overhead on iOS makes
     // per-file round trips the dominant load cost.
-    let files = vfs
-        .read_files(&miss_paths)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to read entities in {relative_dir}: {error}"))?;
+    let files = if miss_paths.is_empty() {
+        Vec::new()
+    } else {
+        vfs.read_files(&miss_paths).await.map_err(|error| {
+            anyhow::anyhow!("failed to read entities in {relative_dir}: {error}")
+        })?
+    };
 
     let mut skipped: Vec<LibraryDiagnostic> = Vec::new();
     for (relative_path, bytes) in files {

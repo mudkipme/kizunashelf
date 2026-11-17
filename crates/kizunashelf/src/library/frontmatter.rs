@@ -298,18 +298,16 @@ pub(super) fn strip_wikilink(value: &str) -> String {
 }
 
 pub(super) fn extract_summary(body: &str) -> Option<String> {
+    let stripped_body = crate::markdown::strip_fenced_code(body);
     let source = summary_heading_regex()
-        .find(body)
-        .map(|mat| &body[mat.end()..])
-        .unwrap_or(body);
-    let source = source
+        .find(&stripped_body)
+        .map(|mat| &stripped_body[mat.end()..])
+        .unwrap_or(&stripped_body);
+    let stripped = source
         .split_once("\n## ")
         .map(|(head, _)| head)
         .unwrap_or(source);
-    let stripped = crate::markdown::strip_fenced_code(source);
-    let mut cleaned = image_markdown_regex()
-        .replace_all(&stripped, "")
-        .to_string();
+    let mut cleaned = image_markdown_regex().replace_all(stripped, "").to_string();
     cleaned = markdown_link_regex().replace_all(&cleaned, "").to_string();
     cleaned = wikilink_regex().replace_all(&cleaned, "$1").to_string();
     let cleaned = cleaned

@@ -78,6 +78,7 @@ export function HeaderSearch({
   // Tracks the currently highlighted item so a bare Enter (nothing highlighted)
   // can fall through to the full-search submit instead of selecting a row.
   const highlighted = useRef<Suggestion | null>(null);
+  if (!hasInput) highlighted.current = null;
 
   const suggestions = useQuery({
     ...entitiesQuery({
@@ -122,7 +123,7 @@ export function HeaderSearch({
     if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
     // A highlighted row is handled by base-ui (fires onValueChange); only the
     // "nothing highlighted" case falls through to the full search.
-    if (highlighted.current) return;
+    if (hasInput && highlighted.current) return;
     event.preventDefault();
     onSubmit();
   }

@@ -12,6 +12,7 @@ use crate::types::{
 use crate::vfs::Vfs;
 use anyhow::{Context, Result};
 use std::hash::{Hash, Hasher};
+use unicode_normalization::UnicodeNormalization;
 
 /// Loads a single full [`Entity`] (including `body`/`raw`) from disk for the
 /// given resident summary. This is the on-demand counterpart to the slim
@@ -74,7 +75,7 @@ pub(super) fn parse_entity(
     let revision = file_revision(&raw);
     let parsed = parse_markdown(&raw);
     let entry = relative_path.rsplit('/').next().unwrap_or(&relative_path);
-    let note_basename = entry.strip_suffix(".md").unwrap_or(entry).to_string();
+    let note_basename: String = entry.strip_suffix(".md").unwrap_or(entry).nfc().collect();
     let titles = title_languages(&parsed.frontmatter, &note_basename, type_config);
     let title = resolve_title(&parsed.frontmatter, &titles, &note_basename, type_config);
     let entity_key = entity_key(&parsed.frontmatter, &note_basename, type_config);

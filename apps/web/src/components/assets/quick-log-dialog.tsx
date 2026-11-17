@@ -74,11 +74,14 @@ export function QuickLogDialog({
   // A background refresh must not silently authorize writing over a newer entity.
   useEffect(() => {
     if (!open) {
+      setDate(todayLocal());
+      setKind(initialKind);
+      setNote("");
       setDraftRevision(revision);
       setConflict(false);
       setSaveError(undefined);
     }
-  }, [open, revision]);
+  }, [initialKind, open, revision]);
 
   async function reloadLatest() {
     if (recovering) return;

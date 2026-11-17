@@ -84,7 +84,11 @@ impl Vfs for NativeVfs {
             None => "tmp".to_string(),
         });
         fs::write(&tmp, data).await.map_err(map_io)?;
-        fs::rename(&tmp, &path).await.map_err(map_io)
+        if let Err(error) = fs::rename(&tmp, &path).await {
+            let _ = fs::remove_file(&tmp).await;
+            return Err(map_io(error));
+        }
+        Ok(())
     }
 
     async fn create_dir_all(&self, path: &str) -> VfsResult<()> {

@@ -93,11 +93,14 @@ export function EntityEditPage() {
 
   const snapshot = seededSnapshotRef.current;
   const dirty = Boolean(
-    snapshot && (JSON.stringify(frontmatter) !== snapshot.frontmatter || body !== snapshot.body),
+    snapshot &&
+    (JSON.stringify(frontmatter) !== snapshot.frontmatter ||
+      body !== snapshot.body ||
+      (baselineRef.current && draftBasenameRef.current !== baselineRef.current.basename)),
   );
 
   // Tab close/reload uses the native prompt; routes and history use the dialog.
-  useUnsavedChangesWarning(dirty);
+  useUnsavedChangesWarning(dirty && !savedRef.current);
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       dirty &&
@@ -115,7 +118,7 @@ export function EntityEditPage() {
       seedDraft(entity);
       return;
     }
-    if (seededRevisionRef.current === entity.revision) return;
+    if (savedRef.current || seededRevisionRef.current === entity.revision) return;
     // Clean forms adopt an external edit immediately. Dirty forms keep their
     // draft and surface the existing reload/conflict recovery instead.
     if (dirty) setConflict(true);
@@ -176,12 +179,13 @@ export function EntityEditPage() {
         frontmatterDraft: frontmatter,
         body,
       });
-      await invalidateEntityData();
       savedRef.current = true;
+      await invalidateEntityData();
       const pending = blockerRef.current;
       if (pending.state === "blocked") pending.proceed();
       else navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
+      savedRef.current = false;
       setSaveError(error);
       if (isConflictError(error)) setConflict(true);
     } finally {

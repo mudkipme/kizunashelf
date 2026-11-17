@@ -10,12 +10,10 @@ import { Button } from "@/components/ui/button";
 export function SectionHeader({
   title,
   count,
-  subtitle,
   viewHref,
 }: {
   title: string;
   count?: number;
-  subtitle?: string;
   viewHref?: string;
 }) {
   const { t } = useLingui();
@@ -24,9 +22,6 @@ export function SectionHeader({
       <h2 className="truncate text-base font-semibold tracking-tight">{title}</h2>
       {count != null ? (
         <span className="shrink-0 text-sm text-muted-foreground tabular-nums">{count}</span>
-      ) : null}
-      {subtitle ? (
-        <span className="truncate text-xs text-muted-foreground">· {subtitle}</span>
       ) : null}
       {viewHref ? (
         <Button

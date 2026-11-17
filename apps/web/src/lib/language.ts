@@ -24,12 +24,15 @@ function isTraditionalChineseTag(tag: string): boolean {
 
 /**
  * The Simplified/Traditional preference a bare `zh` maps to, sniffed from the
- * browser languages. Used for the first-run default and the v1 migration —
- * a stored `zh` is ambiguous between scripts.
+ * browser languages (used for the first-run default).
  */
 function preferredChineseScript(): UiLocale {
-  const tags = (typeof navigator !== "undefined" && navigator.languages) || [];
+  const tags =
+    (typeof navigator !== "undefined" &&
+      (navigator.languages?.length ? navigator.languages : [navigator.language])) ||
+    [];
   for (const tag of tags) {
+    if (!tag) continue;
     if (primaryLanguage(tag) === "zh") {
       return isTraditionalChineseTag(tag) ? "zh-Hant" : "zh-Hans";
     }

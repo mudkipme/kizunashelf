@@ -172,20 +172,6 @@ input {
   letter-spacing: 0;
 }
 
-.line-clamp-2 {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
 /* Native chrome is not a document.
  *
  * These four rules remove the tells that give a desktop window away as a web

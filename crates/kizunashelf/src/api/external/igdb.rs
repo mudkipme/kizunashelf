@@ -90,7 +90,7 @@ async fn search_igdb(
     };
     let client = external_client();
     let token = igdb_access_token(state, client, &client_id, &client_secret, false).await?;
-    let offset = (page - 1) * page_size;
+    let offset = page.saturating_sub(1).saturating_mul(page_size);
     let body = igdb_query_body(q, page_size, offset);
     let response = send_with_token_retry(
         state,
@@ -202,7 +202,7 @@ player_perspectives.name,game_engines.name,franchises.name,collection.name,\
 game_localizations.name,game_localizations.region.identifier,\
 involved_companies.developer,involved_companies.publisher,involved_companies.company.name;";
     let trimmed = q.trim();
-    if trimmed.chars().all(|character| character.is_ascii_digit()) {
+    if !trimmed.is_empty() && trimmed.chars().all(|character| character.is_ascii_digit()) {
         return format!("{fields} where id = {trimmed}; limit {page_size}; offset {offset};");
     }
     if trimmed.starts_with("http://") || trimmed.starts_with("https://") {

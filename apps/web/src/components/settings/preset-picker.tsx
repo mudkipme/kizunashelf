@@ -24,6 +24,7 @@ import { useLanguagePreference } from "@/lib/language";
 import type {
   EntityTypeConfig,
   TypePresetBackfill,
+  TypePresetCollision,
   TypePresetSummary,
   UserLanguage,
 } from "@/types/api";
@@ -225,7 +226,7 @@ export function PresetPickerDialog({
 type ResolvedPlan = {
   types: EntityTypeConfig[];
   backfills: TypePresetBackfill[];
-  collisions: { assignedId: string }[];
+  collisions: TypePresetCollision[];
 };
 
 /**

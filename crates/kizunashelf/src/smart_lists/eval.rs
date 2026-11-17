@@ -12,6 +12,7 @@ use crate::library::find_target;
 use crate::types::{EntityRecord, FieldType, Library};
 use chrono::{DateTime, Months, NaiveDate, Utc};
 use std::collections::HashMap;
+use unicode_normalization::UnicodeNormalization;
 
 // ---------------------------------------------------------------------------
 // Evaluation
@@ -113,8 +114,14 @@ pub fn record_matches(node: &FilterNode, record: &EntityRecord, ctx: &EvalContex
 fn eval_atom(kind: &AtomKind, record: &EntityRecord, ctx: &EvalContext) -> bool {
     match kind {
         AtomKind::InFolder { folder } => {
-            let folder = folder.trim_matches('/');
-            folder.is_empty() || record.summary.path.starts_with(&format!("{folder}/"))
+            let folder: String = folder.trim_matches('/').nfc().collect();
+            folder.is_empty()
+                || record
+                    .summary
+                    .path
+                    .nfc()
+                    .collect::<String>()
+                    .starts_with(&format!("{folder}/"))
         }
         AtomKind::HasTag { tags } => tags.iter().any(|wanted| {
             record
@@ -136,12 +143,16 @@ fn eval_atom(kind: &AtomKind, record: &EntityRecord, ctx: &EvalContext) -> bool 
                 ContainsMode::All => values.iter().all(matches),
             }
         }
-        AtomKind::StartsWith { field, value } => {
-            field_string(field, record).is_some_and(|s| s.starts_with(value.as_str()))
-        }
-        AtomKind::EndsWith { field, value } => {
-            field_string(field, record).is_some_and(|s| s.ends_with(value.as_str()))
-        }
+        AtomKind::StartsWith { field, value } => field_string(field, record).is_some_and(|s| {
+            s.nfc()
+                .collect::<String>()
+                .starts_with(&value.nfc().collect::<String>())
+        }),
+        AtomKind::EndsWith { field, value } => field_string(field, record).is_some_and(|s| {
+            s.nfc()
+                .collect::<String>()
+                .ends_with(&value.nfc().collect::<String>())
+        }),
         AtomKind::IsEmpty { field } => match field {
             FieldRef::FileName => record.summary.basename.is_empty(),
             FieldRef::FileMtime => record.file_modified_unix_nanos == 0,
@@ -175,7 +186,8 @@ fn eval_has_link(
             relation.direction == crate::types::RelationDirection::Out
                 && field.is_none_or(|field| relation.field == field)
                 && ((resolved_id.is_some() && relation.target_id == resolved_id)
-                    || normalize_wikilink_target(&relation.target_title) == wanted)
+                    || (!target.contains('/')
+                        && normalize_wikilink_target(&relation.target_title) == wanted))
         })
 }
 

@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ImageIcon } from "lucide-react";
 
 import { configQuery } from "@/api/queries";
-import { typeIconsById } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 
 /**
@@ -24,7 +23,7 @@ export function CoverFallback({
   className?: string;
 }) {
   const config = useQuery(configQuery());
-  const icon = type ? typeIconsById(config.data?.types).get(type) : undefined;
+  const icon = type ? config.data?.types.find((item) => item.id === type)?.icon : undefined;
 
   return (
     <span

@@ -262,8 +262,6 @@ pub(crate) async fn set_smart_list_home(
     let mut doc = parse_list_raw(&path, &raw)?.doc;
     smart_lists::set_home_visibility(&mut doc, request.show_on_home)
         .map_err(|error| ApiError::bad_request(&error))?;
-    let latest = SMART_LIST.read_raw(vfs.as_ref(), &path).await?;
-    check_revision(&request.revision, &file_revision(&latest))?;
     let raw = render_smart_list(&doc);
     write_entity_raw(&mutation, vfs.as_ref(), &path, &raw).await?;
     let list = parse_list_raw(&path, &raw)?;

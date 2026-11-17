@@ -17,7 +17,7 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -608,6 +608,7 @@ function ManageListsDialog({
   // Membership-annotated list of every list (each carries `contains`).
   const lists = useQuery({ ...entityListsQuery(entityId), enabled: open });
   const [pendingId, setPendingId] = useState<string>();
+  const newNameInputId = useId();
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -702,11 +703,12 @@ function ManageListsDialog({
           }}
           className="flex flex-col gap-2 border-t pt-3"
         >
-          <label className="text-sm font-medium">
+          <label htmlFor={newNameInputId} className="text-sm font-medium">
             <Trans>New list</Trans>
           </label>
           <div className="flex gap-2">
             <Input
+              id={newNameInputId}
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
               placeholder={t`Watchlist`}

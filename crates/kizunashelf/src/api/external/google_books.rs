@@ -139,7 +139,7 @@ async fn search_google_books(
         .map_err(provider_error)?;
         return Ok(google_books_candidate(&value).into_iter().collect());
     }
-    let start_index = (page - 1) * page_size;
+    let start_index = page.saturating_sub(1).saturating_mul(page_size);
     let response = send_limited(
         client
             .get("https://www.googleapis.com/books/v1/volumes")

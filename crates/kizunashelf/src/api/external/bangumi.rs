@@ -285,7 +285,7 @@ async fn search_bangumi(
         }
     }
 
-    let offset = (page - 1) * page_size;
+    let offset = page.saturating_sub(1).saturating_mul(page_size);
     let mut items = Vec::new();
     if let Some(filter_types) = &subject_types {
         let response = send_limited(
@@ -384,7 +384,7 @@ async fn bangumi_get(client: &reqwest::Client, url: &str) -> Result<Value, ApiEr
 
 fn bangumi_subject_id(q: &str) -> Option<String> {
     let trimmed = q.trim().trim_end_matches('/');
-    if trimmed.chars().all(|character| character.is_ascii_digit()) {
+    if !trimmed.is_empty() && trimmed.chars().all(|character| character.is_ascii_digit()) {
         return Some(trimmed.to_string());
     }
     let marker = "/subject/";

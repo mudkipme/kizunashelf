@@ -122,6 +122,11 @@ export function ListDetailPage() {
     setExternalChange(false);
   }, []);
   useEffect(() => {
+    loadedRevision.current = null;
+    loadedSnapshot.current = null;
+    setExternalChange(false);
+  }, [id]);
+  useEffect(() => {
     if (!data || loadedRevision.current === data.revision) return;
     if (loadedRevision.current !== null && dirty) {
       setExternalChange(true);
@@ -202,7 +207,10 @@ export function ListDetailPage() {
   async function addEntity(entityId: string) {
     cancelAutoSave();
     try {
-      if (dirty) await saveList(id, listPayload());
+      if (dirty) {
+        const saved = await saveList(id, listPayload());
+        seedFromServer(saved);
+      }
       await addItemToList(id, { entityId });
       await invalidateLists(id);
     } catch (actionError) {

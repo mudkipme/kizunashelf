@@ -74,7 +74,7 @@ pub(super) fn mention_blocks(markdown: &str) -> Vec<MarkdownMentionBlock> {
             flush_paragraph(&mut blocks, &mut paragraph, heading.clone());
             continue;
         }
-        if list_or_quote_regex().is_match(trimmed) || trimmed.contains('|') {
+        if list_or_quote_regex().is_match(trimmed) || trimmed.starts_with('|') {
             flush_paragraph(&mut blocks, &mut paragraph, heading.clone());
             push_block(
                 &mut blocks,
@@ -160,7 +160,7 @@ fn quote_prefix_regex() -> &'static Regex {
 
 fn list_prefix_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([-*+]|\d+\.)\s+").unwrap())
+    RE.get_or_init(|| Regex::new(r"^([-*+]|\d+[.)])\s+").unwrap())
 }
 
 fn whitespace_regex() -> &'static Regex {

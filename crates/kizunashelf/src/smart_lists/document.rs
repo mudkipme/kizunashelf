@@ -91,6 +91,7 @@ pub fn set_home_visibility(doc: &mut Mapping, visible: bool) -> Result<(), Strin
 /// sequence) or a single expression string. Anything else is opaque.
 fn parse_filter_value(value: &Value, warnings: &mut Vec<String>) -> FilterNode {
     match value {
+        Value::Null => FilterNode::empty(),
         Value::String(expression) => parse_expression_node(expression, warnings),
         Value::Mapping(mapping) if mapping.len() == 1 => {
             let (key, children) = mapping.iter().next().expect("len checked");
@@ -327,7 +328,11 @@ pub fn apply_views(doc: &mut Mapping, specs: &[ViewSpec]) {
         .map(|spec| {
             let existing = reusable.iter_mut().find_map(|slot| {
                 let matches = slot.as_ref().is_some_and(|mapping| {
-                    mapping.get("name").and_then(Value::as_str) == Some(spec.name.as_str())
+                    mapping
+                        .get("name")
+                        .and_then(Value::as_str)
+                        .or_else(|| mapping.get("type").and_then(Value::as_str))
+                        == Some(spec.name.as_str())
                 });
                 if matches {
                     slot.take()

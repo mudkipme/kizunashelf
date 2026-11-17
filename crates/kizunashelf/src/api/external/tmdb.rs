@@ -404,8 +404,9 @@ async fn search_tmdb(
     };
     // TMDB pages hold 20 results; translate our (page, page_size) into a TMDB
     // page plus an in-page offset, then slice.
-    let tmdb_page = (page - 1) * page_size / 20 + 1;
-    let offset = (page - 1) * page_size % 20;
+    let item_offset = page.saturating_sub(1).saturating_mul(page_size);
+    let tmdb_page = item_offset / 20 + 1;
+    let offset = item_offset % 20;
     let value = send_limited(
         client
             .get(&endpoint)

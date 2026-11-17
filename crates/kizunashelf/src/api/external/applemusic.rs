@@ -201,7 +201,7 @@ async fn search_apple_music(
         return Ok(result.and_then(apple_music_candidate).into_iter().collect());
     }
     // iTunes search has no offset; ask for `page * page_size` then skip prior pages.
-    let limit = page * page_size;
+    let limit = page.saturating_mul(page_size);
     let value = send_limited(
         client
             .get("https://itunes.apple.com/search")
@@ -227,7 +227,7 @@ async fn search_apple_music(
         .unwrap_or_default();
     Ok(results
         .iter()
-        .skip((page - 1) * page_size)
+        .skip(page.saturating_sub(1).saturating_mul(page_size))
         .filter_map(apple_music_candidate)
         .collect())
 }

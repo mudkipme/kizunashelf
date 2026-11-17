@@ -109,6 +109,7 @@ import type {
   EntitySummary,
   ImportJob,
   LanguagesResponse,
+  LogActivityRequest,
   ResolveTypePresetsResponse,
   SaveSettingsRequest,
   SettingsConfigResponse,
@@ -166,4 +167,4 @@ export type SeasonLanguage = NonNullable<FieldConfig["seasonLanguage"]>;
 export type TitleRole = NonNullable<FieldConfig["titleRole"]>;
 export type DailyNotesConfig = NonNullable<VaultConfig["dailyNotes"]>;
 
-export type LogKind = NonNullable<import("@kizunashelf/api-contract").LogActivityRequest["kind"]>;
+export type LogKind = NonNullable<LogActivityRequest["kind"]>;

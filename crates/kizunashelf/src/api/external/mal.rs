@@ -244,7 +244,7 @@ async fn search_mal(
         }
         return resolve_mal(client, &client_id, media_type, &id).await;
     }
-    let offset = (page - 1) * page_size;
+    let offset = page.saturating_sub(1).saturating_mul(page_size);
     let mut items = Vec::new();
     for media_type in media {
         let value = send_limited(

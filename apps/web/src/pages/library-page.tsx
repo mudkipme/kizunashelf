@@ -202,8 +202,9 @@ export function LibraryPage() {
 
   useEffect(() => {
     if (!globalStats.data || !selectedType || !searchParams.has("type")) return;
+    if (selectedType === allTypes && query.trim().length > 0) return;
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(searchParams));
-  }, [globalStats.data, selectedType, searchParams]);
+  }, [globalStats.data, query, selectedType, searchParams]);
 
   useEffect(() => {
     // Only re-sync the URL to the server's (clamped) page once the real response

@@ -6,6 +6,7 @@ import { type Ref, useCallback, useEffect, useImperativeHandle, useRef, useState
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
+import { settingsConfigQuery } from "@/api/queries";
 import { saveSettingsConfig } from "@/api/settings";
 import { addSuggestedSmartLists } from "@/api/smart-lists";
 import { Alert } from "@/components/ui/alert";
@@ -250,7 +251,15 @@ export function SettingsEditor({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => seedConfig(initialVault, initialRevision)}
+            onClick={async () => {
+              const latest = await queryClient.fetchQuery({
+                ...settingsConfigQuery(),
+                staleTime: 0,
+              });
+              seenServerSignatureRef.current =
+                latest.revision ?? JSON.stringify(latest.vault ?? null);
+              seedConfig(latest.vault, latest.revision);
+            }}
           >
             <Trans>Reload latest version</Trans>
           </Button>

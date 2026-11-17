@@ -56,6 +56,7 @@ function prepare() {
       "Configure SignPath before publishing, or explicitly set WINDOWS_SIGNING_REQUIRED=false to release unsigned Windows installers.",
     );
   }
+  requireValues(["GITHUB_OUTPUT"]);
   appendFileSync(
     process.env.GITHUB_OUTPUT,
     `version=${version}\nsign=${sign}\nsignpath=${signpath}\n`,

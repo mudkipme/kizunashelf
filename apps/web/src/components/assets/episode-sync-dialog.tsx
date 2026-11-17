@@ -11,7 +11,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { errorMessage } from "@/api/client";
+import { errorMessage, isConflictError } from "@/api/client";
 import { fetchEpisodeSources, syncEpisodes } from "@/api/episodes";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { queryKeys } from "@/api/queries";
@@ -219,6 +219,9 @@ export function EpisodeSyncDialog({
       void invalidateEntityData();
       onOpenChange(false);
     } catch (importError) {
+      if (isConflictError(importError)) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.entity(entityId) });
+      }
       toast.error(errorMessage(importError));
     } finally {
       setImporting(false);
