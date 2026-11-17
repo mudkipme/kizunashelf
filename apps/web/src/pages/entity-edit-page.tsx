@@ -267,7 +267,6 @@ export function EntityEditPage() {
                 frontmatter={frontmatter}
                 bodyText={body}
                 disabled={!contentWritable || saving || reviewing || Boolean(review)}
-                relationSuggestions={[]}
                 onRelationSearch={searchRelations}
                 onFrontmatterChange={setFrontmatter}
                 onBodyChange={setBody}

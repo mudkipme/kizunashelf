@@ -39,7 +39,7 @@ export function HomeEntityCard({
         <div className="mt-auto flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <span className="min-w-0 truncate">
             {entity.dates.length > 0 ? (
-              <EntityDateList entity={entity} compact labelsByType={labelsByType} />
+              <EntityDateList entity={entity} labelsByType={labelsByType} />
             ) : (
               entity.basename
             )}

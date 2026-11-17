@@ -5,11 +5,9 @@ import type { EntitySummary } from "@/types/api";
 
 export function EntityDateList({
   entity,
-  compact = false,
   labelsByType,
 }: {
   entity: EntitySummary;
-  compact?: boolean;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
   const formatDate = useIsoDateFormat();
@@ -22,11 +20,7 @@ export function EntityDateList({
           key={`${date.field}-${date.value}`}
           variant="outline"
           title={`${entityFieldLabel(labelsByType, entity.type, date.field)}: ${formatDate(date.value)}`}
-          className={
-            compact
-              ? "max-w-full truncate px-1.5 py-0 text-xs font-normal"
-              : "max-w-full truncate font-normal"
-          }
+          className="max-w-full truncate px-1.5 py-0 text-xs font-normal"
         >
           {formatDate(date.value)}
         </Badge>

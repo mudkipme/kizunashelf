@@ -47,16 +47,6 @@ export function isFrontmatterObject(
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function parseScalarValue(value: string): FrontmatterValue {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (trimmed === "true") return true;
-  if (trimmed === "false") return false;
-  const number = Number(trimmed);
-  if (Number.isFinite(number) && String(number) === trimmed) return number;
-  return value;
-}
-
 export function withCurrentOption(options: string[], current: string) {
   if (!current || options.includes(current)) return options;
   return [current, ...options];
@@ -180,8 +170,4 @@ export function stripWikilink(value: string) {
   const trimmed = value.trim();
   const match = /^\[\[(.*?)(?:\|.*?)?\]\]$/.exec(trimmed);
   return match?.[1]?.trim() ?? trimmed;
-}
-
-export function isAbortError(error: unknown) {
-  return error instanceof DOMException && error.name === "AbortError";
 }

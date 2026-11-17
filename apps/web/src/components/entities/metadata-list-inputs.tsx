@@ -7,6 +7,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { isAbortError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
@@ -15,7 +16,6 @@ import { useDebouncedAbortableCallback } from "@/hooks/use-debounce";
 
 import {
   formatSeasonValue,
-  isAbortError,
   normalizeListItem,
   parseSeasonValue,
   seasonOptions,

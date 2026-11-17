@@ -414,7 +414,7 @@ function EntitySummaryCell({
         ) : null}
       </div>
       <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
-        <EntityDateList entity={entity} compact labelsByType={labelsByType} />
+        <EntityDateList entity={entity} labelsByType={labelsByType} />
       </div>
       {!compact && entity.summary ? (
         <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">{entity.summary}</div>

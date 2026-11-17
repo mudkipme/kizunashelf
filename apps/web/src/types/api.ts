@@ -1,103 +1,59 @@
 export type {
   ActivityEntry,
-  ActivityEpisodeRef,
   ActivityItem,
-  ActivityResponse,
   AnalyticsActivity,
-  AnalyticsActivityType,
-  AnalyticsActivityYear,
-  AnalyticsResponse,
-  AssetDownloadItemResult,
   AssetDownloadJob,
-  AssetDownloadJobListResponse,
   AssetDownloadRequest,
-  AssetDownloadResponse,
   AssetUploadRequest,
-  AssetUploadResponse,
   CalendarDay,
-  CalendarResponse,
-  CalendarSnippet,
   Capabilities,
   CleanupQueueSummary,
   CleanupQueuesResponse,
   CleanupUnresolvedRelation,
   ConfigResponse,
   Entity,
-  EntityDateDailyNoteEntry,
   EntityDatesResponse,
-  EntityDateMetadataEntry,
-  EntityDateValue,
   EntityDetailResponse,
-  EntityListResponse,
-  EntityMutationResponse,
   EntitySummary,
-  ExistingEntityRef,
-  ExternalCandidate,
   ExternalMatch,
   ExternalProviderCatalog,
   ExternalProviderCatalogItem,
   ExternalProviderSummary,
-  ExternalReviewField,
   ExternalReviewResponse,
-  ExternalReviewSection,
   ExternalSearchResponse,
   ImportSourceCatalogItem,
-  ImportSourceCatalogResponse,
   ImportJob,
-  ImportJobListResponse,
   ImportJobStatus,
-  ImportInputKind,
   CreateImportJobRequest,
   CommitImportJobRequest,
-  ImportDecision,
-  ImportCommitOptions,
   MappedBodySection,
   MappedFieldValue,
-  QuickAddEpisodeResult,
   QuickAddRequest,
-  QuickAddResponse,
-  HomeResponse,
   HealthResponse,
   HomeListResponse,
-  SmartListSuggestion,
-  EpisodeSource,
-  EpisodeSyncResponse,
   Language,
   LanguagesResponse,
-  ListDetail,
-  ProviderEpisodeGroup,
-  ProviderEpisodeItem,
   ListItem,
-  ListItemInput,
   ListMarker,
   ListSection,
-  ListKind,
-  ListsResponse,
-  ListSummary,
   LogActivityRequest,
-  LogActivityResponse,
-  PathSuggestionsResponse,
+  ProviderEpisodeGroup,
+  ProviderEpisodeItem,
   Relation,
   SaveSettingsRequest,
   SettingsConfigResponse,
-  SmartCompareOp,
-  SmartContainsMode,
-  SmartDurationUnit,
   SmartFilterConjunction,
   SmartFilterGroup,
   SmartFilterRule,
-  SmartFilterRuleKind,
   SmartFilterSubgroup,
   SmartListDetail,
   SmartListPreviewRequest,
   SmartListView,
-  SmartRelativeDate,
   SmartSortSpec,
   SmartViewLayout,
   CreateSmartListRequest,
   UpdateSmartListRequest,
   StatsResponse,
-  TagsResponse,
   TypeConfig,
   TypePresetsResponse,
   ResolveTypePresetsRequest,
@@ -123,8 +79,6 @@ export type ImportPlan = NonNullable<ImportJob["plan"]>;
 export type ImportPlanBucket = ImportPlan["buckets"][number];
 export type ImportPlanItem = ImportPlan["items"][number];
 export type ImportPlanUserData = ImportPlanItem["userData"];
-export type ImportPlanItemState = ImportPlanItem["state"];
-export type ImportReviewReason = NonNullable<ImportPlanItem["reviewReason"]>;
 export type ImportCanonicalStatus = NonNullable<ImportPlanUserData["status"]>;
 
 // Derived by indexed access into the generated response so it unifies
@@ -135,9 +89,7 @@ export type UserLanguage = LanguagesResponse["userLanguages"][number];
 // `types`/`field` unify structurally with the editor's own EntityTypeConfig/
 // FieldConfig (both are orval-inlined anonymous shapes, so no TS2719 clash).
 export type TypePresetSummary = TypePresetsResponse["presets"][number];
-export type TypePresetProvider = NonNullable<TypePresetSummary["providers"]>[number];
 export type TypePresetCategoryInfo = TypePresetsResponse["categories"][number];
-export type TypePresetCategory = TypePresetCategoryInfo["id"];
 export type TypePresetBackfill = NonNullable<ResolveTypePresetsResponse["backfills"]>[number];
 export type TypePresetCollision = NonNullable<ResolveTypePresetsResponse["collisions"]>[number];
 
@@ -156,15 +108,11 @@ export type BodySectionKind = BodySection["kind"];
 export type EntityEpisodes = NonNullable<EntityDetailResponse["episodes"]>;
 export type EpisodeGroup = EntityEpisodes["groups"][number];
 export type Episode = EpisodeGroup["items"][number];
-export type EpisodeTracking = EntityEpisodes["tracking"];
-export type EpisodeProgress = NonNullable<EntitySummary["episodeProgress"]>;
 export type ResolvedStatus = NonNullable<EntitySummary["status"]>;
 export type CanonicalStatus = NonNullable<ResolvedStatus["canonical"]>;
-export type EnumRole = NonNullable<FieldConfig["enumRole"]>;
 export type StatusValues = NonNullable<FieldConfig["statusValues"]>;
 export type DateRole = NonNullable<FieldConfig["dateRole"]>;
 export type SeasonLanguage = NonNullable<FieldConfig["seasonLanguage"]>;
-export type TitleRole = NonNullable<FieldConfig["titleRole"]>;
 export type DailyNotesConfig = NonNullable<VaultConfig["dailyNotes"]>;
 
 export type LogKind = NonNullable<LogActivityRequest["kind"]>;

@@ -285,7 +285,6 @@ export function EntityCreatePage() {
               frontmatter={frontmatter}
               bodyText={body}
               disabled={!contentWritable || creating}
-              relationSuggestions={[]}
               onRelationSearch={searchRelations}
               onFrontmatterChange={setFrontmatter}
               onBodyChange={setBody}

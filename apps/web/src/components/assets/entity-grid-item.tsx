@@ -73,7 +73,7 @@ export function EntityGridItem({
           <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
             <span className="min-w-0">
               {entity.dates.length > 0 ? (
-                <EntityDateList entity={entity} compact labelsByType={labelsByType} />
+                <EntityDateList entity={entity} labelsByType={labelsByType} />
               ) : null}
             </span>
             <span className="shrink-0">

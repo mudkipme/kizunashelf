@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useTitleLanguage } from "@/lib/language";
-import type { EntitySummary, TypeConfig } from "@/types/api";
+import type { TypeConfig } from "@/types/api";
 
 import { FormDisclosure } from "./form-disclosure";
 import { editableFieldSpecs } from "./metadata-field-specs";
@@ -22,14 +22,8 @@ import type {
   PickImage,
 } from "./metadata-types";
 
-export type {
-  FrontmatterDraft,
-  FrontmatterObject,
-  FrontmatterValue,
-  RelationSuggestionSearch,
-} from "./metadata-types";
+export type { FrontmatterDraft } from "./metadata-types";
 export { normalizeFrontmatter } from "./frontmatter-utils";
-export { NumberStepper } from "./metadata-scalar-inputs";
 
 /**
  * The frontmatter form: the schema's fields, any hand-added ones, and the body.
@@ -48,7 +42,6 @@ export function MetadataEditor({
   frontmatter,
   bodyText,
   disabled = false,
-  relationSuggestions = [],
   onRelationSearch,
   onFrontmatterChange,
   onBodyChange,
@@ -61,7 +54,6 @@ export function MetadataEditor({
   frontmatter: FrontmatterDraft;
   bodyText: string;
   disabled?: boolean;
-  relationSuggestions?: EntitySummary[];
   onRelationSearch?: RelationSuggestionSearch;
   onFrontmatterChange: (value: FrontmatterDraft) => void;
   onBodyChange: (value: string) => void;
@@ -77,23 +69,14 @@ export function MetadataEditor({
       editableFieldSpecs(
         typeConfig,
         frontmatter,
-        relationSuggestions,
+        [],
         onRelationSearch,
         language,
         allTags,
         tagsFieldName,
         t`Tags`,
       ),
-    [
-      typeConfig,
-      frontmatter,
-      relationSuggestions,
-      onRelationSearch,
-      language,
-      allTags,
-      tagsFieldName,
-      t,
-    ],
+    [typeConfig, frontmatter, onRelationSearch, language, allTags, tagsFieldName, t],
   );
 
   const technicalKeys = new Set(

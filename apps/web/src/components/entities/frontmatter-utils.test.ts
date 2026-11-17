@@ -7,34 +7,11 @@ import {
   normalizeFrontmatter,
   numberOrString,
   parseDateValue,
-  parseScalarValue,
   parseSeasonValue,
   stripWikilink,
   toWikilink,
   valueToText,
 } from "./frontmatter-utils";
-
-describe("parseScalarValue", () => {
-  it("maps blank to null and recognizes booleans", () => {
-    expect(parseScalarValue("")).toBeNull();
-    expect(parseScalarValue("   ")).toBeNull();
-    expect(parseScalarValue("true")).toBe(true);
-    expect(parseScalarValue("false")).toBe(false);
-  });
-
-  it("parses canonical numbers but keeps non-canonical numeric strings", () => {
-    expect(parseScalarValue("42")).toBe(42);
-    expect(parseScalarValue("3.14")).toBe(3.14);
-    // Leading zeros / exponent forms don't round-trip, so they stay strings
-    // (otherwise an id like "007" would be silently renumbered).
-    expect(parseScalarValue("007")).toBe("007");
-    expect(parseScalarValue("1e3")).toBe("1e3");
-  });
-
-  it("returns the original (untrimmed) string for plain text", () => {
-    expect(parseScalarValue("  hello ")).toBe("  hello ");
-  });
-});
 
 describe("numberOrString", () => {
   it("returns null for empty, numbers for canonical numerics, strings otherwise", () => {

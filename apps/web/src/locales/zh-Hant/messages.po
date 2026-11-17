@@ -367,7 +367,7 @@ msgstr "新增自訂類型"
 msgid "Add enum options above to map them to statuses."
 msgstr "請在上方新增列舉選項，以便將其對應到狀態。"
 
-#: src/components/entities/metadata-editor.tsx:182
+#: src/components/entities/metadata-editor.tsx:165
 msgid "Add Field"
 msgstr "新增欄位"
 
@@ -702,8 +702,7 @@ msgstr "全部清除"
 msgid "Clear rating"
 msgstr "清除評分"
 
-#: src/components/ui/dialog.tsx:73
-#: src/components/ui/dialog.tsx:110
+#: src/components/ui/dialog.tsx:64
 msgid "Close"
 msgstr "關閉"
 
@@ -874,11 +873,11 @@ msgstr "CSV 匯出"
 msgid "Current: {0}"
 msgstr "目前：{0}"
 
-#: src/components/entities/metadata-editor.tsx:166
+#: src/components/entities/metadata-editor.tsx:149
 msgid "Custom field"
 msgstr "自訂欄位"
 
-#: src/components/entities/metadata-editor.tsx:241
+#: src/components/entities/metadata-editor.tsx:224
 msgid "Custom field name"
 msgstr "自訂欄位名稱"
 
@@ -982,8 +981,8 @@ msgstr "方向"
 msgid "Disable"
 msgstr "停用"
 
-#: src/pages/entity-create-page.tsx:323
-#: src/pages/entity-edit-page.tsx:325
+#: src/pages/entity-create-page.tsx:322
+#: src/pages/entity-edit-page.tsx:324
 #: src/pages/settings-page.tsx:183
 #: src/pages/settings-page.tsx:228
 msgid "Discard"
@@ -1145,7 +1144,7 @@ msgstr "項目"
 msgid "Entity name"
 msgstr "項目名稱"
 
-#: src/pages/entity-edit-page.tsx:277
+#: src/pages/entity-edit-page.tsx:276
 #: src/pages/entity-page.tsx:447
 msgid "Entity not found"
 msgstr "找不到項目"
@@ -1393,7 +1392,7 @@ msgid "ID"
 msgstr "ID"
 
 #. Disclosure button in entity create/edit forms revealing schema IDs, external provider references, and custom metadata
-#: src/components/entities/metadata-editor.tsx:154
+#: src/components/entities/metadata-editor.tsx:137
 msgid "IDs, sources & custom fields"
 msgstr "ID、來源與自訂欄位"
 
@@ -1572,8 +1571,8 @@ msgstr "JSON 值"
 
 #: src/components/entities/edit-conflict-review.tsx:112
 #: src/hooks/use-vault-actions.tsx:60
-#: src/pages/entity-create-page.tsx:313
-#: src/pages/entity-edit-page.tsx:315
+#: src/pages/entity-create-page.tsx:312
+#: src/pages/entity-edit-page.tsx:314
 #: src/pages/settings-page.tsx:174
 #: src/pages/settings-page.tsx:220
 msgid "Keep editing"
@@ -1812,7 +1811,7 @@ msgid "Match mode"
 msgstr "符合方式"
 
 #: src/components/assets/entity-dates.tsx:33
-#: src/components/entities/metadata-editor.tsx:148
+#: src/components/entities/metadata-editor.tsx:131
 msgid "Metadata"
 msgstr "中繼資料"
 
@@ -2125,8 +2124,8 @@ msgstr "筆記"
 
 #: src/components/assets/entity-detail.tsx:280
 #: src/components/entities/edit-conflict-review.tsx:88
-#: src/components/entities/metadata-editor.tsx:188
-#: src/components/entities/metadata-editor.tsx:195
+#: src/components/entities/metadata-editor.tsx:171
+#: src/components/entities/metadata-editor.tsx:178
 #: src/lib/type-config.ts:10
 #: src/pages/list-detail-page.tsx:504
 #: src/pages/statistics-page.tsx:35
@@ -2414,14 +2413,14 @@ msgstr "重新載入"
 msgid "Reload latest version"
 msgstr "重新載入最新版本"
 
-#: src/components/ui/combobox.tsx:259
+#: src/components/ui/combobox.tsx:167
 msgid "Remove"
 msgstr ""
 
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
 #: src/components/desktop/vault-manager.tsx:70
-#: src/components/entities/metadata-editor.tsx:257
+#: src/components/entities/metadata-editor.tsx:240
 msgid "Remove {0}"
 msgstr "移除 {0}"
 
@@ -2596,7 +2595,7 @@ msgid "Save"
 msgstr "儲存"
 
 #. Saves the entity draft and then continues the navigation the user requested
-#: src/pages/entity-edit-page.tsx:335
+#: src/pages/entity-edit-page.tsx:334
 #: src/pages/settings-page.tsx:189
 msgid "Save and leave"
 msgstr "儲存並離開"
@@ -2612,8 +2611,8 @@ msgid "Save credentials"
 msgstr "儲存憑證"
 
 #. Explains the options for leaving an entity editor with an unsaved draft
-#: src/pages/entity-create-page.tsx:308
-#: src/pages/entity-edit-page.tsx:307
+#: src/pages/entity-create-page.tsx:307
+#: src/pages/entity-edit-page.tsx:306
 #: src/pages/settings-page.tsx:168
 msgid "Save your edits before leaving, or discard them."
 msgstr "離開前儲存編輯內容，或捨棄這些變更。"
@@ -2636,7 +2635,7 @@ msgstr "將目前類型、條件與排序儲存為智慧清單。搜尋內容不
 #: src/components/settings/settings-editor.tsx:228
 #: src/pages/entity-create-page.tsx:164
 #: src/pages/entity-edit-page.tsx:222
-#: src/pages/entity-edit-page.tsx:333
+#: src/pages/entity-edit-page.tsx:332
 #: src/pages/list-detail-page.tsx:408
 #: src/pages/settings-page.tsx:189
 #: src/pages/smart-list-page.tsx:268
@@ -2971,7 +2970,7 @@ msgid "System theme. Switch to light theme."
 msgstr "系統主題。切換為淺色主題。"
 
 #. Field name for the built-in tags field in the rule builder
-#: src/components/entities/metadata-editor.tsx:85
+#: src/components/entities/metadata-editor.tsx:77
 #: src/components/settings/settings-editor.tsx:120
 #: src/components/settings/settings-editor.tsx:348
 #: src/components/smart-lists/rule-field-meta.ts:64
@@ -3199,8 +3198,8 @@ msgid "Unresolved Relations"
 msgstr "未解析的關聯"
 
 #. Title of the confirmation dialog when navigating away from an entity editor with an unsaved draft
-#: src/pages/entity-create-page.tsx:305
-#: src/pages/entity-edit-page.tsx:302
+#: src/pages/entity-create-page.tsx:304
+#: src/pages/entity-edit-page.tsx:301
 #: src/pages/settings-page.tsx:165
 msgid "Unsaved changes"
 msgstr "尚未儲存的變更"

@@ -25,5 +25,3 @@ export function Alert({
 }: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
   return <div className={cn(alertVariants({ variant }), className)} {...props} />;
 }
-
-export { alertVariants };

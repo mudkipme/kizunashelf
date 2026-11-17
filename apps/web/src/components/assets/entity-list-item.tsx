@@ -56,7 +56,7 @@ export function EntityListItem({
             <StatusBadge status={entity.status} />
           </span>
           <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-            <EntityDateList entity={entity} compact labelsByType={labelsByType} />
+            <EntityDateList entity={entity} labelsByType={labelsByType} />
             {progressLabel ? (
               <span className="ml-auto shrink-0 tabular-nums">{progressLabel}</span>
             ) : null}

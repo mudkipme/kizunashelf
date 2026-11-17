@@ -91,30 +91,22 @@ pub struct CalendarSnippet {
     pub line: usize,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug)]
 pub struct CalendarEntry {
-    pub id: String,
     pub date: String,
     pub source: CalendarEntrySource,
     pub entity: EntitySummary,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub date_field: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub raw_date: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note_path: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub snippets: Option<Vec<CalendarSnippet>>,
     /// Present only for `episode`-source entries: the episode this date belongs
     /// to (its number, title, and whether the date is its air or completion).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub episode: Option<CalendarEpisode>,
     /// Set when [`Self::date`] is an anchor derived from a season rather than a
     /// date the entity records. The mode filter reads it to skip the day-level
     /// tests (the anchor already encodes them) and clients read the item's
     /// `dateText` to show the season instead of the anchor.
-    #[serde(default)]
     pub season: bool,
 }
 
@@ -129,8 +121,7 @@ pub enum CalendarEntrySource {
 }
 
 /// The item behind an `episode`-source calendar entry.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug)]
 pub struct CalendarEpisode {
     pub key: String,
     pub title: String,

@@ -721,7 +721,6 @@ fn taxonomy_calendar_entries(
             {
                 let date = item.date.clone().unwrap();
                 entries.push(CalendarEntry {
-                    id: format!("taxonomy:{}:{date}:{}", item.field, entity.id),
                     date,
                     source: CalendarEntrySource::Taxonomy,
                     entity: summaries
@@ -738,16 +737,15 @@ fn taxonomy_calendar_entries(
             }
         }
     }
-    let mut seen = Vec::<String>::new();
+    let mut seen = HashSet::new();
     entries
         .into_iter()
         .filter(|entry| {
-            if seen.contains(&entry.id) {
-                false
-            } else {
-                seen.push(entry.id.clone());
-                true
-            }
+            seen.insert((
+                entry.date_field.clone(),
+                entry.date.clone(),
+                entry.entity.id.clone(),
+            ))
         })
         .collect()
 }
@@ -782,12 +780,7 @@ fn episode_calendar_entries(
             if !is_in_month(&item.date, options.year, options.month) {
                 continue;
             }
-            let role = match item.role {
-                EpisodeDateRole::Scheduled => "scheduled",
-                EpisodeDateRole::Completed => "completed",
-            };
             entries.push(CalendarEntry {
-                id: format!("episode:{role}:{}:{}:{}", item.key, item.date, entity.id),
                 date: item.date.clone(),
                 source: CalendarEntrySource::Episode,
                 entity: summaries
@@ -1141,7 +1134,7 @@ fn daily_note_entries_from_files(
     by_basename: &HashMap<String, Vec<EntitySummary>>,
     options: &CalendarBuildOptions,
 ) -> Vec<CalendarEntry> {
-    let mut grouped: HashMap<String, CalendarEntry> = HashMap::new();
+    let mut grouped: HashMap<(String, String), CalendarEntry> = HashMap::new();
     for file in files {
         let Some(file_date) = file.date.as_ref() else {
             continue;
@@ -1163,19 +1156,19 @@ fn daily_note_entries_from_files(
                     continue;
                 }
 
-                let key = format!("daily-note:{}:{}", file_date, entity.id);
-                let entry = grouped.entry(key.clone()).or_insert_with(|| CalendarEntry {
-                    id: key,
-                    date: file_date.clone(),
-                    source: CalendarEntrySource::DailyNote,
-                    entity: entity.clone(),
-                    date_field: None,
-                    raw_date: None,
-                    note_path: Some(file.relative_path.clone()),
-                    snippets: Some(Vec::new()),
-                    episode: None,
-                    season: false,
-                });
+                let entry = grouped
+                    .entry((file_date.clone(), entity.id.clone()))
+                    .or_insert_with(|| CalendarEntry {
+                        date: file_date.clone(),
+                        source: CalendarEntrySource::DailyNote,
+                        entity: entity.clone(),
+                        date_field: None,
+                        raw_date: None,
+                        note_path: Some(file.relative_path.clone()),
+                        snippets: Some(Vec::new()),
+                        episode: None,
+                        season: false,
+                    });
                 if let Some(snippets) = &mut entry.snippets {
                     push_mention_snippet(snippets, &block);
                 }
