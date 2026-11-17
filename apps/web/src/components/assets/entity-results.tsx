@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useRef } from "react";
 
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
@@ -37,9 +38,17 @@ export function EntityResults({
   className?: string;
   onPageChange: (page: number) => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  function handlePageChange(nextPage: number) {
+    scrollRef.current?.scrollTo({ top: 0 });
+    scrollRef.current?.scrollIntoView({ block: "nearest" });
+    onPageChange(nextPage);
+  }
+
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", className)}>
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto">
         {layout === "grid" ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 p-3">
             {entities.map((entity) => (
@@ -72,7 +81,7 @@ export function EntityResults({
         totalPages={totalPages}
         total={total}
         pageSize={pageSize}
-        onPageChange={onPageChange}
+        onPageChange={handlePageChange}
       />
     </div>
   );
