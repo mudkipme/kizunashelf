@@ -22,6 +22,29 @@ import type {
 
 type ExternalRefs = Record<string, string | undefined>;
 
+/**
+ * The chosen candidate and its review, as one state. The core's review supplies
+ * the default selection and the locked fields, so the user can only choose what
+ * to apply once it has landed (`ready`). Before then, a toggle would be
+ * overwritten by the review's defaults, and Apply would skip the locks.
+ */
+export type CandidateSelection =
+  | { status: "none" }
+  | { status: "reviewing"; candidate: ExternalMatch }
+  | { status: "failed"; candidate: ExternalMatch }
+  | {
+      status: "ready";
+      candidate: ExternalMatch;
+      review: ExternalReviewResponse;
+      fields: ReadonlySet<string>;
+      sections: ReadonlySet<string>;
+    };
+
+export type CandidateReviewStatus = CandidateSelection["status"];
+
+const NO_SELECTION: CandidateSelection = { status: "none" };
+const EMPTY_SET: ReadonlySet<string> = new Set();
+
 function patchValueHasRemote(value: unknown): boolean {
   if (typeof value === "string") return isRemoteAsset(value);
   if (Array.isArray(value)) {
@@ -84,14 +107,16 @@ export function useExternalMatch({
   useEffect(() => {
     if (results.error) toast.error(errorMessage(results.error));
   }, [results.error]);
-  const [selectedCandidate, setSelectedCandidate] = useState<ExternalMatch>();
-  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
-  const [selectedBodySections, setSelectedBodySections] = useState<Set<string>>(new Set());
-  // The core's per-candidate review (current values, default selection, locked
-  // flags, replace-vs-append). Undefined until the review request resolves; the
-  // dialog then renders everything unlocked/unbadged rather than guessing.
-  const [review, setReview] = useState<ExternalReviewResponse>();
+  const [selection, setSelection] = useState<CandidateSelection>(NO_SELECTION);
+  // Bumped whenever the selection is replaced or dropped, so a review resolving
+  // for an earlier choice (or after close/entity change) is ignored.
   const reviewToken = useRef(0);
+  const selectedCandidate = selection.status === "none" ? undefined : selection.candidate;
+  // The core's per-candidate review (current values, default selection, locked
+  // flags, replace-vs-append), present only once it has landed.
+  const review = selection.status === "ready" ? selection.review : undefined;
+  const selectedFields = selection.status === "ready" ? selection.fields : EMPTY_SET;
+  const selectedBodySections = selection.status === "ready" ? selection.sections : EMPTY_SET;
   const [downloadAfterApply, setDownloadAfterApply] = useState(false);
 
   // Providers configured for this type by the schema (credential-independent).
@@ -119,9 +144,9 @@ export function useExternalMatch({
   // then the thin mapping keeps the panel from flashing empty.
   const effectiveFields = review?.fields ?? selectedCandidate?.fields;
   // Apply sends the review's enriched candidate (its enrichment marker already
-  // consumed server-side) so provider detail is fetched once per selection —
-  // the original search candidate is only a fallback if the review failed.
-  const candidateForApply = review?.candidate ?? selectedCandidate?.candidate;
+  // consumed server-side) so provider detail is fetched once per selection.
+  // Nothing is applicable until the review lands.
+  const candidateForApply = review?.candidate;
   const metadataEntries = useMemo(
     () => (selectedCandidate ? matchFieldPreviewEntries(effectiveFields, typeConfig) : []),
     [selectedCandidate, effectiveFields, typeConfig],
@@ -189,10 +214,7 @@ export function useExternalMatch({
 
   const resetSelection = useCallback(() => {
     reviewToken.current += 1;
-    setSelectedCandidate(undefined);
-    setSelectedFields(new Set());
-    setSelectedBodySections(new Set());
-    setReview(undefined);
+    setSelection(NO_SELECTION);
   }, []);
 
   // Dropping the active query detaches its observer and aborts the request.
@@ -289,33 +311,46 @@ export function useExternalMatch({
   // previously chosen candidate is dropped via the token.
   const chooseCandidate = useCallback(
     (match: ExternalMatch) => {
-      const token = ++reviewToken.current;
-      setSelectedCandidate(match);
-      setSelectedFields(new Set());
-      setSelectedBodySections(new Set());
-      setReview(undefined);
       if (!entityId) return;
+      const token = ++reviewToken.current;
+      setSelection({ status: "reviewing", candidate: match });
       void (async () => {
         try {
           const result = await reviewMatch(entityId, { candidate: match.candidate, language });
           if (token !== reviewToken.current) return;
-          setReview(result);
-          setSelectedFields(
-            new Set(result.fields.filter((field) => field.selected).map((field) => field.field)),
-          );
-          setSelectedBodySections(
-            new Set(
+          setSelection({
+            status: "ready",
+            candidate: match,
+            review: result,
+            fields: new Set(
+              result.fields.filter((field) => field.selected).map((field) => field.field),
+            ),
+            sections: new Set(
               result.sections.filter((section) => section.selected).map((section) => section.key),
             ),
-          );
+          });
         } catch (error) {
           if (token !== reviewToken.current) return;
+          setSelection({ status: "failed", candidate: match });
           toast.error(errorMessage(error));
         }
       })();
     },
     [entityId, language],
   );
+
+  const retryReview = useCallback(() => {
+    if (selection.status === "failed") chooseCandidate(selection.candidate);
+  }, [selection, chooseCandidate]);
+
+  // The user's choices only exist on a landed review; toggles before then have
+  // nothing to apply to (the controls are disabled meanwhile).
+  const setSelectedFields = useCallback((fields: Set<string>) => {
+    setSelection((current) => (current.status === "ready" ? { ...current, fields } : current));
+  }, []);
+  const setSelectedBodySections = useCallback((sections: Set<string>) => {
+    setSelection((current) => (current.status === "ready" ? { ...current, sections } : current));
+  }, []);
 
   // Locked/replace-vs-append flags for the dialog, straight from the review.
   const fieldLocks = useMemo(
@@ -353,6 +388,8 @@ export function useExternalMatch({
     providers: results.data?.providers ?? [],
     searching,
     selectedCandidate,
+    reviewStatus: selection.status,
+    retryReview,
     candidateForApply,
     selectedFields,
     setSelectedFields,

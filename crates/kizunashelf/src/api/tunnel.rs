@@ -21,15 +21,14 @@ pub struct TunnelResponse {
     pub body: Vec<u8>,
 }
 
-/// Failure while tunneling a request: the request couldn't be built, the router
-/// service errored, or the body couldn't be buffered. Hosts map this to their own
-/// error type via its `Display`.
+/// Failure while tunneling a request: the request couldn't be built, or the body
+/// couldn't be buffered. The router itself can't fail (its service error is
+/// `Infallible`; handler failures are ordinary error responses). Hosts map this
+/// to their own error type via its `Display`.
 #[derive(Debug)]
 pub enum TunnelError {
     /// The HTTP request could not be constructed (e.g. an invalid URI).
     InvalidRequest(String),
-    /// The router service errored while driving the request.
-    Router(String),
     /// The response body could not be read into memory.
     Body(String),
 }
@@ -38,7 +37,6 @@ impl std::fmt::Display for TunnelError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TunnelError::InvalidRequest(message) => write!(f, "invalid request: {message}"),
-            TunnelError::Router(message) => write!(f, "router error: {message}"),
             TunnelError::Body(message) => write!(f, "failed to read body: {message}"),
         }
     }
@@ -78,10 +76,8 @@ pub async fn run_asset(router: Router, uri: &str) -> Result<TunnelResponse, Tunn
 }
 
 async fn collect(router: Router, request: Request<Body>) -> Result<TunnelResponse, TunnelError> {
-    let response = router
-        .oneshot(request)
-        .await
-        .map_err(|error| TunnelError::Router(error.to_string()))?;
+    // `Router`'s service error is `Infallible`, so this pattern is irrefutable.
+    let Ok(response) = router.oneshot(request).await;
     let (parts, body) = response.into_parts();
     let content_type = parts
         .headers

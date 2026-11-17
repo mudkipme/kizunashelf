@@ -3,6 +3,7 @@ import { SearchIcon, WandSparklesIcon } from "lucide-react";
 import { memo } from "react";
 
 import { ExternalSearchErrors } from "@/components/entities/external-search-errors";
+import type { CandidateReviewStatus } from "@/components/entities/use-external-match";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,18 +35,22 @@ type ExternalMatchDialogProps = {
   provider: string;
   candidates: ExternalMatch[];
   selectedCandidate?: ExternalMatch;
+  // Where the chosen candidate's review stands. Fields can only be chosen, and
+  // applied, once it is `ready`.
+  reviewStatus: CandidateReviewStatus;
+  onRetryReview: () => void;
   metadataEntries: ExternalMetadataPreviewEntry[];
   bodyEntries: ExternalBodyPreviewEntry[];
-  selectedFields: Set<string>;
-  selectedBodySections: Set<string>;
+  selectedFields: ReadonlySet<string>;
+  selectedBodySections: ReadonlySet<string>;
   providerCatalog?: ExternalProviderCatalog;
   providerOptions: string[];
   providers?: ExternalProviderSummary[];
   externalSearchEnabled: boolean;
   currentValues?: Record<string, unknown>;
   // Locked checkboxes and replace-vs-append badges, from the core's review of
-  // the chosen candidate (`reviewExternalCandidate`). `sectionModes` is
-  // undefined until the review resolves; the badges are hidden meanwhile.
+  // the chosen candidate (`reviewExternalCandidate`). Undefined until the review
+  // resolves; the badges are hidden meanwhile.
   fieldLocks?: ReadonlySet<string>;
   sectionLocks?: ReadonlySet<string>;
   sectionModes?: Record<string, "replace" | "append">;
@@ -74,6 +79,8 @@ export function ExternalMatchDialog({
   provider,
   candidates,
   selectedCandidate,
+  reviewStatus,
+  onRetryReview,
   metadataEntries,
   bodyEntries,
   selectedFields,
@@ -184,6 +191,8 @@ export function ExternalMatchDialog({
 
             <SelectedMetadataPanel
               selectedCandidate={selectedCandidate}
+              reviewStatus={reviewStatus}
+              onRetryReview={onRetryReview}
               metadataEntries={metadataEntries}
               bodyEntries={bodyEntries}
               selectedFields={selectedFields}
@@ -216,7 +225,9 @@ export function ExternalMatchDialog({
           <Button
             type="button"
             onClick={onApply}
-            disabled={!contentWritable || applying || !selectedCandidate || selectedCount === 0}
+            disabled={
+              !contentWritable || applying || reviewStatus !== "ready" || selectedCount === 0
+            }
           >
             <WandSparklesIcon data-icon="inline-start" />
             {applying ? t`Applying…` : t`Apply Selected`}
@@ -280,6 +291,8 @@ const CandidateList = memo(function CandidateList({
 
 const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
   selectedCandidate,
+  reviewStatus,
+  onRetryReview,
   metadataEntries,
   bodyEntries,
   selectedFields,
@@ -293,10 +306,12 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
   onSelectedBodySectionsChange,
 }: {
   selectedCandidate?: ExternalMatch;
+  reviewStatus: CandidateReviewStatus;
+  onRetryReview: () => void;
   metadataEntries: ExternalMetadataPreviewEntry[];
   bodyEntries: ExternalBodyPreviewEntry[];
-  selectedFields: Set<string>;
-  selectedBodySections: Set<string>;
+  selectedFields: ReadonlySet<string>;
+  selectedBodySections: ReadonlySet<string>;
   currentValues?: Record<string, unknown>;
   fieldLocks?: ReadonlySet<string>;
   sectionLocks?: ReadonlySet<string>;
@@ -306,6 +321,9 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
   onSelectedBodySectionsChange: (sections: Set<string>) => void;
 }) {
   const { t } = useLingui();
+  // Until the review lands the panel previews the search result's values, but
+  // there is no selection to change yet.
+  const choosable = contentWritable && reviewStatus === "ready";
   function toggleField(field: string) {
     const next = new Set(selectedFields);
     if (next.has(field)) next.delete(field);
@@ -327,6 +345,20 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
       </h3>
       {selectedCandidate ? (
         <div className="mt-3 flex flex-col gap-2">
+          {reviewStatus === "reviewing" ? (
+            <p className="text-sm text-muted-foreground" role="status">
+              <Trans>Comparing with this entry…</Trans>
+            </p>
+          ) : reviewStatus === "failed" ? (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-destructive" role="alert">
+                <Trans>Couldn't compare this candidate with the entry.</Trans>
+              </span>
+              <Button type="button" variant="outline" size="sm" onClick={onRetryReview}>
+                <Trans>Retry</Trans>
+              </Button>
+            </div>
+          ) : null}
           {metadataEntries.map((entry) => {
             const newValue = entry.hasValue
               ? formatMetadataValue(entry.value)
@@ -342,7 +374,7 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
                   checked={selectedFields.has(entry.field)}
                   onChange={() => toggleField(entry.field)}
                   className="mt-1"
-                  disabled={!contentWritable || locked}
+                  disabled={!choosable || locked}
                 />
                 <span className="min-w-0">
                   <span className="block font-medium">{entry.label}</span>
@@ -381,7 +413,7 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
                         checked={selectedBodySections.has(entry.key)}
                         onChange={() => toggleBodySection(entry.key)}
                         className="mt-1"
-                        disabled={!contentWritable || locked}
+                        disabled={!choosable || locked}
                       />
                       <span className="min-w-0">
                         <span className="block font-medium">{entry.heading}</span>

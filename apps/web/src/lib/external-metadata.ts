@@ -109,7 +109,7 @@ export function matchFieldPreviewEntries(
 
 export function matchFieldPatch(
   entries: MappedFieldValue[] | undefined,
-  fields: Set<string>,
+  fields: ReadonlySet<string>,
 ): Record<string, unknown> {
   return Object.fromEntries(
     (entries ?? [])

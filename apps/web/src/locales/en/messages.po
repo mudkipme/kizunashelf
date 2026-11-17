@@ -58,7 +58,7 @@ msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, one {# issue} other {# issues}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:680
+#: src/pages/entity-page.tsx:685
 #: src/pages/lists-page.tsx:87
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
@@ -296,8 +296,8 @@ msgid "A type with the same name already exists, so {assignedIds} was used inste
 msgstr "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 
 #: src/components/layout/command-palette.tsx:191
-#: src/pages/entity-page.tsx:490
-#: src/pages/entity-page.tsx:493
+#: src/pages/entity-page.tsx:495
+#: src/pages/entity-page.tsx:498
 msgid "Actions"
 msgstr "Actions"
 
@@ -455,7 +455,7 @@ msgstr "Added, but episode import failed: {0}"
 msgid "Adding…"
 msgstr "Adding…"
 
-#: src/components/entities/external-match-dialog.tsx:395
+#: src/components/entities/external-match-dialog.tsx:427
 msgid "adds new section"
 msgstr "adds new section"
 
@@ -477,7 +477,7 @@ msgstr "All dates"
 msgid "all of"
 msgstr "all of"
 
-#: src/components/entities/external-match-dialog.tsx:138
+#: src/components/entities/external-match-dialog.tsx:145
 #: src/pages/quick-capture-page.tsx:292
 msgid "All providers"
 msgstr "All providers"
@@ -536,11 +536,11 @@ msgstr "Anything worth remembering"
 msgid "Apply"
 msgstr "Apply"
 
-#: src/components/entities/external-match-dialog.tsx:222
+#: src/components/entities/external-match-dialog.tsx:233
 msgid "Apply Selected"
 msgstr "Apply Selected"
 
-#: src/components/entities/external-match-dialog.tsx:222
+#: src/components/entities/external-match-dialog.tsx:233
 msgid "Applying…"
 msgstr "Applying…"
 
@@ -572,7 +572,7 @@ msgstr "Back to home"
 msgid "Basics"
 msgstr "Basics"
 
-#: src/components/entities/external-match-dialog.tsx:372
+#: src/components/entities/external-match-dialog.tsx:404
 msgid "Body Sections"
 msgstr "Body Sections"
 
@@ -610,7 +610,7 @@ msgstr "Calendar"
 #: src/components/smart-lists/save-smart-list-dialog.tsx:123
 #: src/components/smart-lists/suggested-lists-dialog.tsx:119
 #: src/pages/entity-edit-page.tsx:209
-#: src/pages/entity-page.tsx:578
+#: src/pages/entity-page.tsx:583
 #: src/pages/import-wizard-page.tsx:252
 #: src/pages/import-wizard-page.tsx:293
 #: src/pages/list-detail-page.tsx:537
@@ -657,7 +657,7 @@ msgstr "Checklist (per-item checkboxes)"
 msgid "Chinese"
 msgstr "Chinese"
 
-#: src/components/entities/external-match-dialog.tsx:412
+#: src/components/entities/external-match-dialog.tsx:444
 msgid "Choose a candidate to compare fields."
 msgstr "Choose a candidate to compare fields."
 
@@ -716,6 +716,10 @@ msgstr "Close navigation"
 msgid "Command palette"
 msgstr "Command palette"
 
+#: src/components/entities/external-match-dialog.tsx:350
+msgid "Comparing with this entry…"
+msgstr "Comparing with this entry…"
+
 #: src/components/assets/asset-download-panel.tsx:153
 #: src/components/assets/quick-log-dialog.tsx:31
 #: src/components/import/import-labels.ts:34
@@ -723,7 +727,7 @@ msgstr "Command palette"
 #: src/components/settings/settings-field-form.tsx:214
 #: src/components/settings/settings-field-form.tsx:295
 #: src/pages/activity-page.tsx:42
-#: src/pages/entity-page.tsx:415
+#: src/pages/entity-page.tsx:420
 msgid "Completed"
 msgstr "Completed"
 
@@ -783,7 +787,7 @@ msgstr "contains any of"
 msgid "Content writes are disabled."
 msgstr "Content writes are disabled."
 
-#: src/pages/entity-page.tsx:558
+#: src/pages/entity-page.tsx:563
 msgid "Content writes are disabled. Editing actions are unavailable."
 msgstr "Content writes are disabled. Editing actions are unavailable."
 
@@ -796,7 +800,7 @@ msgstr "Continue"
 msgid "Continue ({0})"
 msgstr "Continue ({0})"
 
-#: src/pages/entity-page.tsx:517
+#: src/pages/entity-page.tsx:522
 msgid "Copy file path"
 msgstr "Copy file path"
 
@@ -817,6 +821,10 @@ msgstr "Could not read this CSV file."
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "Couldn't add suggested lists. You can retry from Home."
 
+#: src/components/entities/external-match-dialog.tsx:355
+msgid "Couldn't compare this candidate with the entry."
+msgstr "Couldn't compare this candidate with the entry."
+
 #: src/components/vault-change-sync.tsx:34
 msgid "Couldn't refresh. Showing the last loaded version."
 msgstr "Couldn't refresh. Showing the last loaded version."
@@ -831,7 +839,7 @@ msgstr "Create"
 msgid "Create “{query}” manually →"
 msgstr "Create “{query}” manually →"
 
-#: src/pages/entity-page.tsx:716
+#: src/pages/entity-page.tsx:721
 msgid "Create & add"
 msgstr "Create & add"
 
@@ -851,7 +859,7 @@ msgid "Create vault ({0})"
 msgstr "Create vault ({0})"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:130
-#: src/pages/entity-page.tsx:716
+#: src/pages/entity-page.tsx:721
 #: src/pages/lists-page.tsx:239
 #: src/pages/onboarding-page.tsx:254
 msgid "Creating…"
@@ -862,7 +870,7 @@ msgid "CSV export"
 msgstr "CSV export"
 
 #. placeholder {0}: formatMetadataValue(currentValues[entry.field])
-#: src/components/entities/external-match-dialog.tsx:354
+#: src/components/entities/external-match-dialog.tsx:386
 msgid "Current: {0}"
 msgstr "Current: {0}"
 
@@ -934,7 +942,7 @@ msgid "Default line format"
 msgstr "Default line format"
 
 #: src/components/lists/section-block.tsx:121
-#: src/pages/entity-page.tsx:551
+#: src/pages/entity-page.tsx:556
 #: src/pages/list-detail-page.tsx:388
 #: src/pages/smart-list-page.tsx:298
 #: src/pages/smart-list-page.tsx:410
@@ -1006,15 +1014,15 @@ msgstr "does not link to"
 #: src/components/lists/add-items-dialog.tsx:122
 #: src/components/settings/settings-dialogs.tsx:514
 #: src/components/settings/settings-dialogs.tsx:550
-#: src/pages/entity-page.tsx:724
+#: src/pages/entity-page.tsx:729
 msgid "Done"
 msgstr "Done"
 
-#: src/pages/entity-page.tsx:539
+#: src/pages/entity-page.tsx:544
 msgid "Download cover"
 msgstr "Download cover"
 
-#: src/components/entities/external-match-dialog.tsx:211
+#: src/components/entities/external-match-dialog.tsx:220
 msgid "Download cover locally"
 msgstr "Download cover locally"
 
@@ -1057,7 +1065,7 @@ msgstr "Duplicate Filenames"
 msgid "Duplicate type"
 msgstr "Duplicate type"
 
-#: src/pages/entity-page.tsx:389
+#: src/pages/entity-page.tsx:394
 #: src/pages/list-detail-page.tsx:587
 msgid "Edit"
 msgstr "Edit"
@@ -1137,7 +1145,7 @@ msgid "Entity name"
 msgstr "Entity name"
 
 #: src/pages/entity-edit-page.tsx:273
-#: src/pages/entity-page.tsx:442
+#: src/pages/entity-page.tsx:447
 msgid "Entity not found"
 msgstr "Entity not found"
 
@@ -1193,7 +1201,7 @@ msgstr "External field"
 msgid "External field mappings"
 msgstr "External field mappings"
 
-#: src/components/entities/external-match-dialog.tsx:118
+#: src/components/entities/external-match-dialog.tsx:125
 msgid "External Match"
 msgstr "External Match"
 
@@ -1201,7 +1209,7 @@ msgstr "External Match"
 msgid "External metadata"
 msgstr "External metadata"
 
-#: src/components/entities/external-match-dialog.tsx:350
+#: src/components/entities/external-match-dialog.tsx:382
 msgid "external ref"
 msgstr "external ref"
 
@@ -1253,11 +1261,11 @@ msgstr "File"
 #: src/pages/entity-create-page.tsx:233
 #: src/pages/entity-create-page.tsx:241
 #: src/pages/entity-create-page.tsx:244
-#: src/pages/entity-page.tsx:314
+#: src/pages/entity-page.tsx:317
 msgid "File name"
 msgstr "File name"
 
-#: src/pages/entity-page.tsx:480
+#: src/pages/entity-page.tsx:485
 msgid "File path copied"
 msgstr "File path copied"
 
@@ -1671,7 +1679,7 @@ msgstr "Links to"
 msgid "List"
 msgstr "List"
 
-#: src/pages/entity-page.tsx:641
+#: src/pages/entity-page.tsx:646
 #: src/pages/lists-page.tsx:148
 msgid "List created"
 msgstr "List created"
@@ -1723,8 +1731,8 @@ msgstr "Loading type…"
 #: src/components/smart-lists/suggested-lists-dialog.tsx:73
 #: src/pages/activity-page.tsx:180
 #: src/pages/entity-edit-page.tsx:257
-#: src/pages/entity-page.tsx:305
-#: src/pages/entity-page.tsx:660
+#: src/pages/entity-page.tsx:308
+#: src/pages/entity-page.tsx:665
 #: src/pages/home-page.tsx:58
 #: src/pages/import-wizard-page.tsx:231
 #: src/pages/list-detail-page.tsx:359
@@ -1759,8 +1767,8 @@ msgstr "Log to daily note"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 
-#: src/pages/entity-page.tsx:530
-#: src/pages/entity-page.tsx:654
+#: src/pages/entity-page.tsx:535
+#: src/pages/entity-page.tsx:659
 msgid "Manage lists"
 msgstr "Manage lists"
 
@@ -1794,7 +1802,7 @@ msgstr "Mark watched progress"
 msgid "Markdown body sections"
 msgstr "Markdown body sections"
 
-#: src/pages/entity-page.tsx:534
+#: src/pages/entity-page.tsx:539
 msgid "Match"
 msgstr "Match"
 
@@ -1836,16 +1844,16 @@ msgstr "Move {label} up"
 msgid "Move list to trash?"
 msgstr "Move list to trash?"
 
-#: src/pages/entity-page.tsx:581
+#: src/pages/entity-page.tsx:586
 #: src/pages/list-detail-page.tsx:546
 msgid "Move to Trash"
 msgstr "Move to Trash"
 
-#: src/pages/entity-page.tsx:567
+#: src/pages/entity-page.tsx:572
 msgid "Move to trash?"
 msgstr "Move to trash?"
 
-#: src/pages/entity-page.tsx:229
+#: src/pages/entity-page.tsx:232
 msgid "Moved to trash"
 msgstr "Moved to trash"
 
@@ -1879,7 +1887,7 @@ msgstr "Needs review"
 msgid "New field"
 msgstr "New field"
 
-#: src/pages/entity-page.tsx:701
+#: src/pages/entity-page.tsx:706
 #: src/pages/lists-page.tsx:48
 #: src/pages/lists-page.tsx:167
 msgid "New list"
@@ -1893,7 +1901,7 @@ msgstr "New section"
 msgid "New-note template"
 msgstr "New-note template"
 
-#: src/components/entities/external-match-dialog.tsx:358
+#: src/components/entities/external-match-dialog.tsx:390
 msgid "New: {newValue}"
 msgstr "New: {newValue}"
 
@@ -1922,7 +1930,7 @@ msgstr "No activity actions are available."
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 msgstr "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 
-#: src/components/entities/external-match-dialog.tsx:366
+#: src/components/entities/external-match-dialog.tsx:398
 msgid "No candidate fields or body sections match this type schema."
 msgstr "No candidate fields or body sections match this type schema."
 
@@ -1964,7 +1972,7 @@ msgstr "No entries match the criteria"
 msgid "No external mappings."
 msgstr "No external mappings."
 
-#: src/components/entities/use-external-match.ts:82
+#: src/components/entities/use-external-match.ts:105
 msgid "No external matches"
 msgstr "No external matches"
 
@@ -1993,7 +2001,7 @@ msgstr "No items yet. Use “Add items” to put entities on this list, or “Ad
 msgid "No limit"
 msgstr "No limit"
 
-#: src/pages/entity-page.tsx:664
+#: src/pages/entity-page.tsx:669
 msgid "No lists yet. Create one below."
 msgstr "No lists yet. Create one below."
 
@@ -2054,7 +2062,7 @@ msgstr "No smart lists on Home yet"
 msgid "No suggestions for your current types. You can create a smart list in Lists."
 msgstr "No suggestions for your current types. You can create a smart list in Lists."
 
-#: src/components/entities/external-match-dialog.tsx:136
+#: src/components/entities/external-match-dialog.tsx:143
 msgid "No supported providers"
 msgstr "No supported providers"
 
@@ -2062,8 +2070,8 @@ msgstr "No supported providers"
 msgid "No type options."
 msgstr "No type options."
 
-#: src/components/entities/external-match-dialog.tsx:333
-#: src/components/entities/external-match-dialog.tsx:400
+#: src/components/entities/external-match-dialog.tsx:365
+#: src/components/entities/external-match-dialog.tsx:432
 msgid "No value returned"
 msgstr "No value returned"
 
@@ -2195,7 +2203,7 @@ msgstr "Open existing vault"
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/pages/entity-page.tsx:513
+#: src/pages/entity-page.tsx:518
 msgid "Open in default editor"
 msgstr "Open in default editor"
 
@@ -2303,7 +2311,7 @@ msgid "Previous"
 msgstr "Previous"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
-#: src/components/entities/external-match-dialog.tsx:132
+#: src/components/entities/external-match-dialog.tsx:139
 #: src/components/settings/settings-external-mappings.tsx:67
 #: src/components/settings/settings-field-form.tsx:246
 #: src/pages/quick-capture-page.tsx:290
@@ -2335,7 +2343,7 @@ msgid "Queued"
 msgstr "Queued"
 
 #: src/components/entities/entity-ratings.tsx:73
-#: src/pages/entity-page.tsx:416
+#: src/pages/entity-page.tsx:421
 msgid "Rate"
 msgstr "Rate"
 
@@ -2373,7 +2381,7 @@ msgid "Recent"
 msgstr "Recent"
 
 #. placeholder {0}: externalSourceLabel(providerCatalog, ref.provider)
-#: src/components/entities/external-match-dialog.tsx:170
+#: src/components/entities/external-match-dialog.tsx:177
 msgid "Refresh {0}"
 msgstr "Refresh {0}"
 
@@ -2477,8 +2485,8 @@ msgstr "Removed"
 
 #: src/components/lists/section-block.tsx:117
 #: src/components/rename-dialog.tsx:94
-#: src/pages/entity-page.tsx:313
-#: src/pages/entity-page.tsx:526
+#: src/pages/entity-page.tsx:316
+#: src/pages/entity-page.tsx:531
 #: src/pages/list-detail-page.tsx:378
 #: src/pages/smart-list-page.tsx:288
 msgid "Rename"
@@ -2492,11 +2500,11 @@ msgstr "Rename list"
 msgid "Rename smart list"
 msgstr "Rename smart list"
 
-#: src/pages/entity-page.tsx:168
+#: src/pages/entity-page.tsx:171
 msgid "Renamed"
 msgstr "Renamed"
 
-#: src/pages/entity-page.tsx:167
+#: src/pages/entity-page.tsx:170
 msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "Renamed — updated {updated, plural, one {# link} other {# links}}"
 
@@ -2509,7 +2517,7 @@ msgstr "renamed to “{0}”"
 msgid "Renaming…"
 msgstr "Renaming…"
 
-#: src/components/entities/external-match-dialog.tsx:394
+#: src/components/entities/external-match-dialog.tsx:426
 msgid "replaces existing section"
 msgstr "replaces existing section"
 
@@ -2538,20 +2546,21 @@ msgid "Results"
 msgstr "Results"
 
 #: src/components/entities/entity-ratings.tsx:180
+#: src/components/entities/external-match-dialog.tsx:358
 #: src/components/settings/settings-dialogs.tsx:451
 #: src/components/vault-change-sync.tsx:36
 msgid "Retry"
 msgstr "Retry"
 
-#: src/pages/entity-page.tsx:506
+#: src/pages/entity-page.tsx:511
 msgid "Reveal in Explorer"
 msgstr "Reveal in Explorer"
 
-#: src/pages/entity-page.tsx:508
+#: src/pages/entity-page.tsx:513
 msgid "Reveal in file manager"
 msgstr "Reveal in file manager"
 
-#: src/pages/entity-page.tsx:504
+#: src/pages/entity-page.tsx:509
 msgid "Reveal in Finder"
 msgstr "Reveal in Finder"
 
@@ -2644,8 +2653,8 @@ msgstr "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHE
 msgid "Scope"
 msgstr "Scope"
 
-#: src/components/entities/external-match-dialog.tsx:125
-#: src/components/entities/external-match-dialog.tsx:152
+#: src/components/entities/external-match-dialog.tsx:132
+#: src/components/entities/external-match-dialog.tsx:159
 #: src/pages/quick-capture-page.tsx:268
 msgid "Search"
 msgstr "Search"
@@ -2666,8 +2675,8 @@ msgstr "Search entities, pages and commands…"
 msgid "Search entities…"
 msgstr "Search entities…"
 
-#: src/components/entities/external-match-dialog.tsx:181
-#: src/components/entities/use-external-match.ts:83
+#: src/components/entities/external-match-dialog.tsx:188
+#: src/components/entities/use-external-match.ts:106
 msgid "Search for a match"
 msgstr "Search for a match"
 
@@ -2689,8 +2698,8 @@ msgstr "Search or add relation"
 msgid "Search queue"
 msgstr "Search queue"
 
-#: src/components/entities/external-match-dialog.tsx:152
-#: src/components/entities/use-external-match.ts:80
+#: src/components/entities/external-match-dialog.tsx:159
+#: src/components/entities/use-external-match.ts:103
 #: src/components/ui/multi-value-combobox.tsx:165
 #: src/pages/quick-capture-page.tsx:321
 msgid "Searching…"
@@ -2766,7 +2775,7 @@ msgstr "Select type"
 msgid "Selected images will be saved when you create the entry."
 msgstr "Selected images will be saved when you create the entry."
 
-#: src/components/entities/external-match-dialog.tsx:326
+#: src/components/entities/external-match-dialog.tsx:344
 msgid "Selected Metadata"
 msgstr "Selected Metadata"
 
@@ -2833,11 +2842,11 @@ msgstr "Smart list renamed"
 msgid "Smart list saved"
 msgstr "Smart list saved"
 
-#: src/pages/entity-page.tsx:215
+#: src/pages/entity-page.tsx:218
 msgid "Some images could not be downloaded"
 msgstr "Some images could not be downloaded"
 
-#: src/pages/entity-page.tsx:214
+#: src/pages/entity-page.tsx:217
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "Some images could not be downloaded: {reasons}"
 
@@ -3051,7 +3060,7 @@ msgid "This month"
 msgstr "This month"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-page.tsx:570
+#: src/pages/entity-page.tsx:575
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "This moves {0} to the Trash. You can restore it later if you need it."
 
@@ -3287,7 +3296,7 @@ msgstr "Vaults"
 msgid "Watching now"
 msgstr "Watching now"
 
-#: src/pages/entity-page.tsx:707
+#: src/pages/entity-page.tsx:712
 #: src/pages/lists-page.tsx:201
 msgid "Watchlist"
 msgstr "Watchlist"

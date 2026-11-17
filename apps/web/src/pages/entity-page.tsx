@@ -72,7 +72,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Placeholder } from "@/components/ui/placeholder";
-import { reportEntityError, useEntityMutation } from "@/hooks/use-entity-mutation";
+import { useEntityMutation } from "@/hooks/use-entity-mutation";
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { contentWritesDisabled, useCapabilities } from "@/lib/capabilities";
@@ -108,8 +108,6 @@ export function EntityPage() {
   const [manageListsOpen, setManageListsOpen] = useState(false);
   const [logKind, setLogKind] = useState<LogKind | null>(null);
   const [ratingField, setRatingField] = useState<string | null>(null);
-  const [episodesSaving, setEpisodesSaving] = useState(false);
-  const [tasksSaving, setTasksSaving] = useState(false);
 
   const loading =
     detail.isPending ||
@@ -144,6 +142,11 @@ export function EntityPage() {
   // A 409 means the entity changed on disk and the action's revision is stale:
   // refetch so a retry uses the latest revision (see `useEntityMutation`).
   const refetchOnConflict = () => void detail.refetch();
+  // Writes read the revision from the query cache when they are sent, not from
+  // this render's `entity`: a previous write stores its fresh detail there
+  // synchronously, before React has re-rendered with it.
+  const latestRevision = (current: Entity) =>
+    queryClient.getQueryData(entityQuery(current.id).queryKey)?.entity.revision ?? current.revision;
   const { setQuery: setMatchQuery } = external;
 
   useEffect(() => {
@@ -156,7 +159,7 @@ export function EntityPage() {
     await run(
       async () => {
         const result = await saveEntity(entity.id, {
-          revision: entity.revision,
+          revision: latestRevision(entity),
           renameTo: nextBasename,
         });
         setRenameOpen(false);
@@ -183,7 +186,7 @@ export function EntityPage() {
     await run(
       async () => {
         const result = await applyMatch(entity.id, {
-          revision: entity.revision,
+          revision: latestRevision(entity),
           candidate,
           language: providerLanguage,
           fields: [...external.selectedFields],
@@ -201,7 +204,7 @@ export function EntityPage() {
     if (!entity) return;
     await run(
       async () => {
-        const result = await downloadAssets(entity.id, { revision: entity.revision });
+        const result = await downloadAssets(entity.id, { revision: latestRevision(entity) });
         await invalidateEntityData();
         const failures = result.results.filter((item) => item.status === "failed");
         if (failures.length > 0) {
@@ -224,7 +227,7 @@ export function EntityPage() {
     if (!entity) return;
     await run(
       async () => {
-        await removeEntity(entity.id, { revision: entity.revision });
+        await removeEntity(entity.id, { revision: latestRevision(entity) });
         await invalidateEntityData();
         toast.success(t`Moved to trash`);
         navigate("/library");
@@ -235,7 +238,8 @@ export function EntityPage() {
 
   // Writes one episode through `/episodes/watch` (group + key, index as the fallback
   // locator): the core stamps/clears the ✅ date and returns the refreshed detail.
-  // Independent of daily-note logging.
+  // Independent of daily-note logging. Shares the page's write slot, so it can't
+  // overlap a task toggle or a menu action on the same file.
   async function persistEpisode(args: {
     group: string;
     key: string;
@@ -244,19 +248,20 @@ export function EntityPage() {
     date: string;
   }) {
     if (!entity) return;
-    setEpisodesSaving(true);
-    try {
-      const response = await setEpisodeWatched(entity.id, { revision: entity.revision, ...args });
-      queryClient.setQueryData(queryKeys.entity(entity.id), response);
-      // Refresh everything derived from the entity set (watched/total badges,
-      // home/upcoming shelves, activity, calendar, …) via the shared helper so
-      // this path can't drift from the other mutation flows.
-      void invalidateEntityData();
-    } catch (error) {
-      reportEntityError(error, { onConflict: refetchOnConflict });
-    } finally {
-      setEpisodesSaving(false);
-    }
+    await run(
+      async () => {
+        const response = await setEpisodeWatched(entity.id, {
+          revision: latestRevision(entity),
+          ...args,
+        });
+        queryClient.setQueryData(queryKeys.entity(entity.id), response);
+        // Refresh everything derived from the entity set (watched/total badges,
+        // home/upcoming shelves, activity, calendar, …) via the shared helper so
+        // this path can't drift from the other mutation flows.
+        void invalidateEntityData();
+      },
+      { onConflict: refetchOnConflict },
+    );
   }
 
   // Checkbox toggle: stamp/clear the ✅ using the user's local date.
@@ -274,22 +279,20 @@ export function EntityPage() {
   // pair before writing), and the ✅ is stamped with the user's local date.
   async function toggleNoteTask(line: number, text: string, done: boolean) {
     if (!entity) return;
-    setTasksSaving(true);
-    try {
-      const response = await setTaskDone(entity.id, {
-        revision: entity.revision,
-        line,
-        text,
-        done,
-        date: todayLocal(),
-      });
-      queryClient.setQueryData(queryKeys.entity(entity.id), response);
-      void invalidateEntityData();
-    } catch (error) {
-      reportEntityError(error, { onConflict: refetchOnConflict });
-    } finally {
-      setTasksSaving(false);
-    }
+    await run(
+      async () => {
+        const response = await setTaskDone(entity.id, {
+          revision: latestRevision(entity),
+          line,
+          text,
+          done,
+          date: todayLocal(),
+        });
+        queryClient.setQueryData(queryKeys.entity(entity.id), response);
+        void invalidateEntityData();
+      },
+      { onConflict: refetchOnConflict },
+    );
   }
 
   return (
@@ -323,6 +326,8 @@ export function EntityPage() {
               provider={external.provider}
               candidates={external.candidates}
               selectedCandidate={external.selectedCandidate}
+              reviewStatus={external.reviewStatus}
+              onRetryReview={external.retryReview}
               metadataEntries={external.metadataEntries}
               bodyEntries={external.bodyEntries}
               selectedFields={external.selectedFields}
@@ -363,9 +368,9 @@ export function EntityPage() {
               dates={dates.data}
               typeConfig={typeConfig}
               episodes={detail.data?.episodes ?? undefined}
-              episodesSaving={episodesSaving}
+              episodesSaving={saving}
               notesBody={detail.data?.notesBody}
-              tasksSaving={tasksSaving}
+              tasksSaving={saving}
               contentWritable={contentWritable}
               labelsByType={labelsByType}
               typeLabels={typeLabels}

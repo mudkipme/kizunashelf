@@ -101,7 +101,11 @@ function Harness() {
         {match.candidates.map((item) => item.candidate.title).join(",")}
       </output>
       <output data-testid="loading">{String(match.searching)}</output>
+      <button onClick={() => match.setSelectedFields(new Set(["title"]))}>Toggle title</button>
+      <button onClick={match.retryReview}>Retry review</button>
       <output data-testid="selected">{[...match.selectedFields].join(",")}</output>
+      <output data-testid="review">{match.reviewStatus}</output>
+      <output data-testid="applicable">{match.candidateForApply?.title ?? ""}</output>
     </>
   );
 }
@@ -190,5 +194,67 @@ describe("external matching", () => {
     });
     await screen.getByRole("button", { name: "Open", exact: true }).click();
     await expect.element(screen.getByTestId("selected")).toHaveTextContent("");
+  });
+
+  it("only accepts choices once the candidate's review has landed", async () => {
+    let resolveReview!: (value: Awaited<ReturnType<typeof reviewMatch>>) => void;
+    vi.mocked(reviewMatch).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveReview = resolve;
+        }),
+    );
+    const screen = await render(<Harness />);
+    await screen.getByRole("button", { name: "Open", exact: true }).click();
+    await screen.getByRole("button", { name: "Choose" }).click();
+    await expect.element(screen.getByTestId("review")).toHaveTextContent("reviewing");
+    // A toggle before the review lands has nothing to apply to, and nothing is
+    // applicable yet, so the core's locks can't be bypassed.
+    await screen.getByRole("button", { name: "Toggle title" }).click();
+    await expect.element(screen.getByTestId("selected")).toHaveTextContent("");
+    await expect.element(screen.getByTestId("applicable")).toHaveTextContent("");
+
+    resolveReview({
+      entityType: "stories",
+      candidate: { ...result("chosen").items[0].candidate, title: "enriched" },
+      sections: [],
+      fields: [
+        {
+          field: "source",
+          value: "new",
+          source: "bangumi",
+          hasValue: true,
+          selected: true,
+          locked: true,
+          current: null,
+        },
+      ],
+    });
+    await expect.element(screen.getByTestId("review")).toHaveTextContent("ready");
+    await expect.element(screen.getByTestId("selected")).toHaveTextContent("source");
+    await expect.element(screen.getByTestId("applicable")).toHaveTextContent("enriched");
+    // Once ready, the user's choices are kept.
+    await screen.getByRole("button", { name: "Toggle title" }).click();
+    await expect.element(screen.getByTestId("selected")).toHaveTextContent("title");
+  });
+
+  it("reports a failed review and retries it", async () => {
+    vi.mocked(reviewMatch).mockRejectedValueOnce(new Error("provider down"));
+    const screen = await render(<Harness />);
+    await screen.getByRole("button", { name: "Open", exact: true }).click();
+    await screen.getByRole("button", { name: "Choose" }).click();
+    await expect.element(screen.getByTestId("review")).toHaveTextContent("failed");
+    await expect.element(screen.getByTestId("applicable")).toHaveTextContent("");
+
+    vi.mocked(reviewMatch).mockResolvedValueOnce({
+      entityType: "stories",
+      candidate: result("chosen").items[0].candidate,
+      fields: [],
+      sections: [],
+    });
+    await screen.getByRole("button", { name: "Retry review" }).click();
+    await expect.element(screen.getByTestId("review")).toHaveTextContent("ready");
+    await expect.element(screen.getByTestId("applicable")).toHaveTextContent("chosen");
+    expect(reviewMatch).toHaveBeenCalledTimes(2);
   });
 });
