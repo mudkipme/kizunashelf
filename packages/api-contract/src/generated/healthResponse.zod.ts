@@ -23,7 +23,8 @@ export const HealthResponse = zod.object({
   "path": zod.string(),
   "kind": zod.string(),
   "message": zod.string()
-}))
+})),
+  "changed": zod.boolean().nullish().describe('Present on `\/api\/refresh`: `false` when a conditional refresh\n(`ifChanged=true`) confirmed the vault was unchanged and reused the\ncached library; `true` when the library was reloaded.')
 })
 
 export type HealthResponse = zod.input<typeof HealthResponse>;

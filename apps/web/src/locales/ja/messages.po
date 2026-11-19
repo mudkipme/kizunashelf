@@ -824,7 +824,7 @@ msgstr "おすすめリストを追加できませんでした。ホームから
 msgid "Couldn't compare this candidate with the entry."
 msgstr "この候補を項目と比較できませんでした。"
 
-#: src/components/vault-change-sync.tsx:34
+#: src/components/vault-change-sync.tsx:39
 msgid "Couldn't refresh. Showing the last loaded version."
 msgstr "更新できませんでした。前回読み込んだ内容を表示しています。"
 
@@ -2552,7 +2552,7 @@ msgstr ""
 #: src/components/entities/entity-ratings.tsx:180
 #: src/components/entities/external-match-dialog.tsx:359
 #: src/components/settings/settings-dialogs.tsx:451
-#: src/components/vault-change-sync.tsx:36
+#: src/components/vault-change-sync.tsx:41
 msgid "Retry"
 msgstr "再試行"
 

@@ -824,7 +824,7 @@ msgstr "Couldn't add suggested lists. You can retry from Home."
 msgid "Couldn't compare this candidate with the entry."
 msgstr "Couldn't compare this candidate with the entry."
 
-#: src/components/vault-change-sync.tsx:34
+#: src/components/vault-change-sync.tsx:39
 msgid "Couldn't refresh. Showing the last loaded version."
 msgstr "Couldn't refresh. Showing the last loaded version."
 
@@ -2552,7 +2552,7 @@ msgstr "Results"
 #: src/components/entities/entity-ratings.tsx:180
 #: src/components/entities/external-match-dialog.tsx:359
 #: src/components/settings/settings-dialogs.tsx:451
-#: src/components/vault-change-sync.tsx:36
+#: src/components/vault-change-sync.tsx:41
 msgid "Retry"
 msgstr "Retry"
 

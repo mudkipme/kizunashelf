@@ -7,11 +7,12 @@ use crate::vfs::Vfs;
 use anyhow::Result;
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::sync::Arc;
 use unicode_normalization::UnicodeNormalization;
 
 use super::frontmatter::{strip_wikilink, wikilink_regex};
 use super::index_cache::{fingerprint_hit, CachedDailyNote};
-use super::read::cache_key;
+use super::read::{cache_key, fold_listing_entry};
 
 /// The `field` value marking a relation that originates from a daily note (the
 /// only relation kind that requires reading files outside the resident records).
@@ -180,11 +181,13 @@ fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<RelationFiel
 
 /// The daily-note wikilinks gathered for a load: the `(source_id, link targets)`
 /// pairs to resolve into relations, the per-note cache map to persist (current
-/// notes only, so deletions drop out), and whether anything was re-read.
+/// notes only, so deletions drop out), whether anything was re-read, and the
+/// XOR listing digest of every discovered daily note.
 pub(super) struct DailyNoteRead {
     pub(super) links: Vec<(String, Vec<String>)>,
-    pub(super) cache: BTreeMap<String, CachedDailyNote>,
+    pub(super) cache: BTreeMap<String, Arc<CachedDailyNote>>,
     pub(super) dirty: bool,
+    pub(super) listing_digest: Option<u64>,
 }
 
 /// Gathers each daily note's wikilink targets, reusing `loaded` cache entries for
@@ -196,17 +199,24 @@ pub(super) struct DailyNoteRead {
 pub(super) async fn read_daily_note_links(
     config: &KizunaConfig,
     vfs: &dyn Vfs,
-    loaded: &HashMap<String, CachedDailyNote>,
+    loaded: &HashMap<String, Arc<CachedDailyNote>>,
 ) -> Result<DailyNoteRead> {
     let candidates = daily_note_candidates(config, vfs, None, None, false).await?;
 
     let mut links: Vec<(String, Vec<String>)> = Vec::new();
-    let mut cache: BTreeMap<String, CachedDailyNote> = BTreeMap::new();
+    let mut cache: BTreeMap<String, Arc<CachedDailyNote>> = BTreeMap::new();
     let mut miss_paths: Vec<String> = Vec::new();
     // path -> (source_id, len, mtime) for the notes we must read.
     let mut miss_meta: HashMap<String, (String, u64, u128)> = HashMap::new();
+    let mut listing_digest = Some(0u64);
 
     for note in candidates {
+        fold_listing_entry(
+            &mut listing_digest,
+            &note.relative_path,
+            note.len,
+            note.modified_unix_nanos,
+        );
         let source_id = daily_note_source_id(&note.source_label, &note.relative_path);
         let key = cache_key(&note.relative_path);
         if let Some(cached) = loaded.get(&key) {
@@ -217,7 +227,7 @@ pub(super) async fn read_daily_note_links(
                 note.modified_unix_nanos,
             ) {
                 links.push((source_id, cached.links.clone()));
-                cache.insert(key, cached.clone());
+                cache.insert(key, Arc::clone(cached));
                 continue;
             }
         }
@@ -248,11 +258,11 @@ pub(super) async fn read_daily_note_links(
             let note_links = daily_note_wikilinks(&contents);
             cache.insert(
                 cache_key(&relative_path),
-                CachedDailyNote {
+                Arc::new(CachedDailyNote {
                     len,
                     modified_unix_nanos,
                     links: note_links.clone(),
-                },
+                }),
             );
             links.push((source_id, note_links));
         }
@@ -265,6 +275,7 @@ pub(super) async fn read_daily_note_links(
         links,
         cache,
         dirty,
+        listing_digest,
     })
 }
 

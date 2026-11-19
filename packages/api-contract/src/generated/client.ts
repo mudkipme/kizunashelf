@@ -297,6 +297,10 @@ import {
 } from './rawConfigResponse.zod';
 
 import type {
+  RefreshLibraryParams
+} from './refreshLibraryParams.zod';
+
+import type {
   ResolveTypePresetsRequest
 } from './resolveTypePresetsRequest.zod';
 
@@ -413,17 +417,24 @@ export const getHealth = async ( options?: RequestInit, fetchFn?: typeof globalT
 
 
 
-export const getRefreshLibraryUrl = () => {
+export const getRefreshLibraryUrl = (params?: RefreshLibraryParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/refresh`
+  return stringifiedParams.length > 0 ? `/api/refresh?${stringifiedParams}` : `/api/refresh`
 }
 
-export const refreshLibrary = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<HealthResponse> => {
+export const refreshLibrary = async (params?: RefreshLibraryParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<HealthResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getRefreshLibraryUrl(),
+  const res = await (fetchFn ?? fetch)(getRefreshLibraryUrl(params),
   {
     ...options,
     method: 'POST'

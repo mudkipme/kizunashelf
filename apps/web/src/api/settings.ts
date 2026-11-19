@@ -11,6 +11,7 @@ import {
   saveRawSettingsConfig as requestSaveRawSettingsConfig,
   saveSettingsConfig as requestSaveSettingsConfig,
   type GetTypePresetsParams,
+  type RefreshLibraryParams,
   type ResolveTypePresetsRequest,
   type SaveRawConfigRequest,
   type SaveSettingsRequest,
@@ -18,12 +19,11 @@ import {
 
 import { apiFetch } from "@/api/client";
 
-// Force a full vault re-index server-side. The library otherwise only reloads
-// on a TTL poll, so this is the manual "I just edited frontmatter in Obsidian"
-// escape hatch. Callers invalidate the query cache afterward to pull the fresh
-// index into the UI.
-export function refreshLibrary(init?: RequestInit) {
-  return requestRefreshLibrary(init, apiFetch);
+// Re-index the vault server-side. With `ifChanged: true`, revalidates via the
+// listing fingerprint and skips re-indexing when unchanged; otherwise forces a
+// full re-read (the manual "Rescan vault" escape hatch).
+export function refreshLibrary(params?: RefreshLibraryParams, init?: RequestInit) {
+  return requestRefreshLibrary(params, init, apiFetch);
 }
 
 export function getSettingsConfig(init?: RequestInit) {

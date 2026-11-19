@@ -824,7 +824,7 @@ msgstr "无法添加推荐列表。你可以在首页重试。"
 msgid "Couldn't compare this candidate with the entry."
 msgstr "无法将此候选项与条目进行比较。"
 
-#: src/components/vault-change-sync.tsx:34
+#: src/components/vault-change-sync.tsx:39
 msgid "Couldn't refresh. Showing the last loaded version."
 msgstr "无法刷新。正在显示上次加载的内容。"
 
@@ -2552,7 +2552,7 @@ msgstr ""
 #: src/components/entities/entity-ratings.tsx:180
 #: src/components/entities/external-match-dialog.tsx:359
 #: src/components/settings/settings-dialogs.tsx:451
-#: src/components/vault-change-sync.tsx:36
+#: src/components/vault-change-sync.tsx:41
 msgid "Retry"
 msgstr "重试"
 

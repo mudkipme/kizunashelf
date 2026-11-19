@@ -16,7 +16,7 @@ mod read;
 mod relations;
 mod wikilink_rewrite;
 
-pub(crate) use config_io::inspect_vault_config_text;
+pub(crate) use config_io::{inspect_vault_config_text, load_vault_config_with_raw_via_vfs};
 pub(crate) use index_cache::{IndexCacheContext, MemoryIndexCache};
 
 pub use collation::{compare_string, compare_string_for_title_language};
@@ -32,7 +32,9 @@ pub use read::read_library;
 pub use relations::{find_target, normalized_entity_basename_index};
 
 pub(crate) use parse::{file_revision, load_entity};
-pub(crate) use read::{compute_listing_fingerprint, read_library_cached};
+#[cfg(test)]
+pub(crate) use read::read_library_cached;
+pub(crate) use read::{compute_listing_fingerprint, read_library_with_fingerprint};
 pub(crate) use relations::{parse_daily_note_source_id, DAILY_NOTE_RELATION_FIELD};
 pub(crate) use wikilink_rewrite::{
     normalize_full_target, rewrite_backlink_wikilinks, rewrite_self_wikilinks,

@@ -709,3 +709,87 @@ async fn index_cache_reparses_daily_note_when_fingerprint_changes() {
     .unwrap();
     assert_eq!(daily_note_relation_count(&updated), 0);
 }
+
+#[tokio::test]
+async fn read_library_with_fingerprint_matches_compute_listing_fingerprint() {
+    const RAW_CONFIG: &str = "taxonomyRoot: Taxonomy\ntypes: []\n";
+    let vfs = daily_notes_vault("---\ntitle: Alpha\n---\n", "Watched [[Alpha]] today.\n");
+    vfs.insert_file(crate::library::VAULT_CONFIG_RELATIVE_PATH, RAW_CONFIG);
+    let config = daily_notes_config();
+
+    let (_, from_read) = crate::library::read_library_with_fingerprint(
+        config.clone(),
+        RAW_CONFIG,
+        Arc::clone(&vfs) as Arc<dyn Vfs>,
+        None,
+    )
+    .await
+    .unwrap();
+    let standalone = compute_listing_fingerprint(&config, vfs.as_ref()).await;
+    assert!(from_read.is_some());
+    assert_eq!(from_read, standalone);
+}
+
+#[tokio::test]
+async fn memory_l1_hydrates_from_disk_and_serves_warm_reloads_without_disk() {
+    use crate::library::MemoryIndexCache;
+    use std::sync::{Arc as StdArc, Mutex as StdMutex};
+
+    let dir = tempfile::tempdir().unwrap();
+    let vfs = Arc::new(InMemoryVfs::new());
+    seed_one(&vfs, "AAAA");
+
+    // First process populates the disk cache.
+    let first_store = StdArc::new(StdMutex::new(MemoryIndexCache::default()));
+    let first = read_library_cached(
+        test_config("/virtual-vault"),
+        Arc::clone(&vfs) as Arc<dyn Vfs>,
+        IndexCacheContext::with_memory_and_disk(
+            first_store,
+            dir.path().to_path_buf(),
+            "schema-v1",
+            "test-vault",
+        ),
+    )
+    .await
+    .unwrap();
+    assert_eq!(first.summaries().next().unwrap().title, "AAAA");
+
+    // New process (fresh L1 memory) hydrates from disk without re-reading the vault file.
+    vfs.overwrite_preserving_stamp(
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
+        "---\ntitle: BBBB\n---\n\nBody.\n",
+    );
+    let second_store = StdArc::new(StdMutex::new(MemoryIndexCache::default()));
+    let second = read_library_cached(
+        test_config("/virtual-vault"),
+        Arc::clone(&vfs) as Arc<dyn Vfs>,
+        IndexCacheContext::with_memory_and_disk(
+            StdArc::clone(&second_store),
+            dir.path().to_path_buf(),
+            "schema-v1",
+            "test-vault",
+        ),
+    )
+    .await
+    .unwrap();
+    assert_eq!(second.summaries().next().unwrap().title, "AAAA");
+
+    // Delete the disk cache: subsequent reloads in the same process still hit L1 memory.
+    for entry in std::fs::read_dir(dir.path()).unwrap() {
+        std::fs::remove_file(entry.unwrap().path()).unwrap();
+    }
+    let third = read_library_cached(
+        test_config("/virtual-vault"),
+        Arc::clone(&vfs) as Arc<dyn Vfs>,
+        IndexCacheContext::with_memory_and_disk(
+            second_store,
+            dir.path().to_path_buf(),
+            "schema-v1",
+            "test-vault",
+        ),
+    )
+    .await
+    .unwrap();
+    assert_eq!(third.summaries().next().unwrap().title, "AAAA");
+}

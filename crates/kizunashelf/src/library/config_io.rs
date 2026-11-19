@@ -162,10 +162,11 @@ pub fn parse_vault_config_strict(content: &str) -> Result<VaultConfig> {
     Ok(config)
 }
 
-/// Reads the vault config from inside the vault (`KizunaShelf/config.yaml`)
-/// through the VFS. Works for both `NativeVfs` (desktop) and the injected iOS
-/// VFS, so library loading never needs an absolute vault-config path.
-pub async fn load_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<VaultConfig> {
+/// Reads the vault config and its verbatim YAML text from inside the vault
+/// (`KizunaShelf/config.yaml`) through the VFS in a single read.
+pub(crate) async fn load_vault_config_with_raw_via_vfs(
+    vfs: &dyn Vfs,
+) -> Result<(VaultConfig, String)> {
     let raw = vfs
         .read_to_string(VAULT_CONFIG_RELATIVE_PATH)
         .await
@@ -175,7 +176,17 @@ pub async fn load_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<VaultConfig> {
             ),
             other => anyhow::anyhow!("failed to read vault config: {other}"),
         })?;
-    parse_vault_config(&raw)
+    let config = parse_vault_config(&raw)?;
+    Ok((config, raw))
+}
+
+/// Reads the vault config from inside the vault (`KizunaShelf/config.yaml`)
+/// through the VFS. Works for both `NativeVfs` (desktop) and the injected iOS
+/// VFS, so library loading never needs an absolute vault-config path.
+pub async fn load_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<VaultConfig> {
+    load_vault_config_with_raw_via_vfs(vfs)
+        .await
+        .map(|(config, _)| config)
 }
 
 pub(super) fn validate_config_paths(config: &KizunaConfig) -> Result<()> {

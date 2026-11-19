@@ -17,6 +17,11 @@ pub struct HealthResponse {
     pub relation_count: usize,
     pub diagnostic_count: usize,
     pub diagnostics: Vec<LibraryDiagnostic>,
+    /// Present on `/api/refresh`: `false` when a conditional refresh
+    /// (`ifChanged=true`) confirmed the vault was unchanged and reused the
+    /// cached library; `true` when the library was reloaded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub changed: Option<bool>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

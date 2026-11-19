@@ -49,6 +49,7 @@ export * from "./generated/getEntitiesParams.zod.js";
 export * from "./generated/getListsParams.zod.js";
 export * from "./generated/getStatsParams.zod.js";
 export * from "./generated/healthResponse.zod.js";
+export * from "./generated/refreshLibraryParams.zod.js";
 export * from "./generated/homeResponse.zod.js";
 export * from "./generated/searchExternalSourcesParams.zod.js";
 export * from "./generated/quickAddRequest.zod.js";

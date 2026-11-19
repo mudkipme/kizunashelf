@@ -1,6 +1,6 @@
 use super::error::{ApiError, ApiResult};
 use super::mutations::check_revision;
-use super::state::{content_writes_enabled, get_library, AppState};
+use super::state::{content_writes_enabled, get_library, revalidate_library, AppState};
 use crate::calendar::{
     build_activity, build_calendar, ActivityBuildOptions, ActivityMode, ActivityResponse,
     CalendarBuildOptions, UpcomingResponse,
@@ -74,25 +74,46 @@ pub(crate) async fn languages() -> Json<LanguagesResponse> {
     })
 }
 
-pub(crate) async fn health(State(state): State<AppState>) -> ApiResult<HealthResponse> {
-    let library = get_library(&state).await?;
-    Ok(Json(HealthResponse {
+#[derive(Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct RefreshQuery {
+    /// When `true`, checks the vault listing fingerprint and reuses the cached
+    /// library if nothing changed instead of forcing a full reload.
+    if_changed: Option<bool>,
+}
+
+fn health_response(library: &crate::types::Library, changed: Option<bool>) -> HealthResponse {
+    HealthResponse {
         ok: true,
         generated_at: library.generated_at.clone(),
         entity_count: library.records.len(),
         relation_count: library.relations.len(),
         diagnostic_count: library.diagnostics.len(),
         diagnostics: library.diagnostics.iter().take(20).cloned().collect(),
-    }))
+        changed,
+    }
 }
 
-/// Drops the in-memory library cache and re-reads the vault, returning fresh
-/// health. Backs an explicit pull-to-refresh that bypasses the read cache (the
-/// iOS/desktop runtimes use a long cache TTL, so external edits otherwise only
-/// surface after the TTL or a relaunch).
-pub(crate) async fn refresh(State(state): State<AppState>) -> ApiResult<HealthResponse> {
-    state.invalidate_cache().await;
-    health(State(state)).await
+pub(crate) async fn health(State(state): State<AppState>) -> ApiResult<HealthResponse> {
+    let library = get_library(&state).await?;
+    Ok(Json(health_response(&library, None)))
+}
+
+/// Refreshes the in-memory library from the vault, returning fresh health.
+/// With `ifChanged=true`, revalidates via the listing fingerprint and skips
+/// re-indexing when nothing changed (used on window focus/resume). Without it,
+/// drops the cache and forces a full re-read (manual rescan / pull-to-refresh).
+pub(crate) async fn refresh(
+    State(state): State<AppState>,
+    Query(query): Query<RefreshQuery>,
+) -> ApiResult<HealthResponse> {
+    let (library, changed) = if query.if_changed.unwrap_or(false) {
+        revalidate_library(&state).await?
+    } else {
+        state.invalidate_cache().await;
+        (get_library(&state).await?, true)
+    };
+    Ok(Json(health_response(&library, Some(changed))))
 }
 
 pub(crate) async fn capabilities(State(state): State<AppState>) -> ApiResult<CapabilitiesResponse> {

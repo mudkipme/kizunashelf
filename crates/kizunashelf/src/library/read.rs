@@ -20,7 +20,9 @@ use unicode_normalization::UnicodeNormalization;
 /// Reads the whole library from the vault, parsing every entity fresh. This is
 /// the uncached path (web/desktop without a configured cache dir, and tests).
 pub async fn read_library(config: KizunaConfig, vfs: Arc<dyn Vfs>) -> Result<Library> {
-    read_library_inner(config, vfs, None).await
+    read_library_inner(config, None, vfs, None)
+        .await
+        .map(|(library, _)| library)
 }
 
 /// Reads the library using the persistent index cache: files whose
@@ -28,12 +30,27 @@ pub async fn read_library(config: KizunaConfig, vfs: Arc<dyn Vfs>) -> Result<Lib
 /// only changed/new files are read and re-parsed. The result is value-equivalent
 /// (up to `generated_at`) to [`read_library`]; the cache only avoids redundant
 /// reads + parses. See [`super::index_cache`].
+#[cfg(test)]
 pub(crate) async fn read_library_cached(
     config: KizunaConfig,
     vfs: Arc<dyn Vfs>,
     cache: IndexCacheContext,
 ) -> Result<Library> {
-    read_library_inner(config, vfs, Some(cache)).await
+    read_library_inner(config, None, vfs, Some(cache))
+        .await
+        .map(|(library, _)| library)
+}
+
+/// Reads the library (with optional index cache) and computes the listing
+/// fingerprint from the same directory enumeration pass so callers don't walk
+/// the vault twice.
+pub(crate) async fn read_library_with_fingerprint(
+    config: KizunaConfig,
+    raw_config: &str,
+    vfs: Arc<dyn Vfs>,
+    cache: Option<IndexCacheContext>,
+) -> Result<(Library, Option<u64>)> {
+    read_library_inner(config, Some(raw_config), vfs, cache).await
 }
 
 /// A cheap fingerprint of everything that determines the derived library,
@@ -56,9 +73,7 @@ pub(crate) async fn compute_listing_fingerprint(
     // The schema gates all derivation, so an external config edit must bust the
     // fingerprint even though the config file is neither an entity nor a note.
     let raw_config = read_raw_vault_config_via_vfs(vfs).await.ok()?;
-    let mut config_hasher = std::collections::hash_map::DefaultHasher::new();
-    raw_config.hash(&mut config_hasher);
-    let mut digest: u64 = config_hasher.finish();
+    let mut digest = Some(raw_config_hash(raw_config.as_deref()));
 
     for type_config in &config.types {
         let relative_dir = format!(
@@ -76,7 +91,8 @@ pub(crate) async fn compute_listing_fingerprint(
                 continue;
             }
             let path = format!("{relative_dir}/{}", entry.name);
-            digest ^= listing_entry_hash(&path, entry.len, entry.modified_unix_nanos)?;
+            fold_listing_entry(&mut digest, &path, entry.len, entry.modified_unix_nanos);
+            digest?;
         }
     }
 
@@ -86,10 +102,36 @@ pub(crate) async fn compute_listing_fingerprint(
         .await
         .ok()?;
     for note in candidates {
-        digest ^= listing_entry_hash(&note.relative_path, note.len, note.modified_unix_nanos)?;
+        fold_listing_entry(
+            &mut digest,
+            &note.relative_path,
+            note.len,
+            note.modified_unix_nanos,
+        );
+        digest?;
     }
 
-    Some(digest)
+    digest
+}
+
+fn raw_config_hash(raw_config: Option<&str>) -> u64 {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    raw_config.hash(&mut hasher);
+    hasher.finish()
+}
+
+/// Folds one listed file's `(path, len, mtime)` into an order-independent XOR
+/// digest, clearing the digest to `None` if any file reports a `0` mtime.
+pub(super) fn fold_listing_entry(
+    digest: &mut Option<u64>,
+    path: &str,
+    len: u64,
+    modified_unix_nanos: u128,
+) {
+    let Some(current) = *digest else {
+        return;
+    };
+    *digest = listing_entry_hash(path, len, modified_unix_nanos).map(|hash| current ^ hash);
 }
 
 /// Hash of one listed file's `(path, len, mtime)`, or `None` when its mtime is `0`
@@ -108,13 +150,17 @@ fn listing_entry_hash(path: &str, len: u64, modified_unix_nanos: u128) -> Option
 
 async fn read_library_inner(
     config: KizunaConfig,
+    raw_config: Option<&str>,
     vfs: Arc<dyn Vfs>,
     cache: Option<IndexCacheContext>,
-) -> Result<Library> {
+) -> Result<(Library, Option<u64>)> {
     validate_library_roots(&config, vfs.as_ref()).await?;
     // Load whatever the cache can vouch for (empty when absent/stale/mismatched);
     // every file not reused from here is read and parsed fresh below.
-    let loaded = cache.as_ref().map(|cache| cache.load()).unwrap_or_default();
+    let loaded = match &cache {
+        Some(cache) => cache.load().await,
+        None => Default::default(),
+    };
 
     // Per-directory streaming: bodies/raw are extracted into compact records +
     // body-link lists and dropped before the next directory, so resident memory
@@ -133,21 +179,31 @@ async fn read_library_inner(
         record.summary.relation_count = *relation_count_by_id.get(&record.summary.id).unwrap_or(&0);
     }
 
+    let listing_fingerprint = match (raw_config, read.listing_digest, daily.listing_digest) {
+        (Some(raw), Some(entities_digest), Some(daily_digest)) => {
+            Some(raw_config_hash(Some(raw)) ^ entities_digest ^ daily_digest)
+        }
+        _ => None,
+    };
+
     // Persist the freshly assembled per-file entries + daily-note links (current
     // listing only, so deleted files drop out) — but only when something actually
     // changed, to avoid rewriting an unchanged cache on every load.
     if let Some(cache) = &cache {
         if read.cache_dirty || daily.dirty {
-            cache.save(read.entries, daily.cache);
+            cache.save(read.entries, daily.cache).await;
         }
     }
 
-    Ok(Library::new(
-        config,
-        records,
-        relations,
-        diagnostics,
-        chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
+    Ok((
+        Library::new(
+            config,
+            records,
+            relations,
+            diagnostics,
+            chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
+        ),
+        listing_fingerprint,
     ))
 }
 
@@ -217,13 +273,15 @@ async fn validate_library_roots(config: &KizunaConfig, vfs: &dyn Vfs) -> Result<
 
 /// The assembled result of reading every entity: the slim resident records (each
 /// carrying its body wikilinks), diagnostics, the per-file cache entries to
-/// persist (current listing only, so deletions drop out), and whether the cache
-/// changed and should be rewritten.
+/// persist (current listing only, so deletions drop out), whether the cache
+/// changed and should be rewritten, and the XOR listing digest of every listed
+/// `.md` entity file.
 struct LibraryRead {
     records: Vec<EntityRecord>,
     diagnostics: Vec<LibraryDiagnostic>,
-    entries: BTreeMap<String, CachedEntry>,
+    entries: BTreeMap<String, Arc<CachedEntry>>,
     cache_dirty: bool,
+    listing_digest: Option<u64>,
 }
 
 /// Reads every entity. Files whose directory-listing fingerprint matches a
@@ -233,19 +291,24 @@ struct LibraryRead {
 async fn read_entities(
     config: &KizunaConfig,
     vfs: &Arc<dyn Vfs>,
-    loaded: &HashMap<String, CachedEntry>,
+    loaded: &HashMap<String, Arc<CachedEntry>>,
 ) -> Result<LibraryRead> {
     let mut records = Vec::new();
     let mut diagnostics = Vec::new();
-    let mut entries: BTreeMap<String, CachedEntry> = BTreeMap::new();
+    let mut entries: BTreeMap<String, Arc<CachedEntry>> = BTreeMap::new();
     let mut misses = 0usize;
+    let mut listing_digest = Some(0u64);
     for type_config in &config.types {
         let batch = read_entities_for_type(config, type_config, vfs, loaded).await?;
         misses += batch.misses;
+        listing_digest = match (listing_digest, batch.listing_digest) {
+            (Some(acc), Some(part)) => Some(acc ^ part),
+            _ => None,
+        };
         diagnostics.extend(batch.diagnostics);
         for (key, entry) in batch.entries {
             records.push(entry.record.clone());
-            diagnostics.extend(entry.diagnostics.clone());
+            diagnostics.extend(entry.diagnostics.iter().cloned());
             entries.insert(key, entry);
         }
     }
@@ -259,6 +322,7 @@ async fn read_entities(
         diagnostics,
         entries,
         cache_dirty,
+        listing_digest,
     })
 }
 
@@ -288,19 +352,21 @@ pub(super) fn sort_records(records: &mut [EntityRecord]) {
 }
 
 /// One type directory's read: the per-file cache entries (cached hits + freshly
-/// parsed misses, keyed by NFC path), how many files were re-parsed, and the
-/// diagnostics for files that could not be parsed at all (skipped, no entry).
+/// parsed misses, keyed by NFC path), how many files were re-parsed, the
+/// diagnostics for files that could not be parsed at all (skipped, no entry),
+/// and the XOR listing digest of every `.md` entry in this directory.
 struct TypeRead {
-    entries: Vec<(String, CachedEntry)>,
+    entries: Vec<(String, Arc<CachedEntry>)>,
     misses: usize,
     diagnostics: Vec<LibraryDiagnostic>,
+    listing_digest: Option<u64>,
 }
 
 async fn read_entities_for_type(
     config: &KizunaConfig,
     type_config: &EntityTypeConfig,
     vfs: &Arc<dyn Vfs>,
-    loaded: &HashMap<String, CachedEntry>,
+    loaded: &HashMap<String, Arc<CachedEntry>>,
 ) -> Result<TypeRead> {
     let relative_dir = format!(
         "{}/{}",
@@ -314,6 +380,7 @@ async fn read_entities_for_type(
                 entries: Vec::new(),
                 misses: 0,
                 diagnostics: Vec::new(),
+                listing_digest: Some(0),
             });
         }
         Err(error) => {
@@ -326,14 +393,21 @@ async fn read_entities_for_type(
     // Split the listing into cache hits (fingerprint unchanged, reused without a
     // read) and misses (read + parsed below). The fingerprint — size + mtime —
     // comes from this same enumeration pass; no per-file stat or read.
-    let mut entries: Vec<(String, CachedEntry)> = Vec::new();
+    let mut entries: Vec<(String, Arc<CachedEntry>)> = Vec::new();
     let mut miss_paths: Vec<String> = Vec::new();
     let mut miss_fingerprints: HashMap<String, (u64, u128)> = HashMap::new();
+    let mut listing_digest = Some(0u64);
     for entry in dir_entries {
         if !(entry.is_file && entry.name.ends_with(".md")) {
             continue;
         }
         let path = format!("{relative_dir}/{}", entry.name);
+        fold_listing_entry(
+            &mut listing_digest,
+            &path,
+            entry.len,
+            entry.modified_unix_nanos,
+        );
         let key = cache_key(&path);
         if let Some(cached) = loaded.get(&key) {
             if fingerprint_hit(
@@ -342,7 +416,7 @@ async fn read_entities_for_type(
                 entry.len,
                 entry.modified_unix_nanos,
             ) {
-                entries.push((key, cached.clone()));
+                entries.push((key, Arc::clone(cached)));
                 continue;
             }
         }
@@ -396,7 +470,7 @@ async fn read_entities_for_type(
         } = parsed;
         entries.push((
             key,
-            CachedEntry {
+            Arc::new(CachedEntry {
                 len,
                 modified_unix_nanos,
                 record: EntityRecord {
@@ -408,12 +482,13 @@ async fn read_entities_for_type(
                     episode_dates,
                 },
                 diagnostics,
-            },
+            }),
         ));
     }
     Ok(TypeRead {
         entries,
         misses,
         diagnostics: skipped,
+        listing_digest,
     })
 }

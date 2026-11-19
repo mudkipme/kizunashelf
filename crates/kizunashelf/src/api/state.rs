@@ -2,8 +2,8 @@ use super::error::ApiError;
 use super::import::{ImportJobRecord, ImportState};
 use crate::contract::{AnalyticsResponse, AssetDownloadJob, CleanupQueuesResponse, ImportJob};
 use crate::library::{
-    compute_listing_fingerprint, load_vault_config_via_vfs, read_library, read_library_cached,
-    read_raw_vault_config_via_vfs, IndexCacheContext, MemoryIndexCache,
+    compute_listing_fingerprint, load_vault_config_with_raw_via_vfs, read_library_with_fingerprint,
+    IndexCacheContext, MemoryIndexCache,
 };
 use crate::secrets::{SecretStore, SECRET_PROVIDER_TOKENS};
 use crate::types::{AppConfig, KizunaConfig, Library};
@@ -816,38 +816,59 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
     let _reload = state.reload.lock().await;
     let generation = state.cache_generation.load(Ordering::Acquire);
     // Re-check: a concurrent reload may have just refreshed the cache.
-    let previous = {
+    {
         let cache = state.cache.lock().await;
-        match cache.as_ref() {
-            Some(cached)
-                if cached.generation == generation
-                    && cached.cached_at.elapsed() < state.options.cache_ttl =>
+        if let Some(cached) = cache.as_ref() {
+            if cached.generation == generation
+                && cached.cached_at.elapsed() < state.options.cache_ttl
             {
                 return Ok(Arc::clone(&cached.library));
             }
-            Some(cached) if cached.generation == generation => cached
-                .listing_fingerprint
-                .map(|fingerprint| (Arc::clone(&cached.library), fingerprint)),
+        }
+    }
+
+    let (library, _) = revalidate_locked(state, generation).await?;
+    Ok(library)
+}
+
+/// Checks whether the cached library still matches the vault's current listing
+/// fingerprint, reusing it without re-indexing when unchanged and reloading
+/// otherwise. Returns `(library, changed)` where `changed` is `false` whenever
+/// the cached library (and its `generated_at` stamp) was kept unchanged.
+pub(crate) async fn revalidate_library(state: &AppState) -> Result<(Arc<Library>, bool)> {
+    state.ensure_vault_watch().await;
+    let _reload = state.reload.lock().await;
+    let generation = state.cache_generation.load(Ordering::Acquire);
+    revalidate_locked(state, generation).await
+}
+
+async fn revalidate_locked(state: &AppState, generation: u64) -> Result<(Arc<Library>, bool)> {
+    let previous = {
+        let cache = state.cache.lock().await;
+        match cache.as_ref() {
+            Some(cached) if cached.generation == generation => {
+                Some((Arc::clone(&cached.library), cached.listing_fingerprint))
+            }
             _ => None,
         }
     };
 
-    // Fast path: the cache is stale, but if the vault's file listing (schema +
-    // every entity/daily-note file's size+mtime) is unchanged since the cached
-    // library was built, that library is still valid. Reuse it, skipping the whole
-    // read + parse + relation rebuild — the directory listing is the only cost.
-    if let Some((library, fingerprint)) = previous {
+    // Fast path: if the vault's file listing (schema + every entity/daily-note
+    // file's size+mtime) is unchanged since the cached library was built, that
+    // library is still valid. Reuse it, skipping the whole read + parse +
+    // relation rebuild — the directory listing is the only cost.
+    if let Some((library, Some(fingerprint))) = &previous {
         let vfs = state.vault_vfs(&library.config.vault_root);
-        if compute_listing_fingerprint(&library.config, vfs.as_ref()).await == Some(fingerprint) {
+        if compute_listing_fingerprint(&library.config, vfs.as_ref()).await == Some(*fingerprint) {
             tracing::debug!("vault listing unchanged; reusing the cached library");
             let mut cache = state.cache.lock().await;
             *cache = Some(CachedLibrary {
-                library: Arc::clone(&library),
+                library: Arc::clone(library),
                 cached_at: Instant::now(),
-                listing_fingerprint: Some(fingerprint),
+                listing_fingerprint: Some(*fingerprint),
                 generation,
             });
-            return Ok(library);
+            return Ok((Arc::clone(library), false));
         }
     }
 
@@ -855,18 +876,25 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
     // number for: "is my vault slow to index, and is the index cache helping?"
     // is unanswerable without timing the reload that actually reads the vault.
     let load_started = Instant::now();
-    let library = Arc::new(load_library(state).await?);
+    let (loaded, listing_fingerprint) = load_library(state).await?;
     tracing::info!(
-        entities = library.records.len(),
-        relations = library.relations.len(),
-        diagnostics = library.diagnostics.len(),
+        entities = loaded.records.len(),
+        relations = loaded.relations.len(),
+        diagnostics = loaded.diagnostics.len(),
         elapsed_ms = load_started.elapsed().as_millis(),
         "reloaded the library from the vault",
     );
-    let listing_fingerprint = {
-        let vfs = state.vault_vfs(&library.config.vault_root);
-        compute_listing_fingerprint(&library.config, vfs.as_ref()).await
+
+    let (library, changed) = match previous {
+        Some((prev, _))
+            if prev.content_revision == loaded.content_revision
+                && prev.diagnostics == loaded.diagnostics =>
+        {
+            (prev, false)
+        }
+        _ => (Arc::new(loaded), true),
     };
+
     let mut cache = state.cache.lock().await;
     *cache = Some(CachedLibrary {
         library: Arc::clone(&library),
@@ -874,13 +902,15 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
         listing_fingerprint,
         generation,
     });
-    Ok(library)
+    Ok((library, changed))
 }
 
-/// Loads the library from the current configuration. The app config is the
-/// inline value; the vault config and all entities are read through the vault
-/// filesystem (a [`NativeVfs`] rooted at the vault root, or the injected iOS VFS).
-async fn load_library(state: &AppState) -> Result<Library> {
+/// Loads the library from the current configuration, returning both the built
+/// [`Library`] and the listing fingerprint computed during the same directory
+/// pass. The app config is the inline value; the vault config and all entities
+/// are read through the vault filesystem (a [`NativeVfs`] rooted at the vault
+/// root, or the injected iOS VFS).
+async fn load_library(state: &AppState) -> Result<(Library, Option<u64>)> {
     let app = state.app_config.clone();
     // Desktop derives the vault filesystem from the (absolute) vault root; iOS
     // injects one and the root is just a display label.
@@ -888,12 +918,10 @@ async fn load_library(state: &AppState) -> Result<Library> {
         anyhow::bail!("config does not set a vault root; run onboarding to create one");
     }
     let vfs = state.vault_vfs(&app.vault_root);
-    let vault = load_vault_config_via_vfs(vfs.as_ref()).await?;
+    let (vault, raw_config) = load_vault_config_with_raw_via_vfs(vfs.as_ref()).await?;
     let config = KizunaConfig::from_parts(app, vault);
-    match build_index_cache_context(state, vfs.as_ref(), &config).await {
-        Some(cache) => read_library_cached(config, vfs, cache).await,
-        None => read_library(config, vfs).await,
-    }
+    let cache = build_index_cache_context(state, &raw_config, &config);
+    read_library_with_fingerprint(config, &raw_config, vfs, Some(cache)).await
 }
 
 async fn invalidate_library_cache(
@@ -957,29 +985,33 @@ fn change_affects_library(change: &VfsChange) -> bool {
     })
 }
 
-/// Builds the index-cache context. The schema fingerprint comes from the raw
-/// vault config text (so any schema edit busts the whole cache); the vault root
-/// is the per-vault identity. Uses the persistent on-disk cache when a dir is
-/// configured, otherwise a process-resident in-memory cache (lost on restart but
-/// still avoids whole-vault re-parses between reloads). Returns `None` — the
-/// fully uncached path — only when the raw config can't be read.
-async fn build_index_cache_context(
+/// Builds the index-cache context from the already-read raw vault config text.
+/// Always keeps the process-resident L1 cache warm; when `index_cache_dir` is
+/// configured, layers the persistent disk cache underneath it so cold starts
+/// reuse prior parses while warm reloads skip disk I/O.
+fn build_index_cache_context(
     state: &AppState,
-    vfs: &dyn Vfs,
+    raw_config: &str,
     config: &KizunaConfig,
-) -> Option<IndexCacheContext> {
-    let raw = read_raw_vault_config_via_vfs(vfs).await.ok().flatten()?;
+) -> IndexCacheContext {
     let vault_identity = state
         .options
         .index_cache_identity
         .as_deref()
         .unwrap_or(&config.vault_root);
-    Some(match state.options.index_cache_dir.clone() {
-        Some(dir) => IndexCacheContext::new(dir, &raw, vault_identity),
-        None => {
-            IndexCacheContext::memory(Arc::clone(&state.index_cache_memory), &raw, vault_identity)
-        }
-    })
+    match state.options.index_cache_dir.clone() {
+        Some(dir) => IndexCacheContext::with_memory_and_disk(
+            Arc::clone(&state.index_cache_memory),
+            dir,
+            raw_config,
+            vault_identity,
+        ),
+        None => IndexCacheContext::memory(
+            Arc::clone(&state.index_cache_memory),
+            raw_config,
+            vault_identity,
+        ),
+    }
 }
 
 pub(crate) fn content_writes_enabled(state: &AppState, library: &Library) -> bool {
@@ -1195,5 +1227,27 @@ types:
 
         let after = get_library(&state).await.unwrap();
         assert_eq!(after.records[0].frontmatter["title"], "After");
+    }
+
+    #[tokio::test]
+    async fn revalidate_library_reuses_cache_when_unchanged_and_reloads_on_edit() {
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_file(
+            "KizunaShelf/config.yaml",
+            "taxonomyRoot: Taxonomy\ntypes:\n  - id: note\n    label: Note\n    path: Notes\n    fields:\n      - field: title\n        fieldType: title\n",
+        );
+        let path = "Taxonomy/Notes/Example.md";
+        vfs.insert_file(path, "---\ntitle: Before\n---\n");
+        let state = test_state(Arc::clone(&vfs));
+
+        let initial = get_library(&state).await.unwrap();
+        let (reused, changed) = revalidate_library(&state).await.unwrap();
+        assert!(!changed);
+        assert_eq!(reused.generated_at, initial.generated_at);
+
+        vfs.insert_file(path, "---\ntitle: After\n---\n");
+        let (reloaded, changed) = revalidate_library(&state).await.unwrap();
+        assert!(changed);
+        assert_eq!(reloaded.records[0].frontmatter["title"], "After");
     }
 }

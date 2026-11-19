@@ -21,14 +21,19 @@ export function VaultChangeSync() {
     const controller = new AbortController();
     let generation = 0;
     let refreshing = false;
+    let lastGeneratedAt: string | null = null;
     async function refresh() {
       if (controller.signal.aborted || refreshing || document.visibilityState === "hidden") return;
       refreshing = true;
       try {
-        await refreshLibrary({ signal: controller.signal });
+        const response = await refreshLibrary({ ifChanged: true }, { signal: controller.signal });
         if (controller.signal.aborted) return;
         toast.dismiss("vault-refresh");
-        await queryClient.invalidateQueries();
+        const changed =
+          response.changed !== false ||
+          (lastGeneratedAt !== null && response.generatedAt !== lastGeneratedAt);
+        lastGeneratedAt = response.generatedAt;
+        if (changed) await queryClient.invalidateQueries();
       } catch (error) {
         if (!controller.signal.aborted && !isAbortError(error))
           toast.error(t`Couldn't refresh. Showing the last loaded version.`, {

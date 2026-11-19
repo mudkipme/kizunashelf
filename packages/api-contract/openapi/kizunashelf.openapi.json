@@ -35,6 +35,18 @@
     "/api/refresh": {
       "post": {
         "operationId": "refreshLibrary",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ifChanged",
+            "description": "When `true`, checks the vault listing fingerprint and reuses the cached\nlibrary if nothing changed instead of forcing a full reload.",
+            "schema": {
+              "description": "When `true`, checks the vault listing fingerprint and reuses the cached\nlibrary if nothing changed instead of forcing a full reload.",
+              "type": "boolean"
+            },
+            "style": "form"
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -4446,6 +4458,13 @@
             "items": {
               "$ref": "#/components/schemas/LibraryDiagnostic"
             }
+          },
+          "changed": {
+            "description": "Present on `/api/refresh`: `false` when a conditional refresh\n(`ifChanged=true`) confirmed the vault was unchanged and reused the\ncached library; `true` when the library was reloaded.",
+            "type": [
+              "boolean",
+              "null"
+            ]
           }
         },
         "required": [
@@ -4486,6 +4505,18 @@
         "required": [
           "error"
         ]
+      },
+      "RefreshQuery": {
+        "type": "object",
+        "properties": {
+          "ifChanged": {
+            "description": "When `true`, checks the vault listing fingerprint and reuses the cached\nlibrary if nothing changed instead of forcing a full reload.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
       },
       "CapabilitiesResponse": {
         "type": "object",
