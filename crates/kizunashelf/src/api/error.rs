@@ -68,6 +68,18 @@ impl From<anyhow::Error> for ApiError {
     }
 }
 
+impl From<crate::library::WriteError> for ApiError {
+    fn from(error: crate::library::WriteError) -> Self {
+        use crate::library::WriteError;
+        match error {
+            WriteError::RevisionConflict | WriteError::AlreadyExists => {
+                Self::conflict(&error.to_string())
+            }
+            WriteError::Io(error) => error.into(),
+        }
+    }
+}
+
 impl From<serde_json::Error> for ApiError {
     fn from(error: serde_json::Error) -> Self {
         Self {

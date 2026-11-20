@@ -163,26 +163,23 @@ where
     Fut: Future<Output = Result<CachedAccessToken, ApiError>>,
 {
     if !force_refresh {
-        if let Some(token) = state.cached_access_token(key).await {
+        if let Some(token) = state.tokens().get(key).await {
             return Ok(token.access_token);
         }
     }
     // Single-flight the fetch: under concurrent searches a cold cache would
     // otherwise stampede the provider's token endpoint and risk rate limits.
-    let fetch_lock = state.token_fetch_lock(key).await;
+    let fetch_lock = state.tokens().fetch_lock(key).await;
     let _guard = fetch_lock.lock().await;
     // Another task may have populated the cache while we waited for the lock.
-    if let Some(token) = state.cached_access_token(key).await {
+    if let Some(token) = state.tokens().get(key).await {
         return Ok(token.access_token);
     }
     let token = fetch().await?;
     let access_token = token.access_token.clone();
-    state
-        .store_access_token(key, token)
-        .await
-        .map_err(|error| {
-            ApiError::bad_request(&format!("failed to cache {label} token: {error}"))
-        })?;
+    state.tokens().store(key, token).await.map_err(|error| {
+        ApiError::bad_request(&format!("failed to cache {label} token: {error}"))
+    })?;
     Ok(access_token)
 }
 
@@ -206,7 +203,7 @@ where
     if response.status() != reqwest::StatusCode::UNAUTHORIZED {
         return Ok(response);
     }
-    state.invalidate_access_token(key).await;
+    state.tokens().invalidate(key).await;
     let token = refresh().await?;
     send_limited(build(&token)).await.map_err(provider_error)
 }

@@ -59,9 +59,9 @@ use super::assets::download_new_entity_covers;
 use super::episodes::import_new_entity_episodes;
 use super::mutations::{
     derive_basename, resolve_free_basename, sanitize_basename, type_config_or_err,
-    write_new_entity_file,
 };
 use super::state::{get_library, require_content_writes, AppState};
+use crate::library::write_new_entity_file;
 
 pub(super) const USER_AGENT: &str = concat!("KizunaShelf/", env!("CARGO_PKG_VERSION"));
 

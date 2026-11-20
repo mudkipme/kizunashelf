@@ -5,12 +5,12 @@
 
 use super::error::{ApiError, ApiResult};
 use super::list_files::{SMART_LIST, STATIC_LIST};
-use super::mutations::{check_revision, write_entity_raw};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     AddListItemRequest, CreateListRequest, DeleteListResponse, ListDetail, ListItem, ListKind,
     ListMarker, ListSection, ListSummary, ListsResponse, UpdateListRequest,
 };
+use crate::library::{check_revision, write_entity_raw};
 use crate::library::{file_revision, find_target, normalized_entity_basename_index};
 use crate::lists::{
     basename_ambiguous, compose_document, entity_wikilink, item_target, parse_list, render_list,
@@ -52,7 +52,7 @@ pub(crate) struct ListsQuery {
 /// an external editor (Obsidian) can change the file between that read and this
 /// write; without the compare, the edit would be silently lost.
 async fn write_list_if_unchanged(
-    mutation: &super::state::ContentMutationGuard<'_>,
+    mutation: &crate::library::ContentMutationGuard<'_>,
     vfs: &dyn Vfs,
     path: &str,
     expected: &str,

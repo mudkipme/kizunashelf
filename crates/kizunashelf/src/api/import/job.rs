@@ -13,14 +13,13 @@ use crate::api::external::{
     build_existing_index, build_mapped_document, candidate_basename_base, candidate_year,
     lookup_existing, resolve_candidate,
 };
-use crate::api::mutations::{
-    entity_create_path, resolve_free_basename, write_entity_raw, write_new_entity_file,
-};
+use crate::api::mutations::resolve_free_basename;
 use crate::api::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CommitImportJobRequest, ExistingEntityRef, ImportDecisionAction, ImportInput, ImportJob,
     ImportPlan, ImportPlanBucket, ImportPlanItem, ImportPlanItemState, ImportReviewReason,
 };
+use crate::library::{entity_create_path, write_entity_raw, write_new_entity_file};
 use crate::library::{serialize_markdown_document, split_markdown_document};
 use crate::types::KizunaConfig;
 use std::collections::{HashMap, HashSet};
@@ -55,6 +54,7 @@ pub(super) async fn run_plan_job(
     // starting. Only a still-queued job advances; otherwise the requested state
     // is left for the cancellation/pause path below.
     state
+        .jobs()
         .update_import_record(&job_id, |record| {
             record.begin_plan();
         })
@@ -138,7 +138,7 @@ pub(super) async fn run_plan_job(
     let buckets = build_buckets(&planned);
     let total = planned.len() as u32;
 
-    let mut jobs = state.import_jobs().lock().await;
+    let mut jobs = state.jobs().import_jobs().lock().await;
     if let Some(record) = jobs.get_mut(&job_id) {
         // A pause or cancel while the fetch was resolving owns the next state;
         // don't resurrect the job as a fresh plan.
@@ -155,7 +155,7 @@ pub(super) async fn run_plan_job(
             buckets,
             items: plan_items,
         });
-        if let Err(error) = state.import_recovery().save(record).await {
+        if let Err(error) = state.jobs().import_recovery().save(record).await {
             pause_after_save_failure(
                 record,
                 format!("Couldn't save import review: {}", error.message()),
@@ -282,6 +282,7 @@ pub(super) async fn run_commit_job(
         }
     };
     let reviewed_schema = state
+        .jobs()
         .import_jobs()
         .lock()
         .await
@@ -317,7 +318,13 @@ pub(super) async fn run_commit_job(
 
     // Retain in-batch dedup even when a custom mapping does not index the
     // external reference on the created file.
-    let saved = state.import_jobs().lock().await.get(&job_id).cloned();
+    let saved = state
+        .jobs()
+        .import_jobs()
+        .lock()
+        .await
+        .get(&job_id)
+        .cloned();
     let import_language = saved
         .as_ref()
         .and_then(|record| record.input.as_ref())
@@ -334,12 +341,18 @@ pub(super) async fn run_commit_job(
         if cancel.load(Ordering::Relaxed) {
             break;
         }
-        let checkpoint = state.import_jobs().lock().await.get(&job_id).map(|record| {
-            (
-                record.outcomes.get(position).copied().flatten(),
-                record.creations.get(&position).cloned(),
-            )
-        });
+        let checkpoint = state
+            .jobs()
+            .import_jobs()
+            .lock()
+            .await
+            .get(&job_id)
+            .map(|record| {
+                (
+                    record.outcomes.get(position).copied().flatten(),
+                    record.creations.get(&position).cloned(),
+                )
+            });
         if let Some((Some(_), _)) = checkpoint {
             continue;
         }
@@ -603,7 +616,7 @@ pub(super) async fn run_commit_job(
                 }
             }
             Err(error) => {
-                pause_with_error(&state, &job_id, error.message().to_owned()).await;
+                pause_with_error(&state, &job_id, error.to_string()).await;
                 return;
             }
         }
@@ -614,6 +627,7 @@ pub(super) async fn run_commit_job(
     // created during this particular run. Episode merging preserves existing
     // items and watched state, making a lost acknowledgement safe to replay.
     let created = state
+        .jobs()
         .import_jobs()
         .lock()
         .await
@@ -629,6 +643,7 @@ pub(super) async fn run_commit_job(
         .unwrap_or_default();
     if request.options.import_episodes && !created.is_empty() && !cancel.load(Ordering::Relaxed) {
         state
+            .jobs()
             .update_import_record(&job_id, |record| {
                 record.job.episodes_total = Some(created.len() as u32);
                 record.job.episodes_processed = Some(
@@ -712,7 +727,7 @@ pub(super) async fn run_commit_job(
             if cancel.load(Ordering::Relaxed) {
                 break;
             }
-            let mut jobs = state.import_jobs().lock().await;
+            let mut jobs = state.jobs().import_jobs().lock().await;
             if let Some(record) = jobs.get_mut(&job_id) {
                 if let Some(intent) = record.creations.get_mut(position) {
                     intent.episodes_done = true;
@@ -724,7 +739,7 @@ pub(super) async fn run_commit_job(
                         .filter(|intent| intent.created && intent.episodes_done)
                         .count() as u32,
                 );
-                if let Err(error) = state.import_recovery().save(record).await {
+                if let Err(error) = state.jobs().import_recovery().save(record).await {
                     pause_after_save_failure(
                         record,
                         format!("Couldn't save episode checkpoint: {}", error.message()),
@@ -738,6 +753,7 @@ pub(super) async fn run_commit_job(
     state.invalidate_cache().await;
     let cancelled = cancel.load(Ordering::Relaxed);
     state
+        .jobs()
         .update_import_record(&job_id, |record| {
             if record.state().is_paused() || record.state().is_terminal() {
                 return;
@@ -762,7 +778,7 @@ async fn checkpoint_outcome(
     outcome: ItemOutcome,
     message: Option<String>,
 ) -> bool {
-    let mut jobs = state.import_jobs().lock().await;
+    let mut jobs = state.jobs().import_jobs().lock().await;
     let Some(record) = jobs.get_mut(id) else {
         return false;
     };
@@ -786,7 +802,7 @@ async fn checkpoint_outcome(
             push_error(&mut record.job, message);
         }
     }
-    if let Err(error) = state.import_recovery().save(record).await {
+    if let Err(error) = state.jobs().import_recovery().save(record).await {
         pause_after_save_failure(
             record,
             format!("Couldn't save import checkpoint: {}", error.message()),
@@ -802,12 +818,12 @@ async fn save_creation_intent(
     position: usize,
     intent: CreationCheckpoint,
 ) -> bool {
-    let mut jobs = state.import_jobs().lock().await;
+    let mut jobs = state.jobs().import_jobs().lock().await;
     let Some(record) = jobs.get_mut(id) else {
         return false;
     };
     record.creations.insert(position, intent);
-    if let Err(error) = state.import_recovery().save(record).await {
+    if let Err(error) = state.jobs().import_recovery().save(record).await {
         pause_after_save_failure(
             record,
             format!("Couldn't save import checkpoint: {}", error.message()),
@@ -837,6 +853,7 @@ async fn record_episode_error(state: &AppState, id: &str, message: String) -> bo
         false
     } else {
         state
+            .jobs()
             .update_import_job(id, |job| push_error(job, message))
             .await;
         true
@@ -844,7 +861,7 @@ async fn record_episode_error(state: &AppState, id: &str, message: String) -> bo
 }
 
 async fn pause_with_error(state: &AppState, id: &str, message: String) {
-    let mut jobs = state.import_jobs().lock().await;
+    let mut jobs = state.jobs().import_jobs().lock().await;
     if let Some(record) = jobs.get_mut(id) {
         let state_now = record.state();
         let Some(phase) = state_now.resumable_phase() else {
@@ -861,7 +878,7 @@ async fn pause_with_error(state: &AppState, id: &str, message: String) {
         }
         record.cancel.store(true, Ordering::Relaxed);
         push_error(&mut record.job, message);
-        let _ = state.import_recovery().save(record).await;
+        let _ = state.jobs().import_recovery().save(record).await;
     }
 }
 
@@ -876,6 +893,7 @@ async fn recover_creation(
 ) -> bool {
     let mutation = state.content_mutation_lock().await;
     if state
+        .jobs()
         .import_jobs()
         .lock()
         .await
@@ -939,6 +957,7 @@ async fn recover_creation(
 async fn fail_plan(state: &AppState, job_id: &str, message: &str) {
     let message = message.to_string();
     state
+        .jobs()
         .update_import_record(job_id, |record| {
             if record.state().is_paused() || record.state().is_terminal() {
                 return;
@@ -953,6 +972,7 @@ async fn fail_plan(state: &AppState, job_id: &str, message: &str) {
 async fn fail_commit(state: &AppState, job_id: &str, message: &str, cancelled: bool) {
     let message = message.to_string();
     state
+        .jobs()
         .update_import_record(job_id, |record| {
             if record.state().is_paused() || record.state().is_terminal() {
                 return;
@@ -970,6 +990,7 @@ async fn fail_commit(state: &AppState, job_id: &str, message: &str, cancelled: b
 
 async fn finish_cancelled(state: &AppState, job_id: &str) {
     state
+        .jobs()
         .update_import_record(job_id, |record| {
             if record.state().is_paused() || record.state().is_terminal() {
                 return;
@@ -1037,7 +1058,8 @@ mod tests {
             .0;
         tokio::time::timeout(Duration::from_secs(5), async {
             loop {
-                if state.import_jobs().lock().await[&job.id].job.status == ImportJobStatus::Planned
+                if state.jobs().import_jobs().lock().await[&job.id].job.status
+                    == ImportJobStatus::Planned
                 {
                     break;
                 }
@@ -1047,7 +1069,7 @@ mod tests {
         .await
         .unwrap();
         let (items, cancel) = {
-            let mut jobs = state.import_jobs().lock().await;
+            let mut jobs = state.jobs().import_jobs().lock().await;
             let ImportJobRecord {
                 job, items, cancel, ..
             } = jobs.get_mut(&job.id).unwrap();
@@ -1092,7 +1114,7 @@ mod tests {
             .into_iter()
             .map(|f| f.name)
             .collect();
-        let job = state.import_jobs().lock().await[&id].job.clone();
+        let job = state.jobs().import_jobs().lock().await[&id].job.clone();
         (job, files)
     }
 
@@ -1156,7 +1178,7 @@ mod tests {
         let (state, fs, id, _, _) = fixture().await;
         let dir = tempfile::tempdir().unwrap();
         let durable = durable_state(fs.clone(), dir.path(), "recovery-vault");
-        let mut record = state.import_jobs().lock().await[&id].clone();
+        let mut record = state.jobs().import_jobs().lock().await[&id].clone();
         let request: CommitImportJobRequest = serde_json::from_value(
             json!({"options":{"importUserData":true,"importEpisodes":true,"markProgress":true}}),
         )
@@ -1184,6 +1206,7 @@ mod tests {
             fs.insert_file("Shelf/Anime/Imported title.md", &raw);
         }
         durable
+            .jobs()
             .import_recovery()
             .save(&record)
             .await
@@ -1204,7 +1227,7 @@ mod tests {
         assert!(!resumed.paused);
         tokio::time::timeout(Duration::from_secs(5), async {
             loop {
-                let jobs = state.import_jobs().lock().await;
+                let jobs = state.jobs().import_jobs().lock().await;
                 let record = &jobs[id];
                 if !record.running {
                     break record.job.clone();
@@ -1222,10 +1245,11 @@ mod tests {
         let (state, fs, id, _, _) = fixture().await;
         let dir = tempfile::tempdir().unwrap();
         let durable = durable_state(fs.clone(), dir.path(), "recovery-vault");
-        let mut record = state.import_jobs().lock().await[&id].clone();
+        let mut record = state.jobs().import_jobs().lock().await[&id].clone();
         record.running = false;
         record.set_state(ImportState::Paused(ImportPhase::Planning));
         durable
+            .jobs()
             .import_recovery()
             .save(&record)
             .await
@@ -1234,7 +1258,7 @@ mod tests {
 
         let reloaded = durable_state(fs, dir.path(), "recovery-vault");
         assert_eq!(
-            reloaded.import_jobs().lock().await[&id].state(),
+            reloaded.jobs().import_jobs().lock().await[&id].state(),
             ImportState::Paused(ImportPhase::Planning)
         );
         let job = resume_and_wait(&reloaded, &id).await;
@@ -1248,7 +1272,7 @@ mod tests {
         for written in [false, true] {
             let (dir, fs, id) = interrupted_fixture(written, false).await;
             let state = durable_state(fs.clone(), dir.path(), "recovery-vault");
-            assert!(state.import_jobs().lock().await[&id].job.paused);
+            assert!(state.jobs().import_jobs().lock().await[&id].job.paused);
             let job = resume_and_wait(&state, &id).await;
             assert_eq!(job.status, ImportJobStatus::Completed);
             assert_eq!(job.created, 1);
@@ -1262,18 +1286,18 @@ mod tests {
     async fn resumes_episode_enrichment_for_previously_created_entities() {
         let (dir, fs, id) = interrupted_fixture(true, true).await;
         let state = durable_state(fs.clone(), dir.path(), "recovery-vault");
-        assert!(!state.import_jobs().lock().await[&id].creations[&0].episodes_done);
+        assert!(!state.jobs().import_jobs().lock().await[&id].creations[&0].episodes_done);
         let job = resume_and_wait(&state, &id).await;
         assert_eq!(job.created, 1);
         assert_eq!(job.skipped, 0);
         assert_eq!(job.episodes_total, Some(1));
         assert_eq!(job.episodes_processed, Some(1));
-        assert!(state.import_jobs().lock().await[&id].creations[&0].episodes_done);
+        assert!(state.jobs().import_jobs().lock().await[&id].creations[&0].episodes_done);
         // A new engine sees the acknowledged terminal job, not another import.
         drop(state);
         let reloaded = durable_state(fs, dir.path(), "recovery-vault");
         assert_eq!(
-            reloaded.import_jobs().lock().await[&id].job.status,
+            reloaded.jobs().import_jobs().lock().await[&id].job.status,
             ImportJobStatus::Completed
         );
     }
@@ -1301,7 +1325,7 @@ mod tests {
     async fn saved_imports_are_isolated_by_vault_identity() {
         let (dir, fs, id) = interrupted_fixture(true, true).await;
         let other = durable_state(fs, dir.path(), "another-vault");
-        assert!(!other.import_jobs().lock().await.contains_key(&id));
+        assert!(!other.jobs().import_jobs().lock().await.contains_key(&id));
     }
 
     #[tokio::test]
@@ -1311,9 +1335,10 @@ mod tests {
         let blocked = dir.path().join("not-a-directory");
         std::fs::write(&blocked, "occupied").unwrap();
         let durable = durable_state(fs.clone(), &blocked, "recovery-vault");
-        let mut record = state.import_jobs().lock().await[&id].clone();
+        let mut record = state.jobs().import_jobs().lock().await[&id].clone();
         record.running = false;
         durable
+            .jobs()
             .import_jobs()
             .lock()
             .await
@@ -1359,7 +1384,7 @@ mod tests {
         let state = durable_state(fs.clone(), dir.path(), "recovery-vault");
         let job = resume_and_wait(&state, &id).await;
         assert!(job.paused);
-        assert!(!state.import_jobs().lock().await[&id].creations[&0].episodes_done);
+        assert!(!state.jobs().import_jobs().lock().await[&id].creations[&0].episodes_done);
     }
 
     #[tokio::test]
@@ -1372,16 +1397,17 @@ mod tests {
         let original = std::fs::read(&file).unwrap();
         std::fs::write(&file, "unreadable journal").unwrap();
         let state = durable_state(fs, dir.path(), "recovery-vault");
-        assert!(state.import_recovery().check().is_err());
-        assert!(state.import_jobs().lock().await.is_empty());
+        assert!(state.jobs().import_recovery().check().is_err());
+        assert!(state.jobs().import_jobs().lock().await.is_empty());
         std::fs::write(&file, original).unwrap();
-        assert!(state.import_recovery().check().is_ok());
-        assert!(state.import_jobs().lock().await[&id].job.paused);
+        assert!(state.jobs().import_recovery().check().is_ok());
+        assert!(state.jobs().import_jobs().lock().await[&id].job.paused);
     }
     #[tokio::test]
     async fn a_late_worker_error_does_not_resurrect_a_cancelled_import() {
         let (state, _, id, _, _) = fixture().await;
         state
+            .jobs()
             .import_jobs()
             .lock()
             .await
@@ -1390,7 +1416,7 @@ mod tests {
             .job
             .status = ImportJobStatus::Cancelled;
         pause_with_error(&state, &id, "A provider request stopped".into()).await;
-        let jobs = state.import_jobs().lock().await;
+        let jobs = state.jobs().import_jobs().lock().await;
         assert_eq!(jobs[&id].job.status, ImportJobStatus::Cancelled);
         assert!(!jobs[&id].job.paused);
         assert!(jobs[&id].job.errors.is_empty());
@@ -1399,7 +1425,7 @@ mod tests {
     async fn web_import_errors_become_terminal_instead_of_unresumable_pauses() {
         let (state, _, id, _, _) = fixture().await;
         pause_with_error(&state, &id, "The vault could not be written".into()).await;
-        let jobs = state.import_jobs().lock().await;
+        let jobs = state.jobs().import_jobs().lock().await;
         assert_eq!(jobs[&id].job.status, ImportJobStatus::Failed);
         assert!(!jobs[&id].job.paused);
         assert!(jobs[&id].job.finished_at.is_some());
@@ -1410,7 +1436,7 @@ mod tests {
     async fn web_episode_errors_are_reported_without_stalling_the_create_job() {
         let (state, _, id, _, _) = fixture().await;
         assert!(record_episode_error(&state, &id, "episodes: provider unavailable".into()).await);
-        let jobs = state.import_jobs().lock().await;
+        let jobs = state.jobs().import_jobs().lock().await;
         assert_eq!(jobs[&id].job.status, ImportJobStatus::Committing);
         assert!(!jobs[&id].job.paused);
         assert!(!jobs[&id].cancel.load(Ordering::Relaxed));
@@ -1422,6 +1448,7 @@ mod tests {
         let (dir, fs, id) = interrupted_fixture(true, true).await;
         let state = durable_state(fs, dir.path(), "recovery-vault");
         state
+            .jobs()
             .import_jobs()
             .lock()
             .await
@@ -1430,7 +1457,7 @@ mod tests {
             .job
             .paused = false;
         assert!(!record_episode_error(&state, &id, "episodes: provider unavailable".into()).await);
-        let jobs = state.import_jobs().lock().await;
+        let jobs = state.jobs().import_jobs().lock().await;
         assert!(jobs[&id].job.paused);
         assert_eq!(jobs[&id].job.status, ImportJobStatus::Committing);
         assert!(!jobs[&id].creations[&0].episodes_done);

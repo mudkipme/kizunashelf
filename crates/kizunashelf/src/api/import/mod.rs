@@ -283,7 +283,7 @@ pub(crate) async fn create_import_job(
     }
 
     let job = ImportJob {
-        id: state.next_import_job_id(),
+        id: state.jobs().next_import_job_id(),
         source: request.source.clone(),
         status: ImportJobStatus::Queued,
         paused: false,
@@ -302,6 +302,7 @@ pub(crate) async fn create_import_job(
     };
     let cancel = Arc::new(AtomicBool::new(false));
     let inserted = state
+        .jobs()
         .insert_import_job_if_idle(ImportJobRecord {
             input: Some(request.input.clone()),
             commit: None,
@@ -324,7 +325,7 @@ pub(crate) async fn create_import_job(
     let input = request.input.clone();
     tokio::spawn(async move {
         job::run_plan_job(worker_state.clone(), job_id.clone(), fetch, input, cancel).await;
-        worker_state.finish_import_worker(&job_id).await;
+        worker_state.jobs().finish_import_worker(&job_id).await;
     });
 
     Ok(Json(job))
@@ -333,8 +334,8 @@ pub(crate) async fn create_import_job(
 pub(crate) async fn list_import_jobs(
     State(state): State<AppState>,
 ) -> ApiResult<ImportJobListResponse> {
-    state.import_recovery().check()?;
-    let jobs = state.import_jobs().lock().await;
+    state.jobs().import_recovery().check()?;
+    let jobs = state.jobs().import_jobs().lock().await;
     let mut jobs: Vec<ImportJob> = jobs.values().map(|record| record.job.clone()).collect();
     jobs.sort_by(|a, b| b.started_at.cmp(&a.started_at));
     Ok(Json(ImportJobListResponse { jobs }))
@@ -344,8 +345,8 @@ pub(crate) async fn get_import_job(
     State(state): State<AppState>,
     AxumPath(path): AxumPath<ImportJobPath>,
 ) -> ApiResult<ImportJob> {
-    state.import_recovery().check()?;
-    let jobs = state.import_jobs().lock().await;
+    state.jobs().import_recovery().check()?;
+    let jobs = state.jobs().import_jobs().lock().await;
     jobs.get(&path.id)
         .map(|record| Json(record.job.clone()))
         .ok_or_else(|| ApiError::not_found("Import job not found"))
@@ -356,12 +357,12 @@ pub(crate) async fn commit_import_job(
     AxumPath(path): AxumPath<ImportJobPath>,
     Json(request): Json<CommitImportJobRequest>,
 ) -> ApiResult<ImportJob> {
-    state.import_recovery().check()?;
+    state.jobs().import_recovery().check()?;
     require_content_writes(&state).await?;
 
     // Flip the job to Committing and take its resolved items under one lock.
     let (planned, cancel) = {
-        let mut jobs = state.import_jobs().lock().await;
+        let mut jobs = state.jobs().import_jobs().lock().await;
         if jobs.values().any(|record| record.running) {
             return Err(ApiError::conflict("An import job is already running"));
         }
@@ -385,7 +386,7 @@ pub(crate) async fn commit_import_job(
             .cancel
             .store(false, std::sync::atomic::Ordering::Relaxed);
         record.job.finished_at = None;
-        if let Err(error) = state.import_recovery().save(record).await {
+        if let Err(error) = state.jobs().import_recovery().save(record).await {
             *record = previous;
             return Err(error);
         }
@@ -403,11 +404,11 @@ pub(crate) async fn commit_import_job(
             cancel,
         )
         .await;
-        worker_state.finish_import_worker(&job_id).await;
+        worker_state.jobs().finish_import_worker(&job_id).await;
     });
 
-    state.import_recovery().check()?;
-    let jobs = state.import_jobs().lock().await;
+    state.jobs().import_recovery().check()?;
+    let jobs = state.jobs().import_jobs().lock().await;
     jobs.get(&path.id)
         .map(|record| Json(record.job.clone()))
         .ok_or_else(|| ApiError::not_found("Import job not found"))
@@ -418,8 +419,8 @@ pub(crate) async fn cancel_import_job(
     AxumPath(path): AxumPath<ImportJobPath>,
 ) -> ApiResult<ImportJob> {
     use std::sync::atomic::Ordering;
-    state.import_recovery().check()?;
-    let mut jobs = state.import_jobs().lock().await;
+    state.jobs().import_recovery().check()?;
+    let mut jobs = state.jobs().import_jobs().lock().await;
     let Some(record) = jobs.get_mut(&path.id) else {
         return Err(ApiError::not_found("Import job not found"));
     };
@@ -430,7 +431,7 @@ pub(crate) async fn cancel_import_job(
         record.set_state(ImportState::Cancelled);
         record.job.finished_at = Some(now_iso());
     }
-    if let Err(error) = state.import_recovery().save(record).await {
+    if let Err(error) = state.jobs().import_recovery().save(record).await {
         *record = previous;
         record.cancel.store(previous_cancel, Ordering::Relaxed);
         return Err(error);
@@ -446,8 +447,8 @@ pub(crate) async fn pause_import_job(
 ) -> ApiResult<ImportJob> {
     use std::sync::atomic::Ordering;
     crate::api::state::require_host_asset_ingest(&state)?;
-    state.import_recovery().check()?;
-    let mut jobs = state.import_jobs().lock().await;
+    state.jobs().import_recovery().check()?;
+    let mut jobs = state.jobs().import_jobs().lock().await;
     let record = jobs
         .get_mut(&path.id)
         .ok_or_else(|| ApiError::not_found("Import job not found"))?;
@@ -456,7 +457,7 @@ pub(crate) async fn pause_import_job(
         let previous_cancel = record.cancel.load(Ordering::Relaxed);
         record.cancel.store(true, Ordering::Relaxed);
         record.set_state(ImportState::Paused(phase));
-        if let Err(error) = state.import_recovery().save(record).await {
+        if let Err(error) = state.jobs().import_recovery().save(record).await {
             *record = previous;
             record.cancel.store(previous_cancel, Ordering::Relaxed);
             return Err(error);
@@ -473,8 +474,8 @@ pub(crate) async fn resume_import_job(
 ) -> ApiResult<ImportJob> {
     crate::api::state::require_host_asset_ingest(&state)?;
     require_content_writes(&state).await?;
-    state.import_recovery().check()?;
-    let mut jobs = state.import_jobs().lock().await;
+    state.jobs().import_recovery().check()?;
+    let mut jobs = state.jobs().import_jobs().lock().await;
     if jobs.values().any(|record| record.running) {
         return Err(ApiError::conflict(
             "An import worker is still stopping or running",
@@ -508,7 +509,7 @@ pub(crate) async fn resume_import_job(
     record.set_state(ImportState::Running(phase));
     record.running = true;
     record.cancel = new_cancel();
-    if let Err(error) = state.import_recovery().save(record).await {
+    if let Err(error) = state.jobs().import_recovery().save(record).await {
         record.running = false;
         record.set_state(ImportState::Paused(phase));
         return Err(error);
@@ -531,7 +532,7 @@ pub(crate) async fn resume_import_job(
                 }
             }
         }
-        state.finish_import_worker(&id).await;
+        state.jobs().finish_import_worker(&id).await;
     });
     Ok(Json(job))
 }

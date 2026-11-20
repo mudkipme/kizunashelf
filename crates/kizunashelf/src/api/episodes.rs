@@ -9,7 +9,7 @@ use super::error::{ApiError, ApiResult};
 use super::external::{
     provider_fetch_episodes, provider_for_external_ref, provider_label, provider_supports_episodes,
 };
-use super::mutations::{edit_entity_document, edit_entity_document_locked, type_config_or_err};
+use super::mutations::{edit_entity_document, type_config_or_err};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     EntityDetailResponse, Episode, EpisodeGroup, EpisodeSource, EpisodeSyncResponse,
@@ -19,6 +19,7 @@ use crate::episodes::{
     apply_episodes, episode_section, merge_episodes, parse_episodes, review_episode_import,
     set_episode_watched,
 };
+use crate::library::edit_entity_document_locked;
 use crate::types::{BodySection, EntityRecord, EntityTypeConfig, FieldType, Library};
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
@@ -340,7 +341,7 @@ async fn fetch_and_write_new_episodes(
         ));
     }
     let vfs = state.vault_vfs(&current.config.vault_root);
-    let (_, changed) = edit_entity_document_locked(
+    let (_, changed) = edit_entity_document_locked::<_, ApiError, _>(
         &mutation,
         vfs.as_ref(),
         &record.summary.path,

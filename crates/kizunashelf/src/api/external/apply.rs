@@ -10,12 +10,13 @@
 use super::mapping::match_candidate;
 use crate::api::entities::EntityPath;
 use crate::api::error::{ApiError, ApiResult};
-use crate::api::mutations::{check_revision, edit_entity_document, type_config_or_err};
+use crate::api::mutations::{edit_entity_document, type_config_or_err};
 use crate::api::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     EntityMutationResponse, ExternalApplyRequest, ExternalReviewField, ExternalReviewRequest,
     ExternalReviewResponse, ExternalReviewSection, MappedBodySection, MappedFieldValue,
 };
+use crate::library::check_revision;
 use crate::library::load_entity;
 use crate::markdown::{find_section, splice_section};
 use crate::types::FieldType;

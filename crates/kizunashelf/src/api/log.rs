@@ -1,11 +1,11 @@
 use super::entities::{build_entity_detail, EntityPath};
 use super::error::{ApiError, ApiResult};
-use super::mutations::{check_revision, edit_entity_document_locked};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     FlippedStatus, LogActions, LogActivityRequest, LogActivityResponse, LogKind, LogOp, StampedDate,
 };
 use crate::daily_notes::{remove_log_line, render_log_line, write_log_line, LogWriteError};
+use crate::library::{check_revision, edit_entity_document_locked};
 use crate::library::{file_revision, MarkdownDocument};
 use crate::types::{CanonicalStatus, DateRole, EntityTypeConfig, ResolvedStatus};
 use axum::extract::{Path as AxumPath, Query, State};

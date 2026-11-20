@@ -11,7 +11,7 @@
 
 use super::error::{ApiError, ApiResult};
 use super::list_files::{basename_is_free, SMART_LIST};
-use super::mutations::{check_revision, derive_basename, write_entity_raw};
+use super::mutations::derive_basename;
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CreateSmartListRequest, DeleteListResponse, EntityListResponse, ListKind, ListSummary,
@@ -21,6 +21,7 @@ use crate::contract::{
 };
 use crate::dates::clamp_number;
 use crate::library::file_revision;
+use crate::library::{check_revision, write_entity_raw};
 use crate::lists::LISTS_DIR;
 use crate::relations::SortDirection as CoreDirection;
 use crate::smart_lists::{
@@ -277,25 +278,27 @@ pub(crate) async fn smart_list_suggestions(
     let library = get_library(&state).await?;
     let vfs = state.vault_vfs(&library.config.vault_root);
     let files = read_smart_list_files(vfs.as_ref()).await?;
-    let suggestions =
-        crate::presets::suggested_lists(&library.config.types, query.language.as_deref())
-            .into_iter()
-            .map(|suggestion| {
-                let existing = files.iter().find(|(_, _, list)| {
-                    smart_lists::suggestion_id(list) == Some(suggestion.id.as_str())
-                });
-                crate::contract::SmartListSuggestion {
-                    id: suggestion.id,
-                    name: existing
-                        .map(|(path, _, _)| SMART_LIST.id(path))
-                        .unwrap_or(suggestion.title),
-                    entity_type: suggestion.entity_type,
-                    existing_list_id: existing.map(|(path, _, _)| SMART_LIST.id(path)),
-                    show_on_home: existing
-                        .is_some_and(|(_, _, list)| smart_lists::shows_on_home(list)),
-                }
-            })
-            .collect();
+    let suggestions = crate::presets::suggested_lists(
+        &library.config.types,
+        query.language.as_deref(),
+        &super::external::provider_catalog_items(),
+    )
+    .into_iter()
+    .map(|suggestion| {
+        let existing = files
+            .iter()
+            .find(|(_, _, list)| smart_lists::suggestion_id(list) == Some(suggestion.id.as_str()));
+        crate::contract::SmartListSuggestion {
+            id: suggestion.id,
+            name: existing
+                .map(|(path, _, _)| SMART_LIST.id(path))
+                .unwrap_or(suggestion.title),
+            entity_type: suggestion.entity_type,
+            existing_list_id: existing.map(|(path, _, _)| SMART_LIST.id(path)),
+            show_on_home: existing.is_some_and(|(_, _, list)| smart_lists::shows_on_home(list)),
+        }
+    })
+    .collect();
     Ok(Json(crate::contract::SmartListSuggestionsResponse {
         suggestions,
     }))
@@ -309,8 +312,11 @@ pub(crate) async fn create_suggested_smart_lists(
     let mutation = state.content_mutation_lock().await;
     let vfs = state.vault_vfs(&library.config.vault_root);
     let files = read_smart_list_files(vfs.as_ref()).await?;
-    let suggestions =
-        crate::presets::suggested_lists(&library.config.types, request.language.as_deref());
+    let suggestions = crate::presets::suggested_lists(
+        &library.config.types,
+        request.language.as_deref(),
+        &super::external::provider_catalog_items(),
+    );
     if request.suggestion_ids.as_ref().is_some_and(|ids| {
         ids.iter()
             .any(|id| !suggestions.iter().any(|suggestion| &suggestion.id == id))
@@ -572,7 +578,8 @@ pub(crate) async fn smart_list_summaries(
             let library_revision = smart_list_library_revision(library);
             let memo_key = format!("{library_revision}|{fingerprint}|{resolved_today}");
             state
-                .smart_list_summaries()
+                .views()
+                .smart_list_summaries
                 .get_or_try_build(&memo_key, build)
                 .await?
         }

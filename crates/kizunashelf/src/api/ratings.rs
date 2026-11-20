@@ -1,9 +1,9 @@
 use super::entities::EntityPath;
 use super::entity_edit_review::read_schema;
 use super::error::{ApiError, ApiResult};
-use super::mutations::edit_entity_document_locked;
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{RatingSnapshot, SetEntityRatingRequest, SetEntityRatingResponse};
+use crate::library::edit_entity_document_locked;
 use crate::library::load_entity;
 use crate::types::FieldType;
 use axum::extract::{Path, State};
@@ -48,7 +48,7 @@ pub(crate) async fn set_entity_rating(
     if let Some(value) = request.value {
         crate::ratings::validate(value, field.rating_max).map_err(ApiError::bad_request)?;
     }
-    let (previous, _) = edit_entity_document_locked(
+    let (previous, _) = edit_entity_document_locked::<_, ApiError, _>(
         &guard,
         vfs.as_ref(),
         &record.summary.path,

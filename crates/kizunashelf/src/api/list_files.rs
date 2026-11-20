@@ -6,9 +6,10 @@
 //! how the file's content is built.
 
 use super::error::ApiError;
-use super::mutations::{check_revision, move_to_trash, sanitize_basename, write_entity_raw};
-use super::state::ContentMutationGuard;
+use super::mutations::sanitize_basename;
 use crate::library::file_revision;
+use crate::library::ContentMutationGuard;
+use crate::library::{check_revision, move_to_trash, write_entity_raw};
 use crate::lists::LISTS_DIR;
 use crate::smart_lists::SMART_LIST_EXTENSION;
 use crate::vfs::Vfs;

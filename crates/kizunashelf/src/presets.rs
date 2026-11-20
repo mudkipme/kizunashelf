@@ -39,13 +39,12 @@
 //! `/api/external/providers`, so a preset can never silently drift from the
 //! providers it references.
 
-use crate::api::external::provider_catalog_items;
 use crate::contract::{
-    ResolveTypePresetsRequest, ResolveTypePresetsResponse, SmartCompareOp, SmartDurationUnit,
-    SmartFilterConjunction, SmartFilterGroup, SmartFilterRule, SmartFilterRuleKind,
-    SmartFilterSubgroup, SmartRelativeDate, TypePresetBackfill, TypePresetCategory,
-    TypePresetCategoryInfo, TypePresetCollision, TypePresetProvider, TypePresetSummary,
-    TypePresetsResponse,
+    ExternalProviderCatalogItem, ResolveTypePresetsRequest, ResolveTypePresetsResponse,
+    SmartCompareOp, SmartDurationUnit, SmartFilterConjunction, SmartFilterGroup, SmartFilterRule,
+    SmartFilterRuleKind, SmartFilterSubgroup, SmartRelativeDate, TypePresetBackfill,
+    TypePresetCategory, TypePresetCategoryInfo, TypePresetCollision, TypePresetProvider,
+    TypePresetSummary, TypePresetsResponse,
 };
 use crate::languages::primary_language;
 use crate::types::{
@@ -61,8 +60,15 @@ use std::collections::HashSet;
 /// list in display order, with all display text in the language `language`
 /// prefers (English fallback). The concrete configs are produced by
 /// [`resolve_presets`].
-pub fn type_presets_response(language: Option<&str>) -> TypePresetsResponse {
-    let ctx = BuildCtx::new(language);
+///
+/// `catalog` is the external-provider catalog (the API layer passes
+/// `provider_catalog_items()`); presets use it for provider labels and to drop
+/// wiring for providers that don't exist.
+pub fn type_presets_response(
+    language: Option<&str>,
+    catalog: &[ExternalProviderCatalogItem],
+) -> TypePresetsResponse {
+    let ctx = BuildCtx::new(language, catalog);
     let presets = built_presets(&ctx);
     TypePresetsResponse {
         presets: presets.iter().map(|preset| preset.summary(&ctx)).collect(),
@@ -74,8 +80,11 @@ pub fn type_presets_response(language: Option<&str>) -> TypePresetsResponse {
 /// caller's current schema. Pure and stateless — onboarding passes an empty
 /// `current_types`, the settings editor passes its in-progress types, and both
 /// get the same relation wiring, back-fill proposals, and collision handling.
-pub fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePresetsResponse {
-    let ctx = BuildCtx::new(request.language.as_deref());
+pub fn resolve_presets(
+    request: &ResolveTypePresetsRequest,
+    catalog: &[ExternalProviderCatalogItem],
+) -> ResolveTypePresetsResponse {
+    let ctx = BuildCtx::new(request.language.as_deref(), catalog);
     let all = built_presets(&ctx);
 
     // The presets the user picked, in request order, de-duplicated, unknown ids
@@ -349,8 +358,12 @@ pub struct SuggestedList {
     pub sort: crate::contract::SmartSortSpec,
 }
 
-pub fn suggested_lists(types: &[EntityTypeConfig], language: Option<&str>) -> Vec<SuggestedList> {
-    let ctx = BuildCtx::new(language);
+pub fn suggested_lists(
+    types: &[EntityTypeConfig],
+    language: Option<&str>,
+    catalog: &[ExternalProviderCatalogItem],
+) -> Vec<SuggestedList> {
+    let ctx = BuildCtx::new(language, catalog);
     let presets = built_presets(&ctx);
     let fallback = l(
         "In progress: {label}",
@@ -471,7 +484,7 @@ struct Preset {
 }
 
 impl Preset {
-    fn summary(&self, ctx: &BuildCtx) -> TypePresetSummary {
+    fn summary(&self, ctx: &BuildCtx<'_>) -> TypePresetSummary {
         // Picker chips come straight from the config's provider priority — the
         // single list that wires the type — so the chips can't disagree with it.
         let providers = self
@@ -540,7 +553,7 @@ fn category_infos(locale: SeedLocale) -> Vec<TypePresetCategoryInfo> {
 /// The order here is the picker's within-category order. Each entry carries its
 /// own category and translations — everything about a preset lives at its
 /// declaration, never in an id-keyed side table.
-fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
+fn built_presets(ctx: &BuildCtx<'_>) -> Vec<Preset> {
     vec![
         // --- Watch ---
         preset(
@@ -1602,26 +1615,26 @@ const MANGA_CHAPTERS: Extra = Extra::Number {
 
 // --- The builder ---------------------------------------------------------------
 
-struct BuildCtx {
-    catalog: Vec<crate::contract::ExternalProviderCatalogItem>,
+struct BuildCtx<'a> {
+    catalog: &'a [ExternalProviderCatalogItem],
     /// Normalized ISO 639-1 title language; `en` when unset/unknown.
     lang: String,
     /// The language the seeded *text* is written in.
     locale: SeedLocale,
 }
 
-impl BuildCtx {
+impl<'a> BuildCtx<'a> {
     /// One language choice, two derivations: the *stamped* title language is
     /// the bare primary subtag (a `zh-Hans`/`zh-Hant` choice stamps `zh` —
     /// script subtags never enter config), while the *text* locale keeps the
     /// script, since it picks glyphs.
-    fn new(language: Option<&str>) -> Self {
+    fn new(language: Option<&str>, catalog: &'a [ExternalProviderCatalogItem]) -> Self {
         let lang = language
             .map(primary_language)
             .filter(|value| !value.is_empty())
             .unwrap_or_else(|| "en".to_string());
         Self {
-            catalog: provider_catalog_items(),
+            catalog,
             lang,
             locale: SeedLocale::from_preference(language),
         }
@@ -1875,7 +1888,7 @@ struct TypeSpec {
     log_hashtag: Option<L>,
 }
 
-fn preset(ctx: &BuildCtx, spec: TypeSpec) -> Preset {
+fn preset(ctx: &BuildCtx<'_>, spec: TypeSpec) -> Preset {
     Preset {
         category: spec.category,
         description: ctx.text(spec.description).to_string(),
@@ -1887,7 +1900,7 @@ fn preset(ctx: &BuildCtx, spec: TypeSpec) -> Preset {
     }
 }
 
-fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
+fn build_type(ctx: &BuildCtx<'_>, spec: &TypeSpec) -> EntityTypeConfig {
     let mut fields = vec![field("id", FieldType::Id, "ID")];
 
     // Primary title, in the chosen language, mapped from every provider's title.
@@ -2043,7 +2056,7 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
 
 const TITLE_NAME: L = l("Title", "タイトル", "标题", "標題");
 
-fn build_body_sections(ctx: &BuildCtx, spec: &TypeSpec) -> Vec<BodySection> {
+fn build_body_sections(ctx: &BuildCtx<'_>, spec: &TypeSpec) -> Vec<BodySection> {
     let mut sections = Vec::new();
     if !spec.summary_sources.is_empty() {
         let external_fields = source_mappings(spec.summary_sources);
@@ -2067,7 +2080,7 @@ fn build_body_sections(ctx: &BuildCtx, spec: &TypeSpec) -> Vec<BodySection> {
     sections
 }
 
-fn extra_field(ctx: &BuildCtx, extra: Extra) -> FieldConfig {
+fn extra_field(ctx: &BuildCtx<'_>, extra: Extra) -> FieldConfig {
     let (name, field_type, label, sources) = match extra {
         Extra::Text {
             field,
@@ -2327,6 +2340,25 @@ fn source_mappings(sources: Sources) -> Vec<ExternalFieldMapping> {
 mod tests {
     use super::*;
 
+    // Presets are validated against the real provider registry, so the tests
+    // (only) reach into the API layer for it. Local wrappers shadow the
+    // glob-imported entry points so each test reads as before.
+    fn catalog() -> Vec<ExternalProviderCatalogItem> {
+        crate::api::provider_catalog_items()
+    }
+
+    fn type_presets_response(language: Option<&str>) -> TypePresetsResponse {
+        super::type_presets_response(language, &catalog())
+    }
+
+    fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePresetsResponse {
+        super::resolve_presets(request, &catalog())
+    }
+
+    fn suggested_lists(types: &[EntityTypeConfig], language: Option<&str>) -> Vec<SuggestedList> {
+        super::suggested_lists(types, language, &catalog())
+    }
+
     fn resolve(
         current: Vec<EntityTypeConfig>,
         ids: &[&str],
@@ -2550,7 +2582,8 @@ mod tests {
     }
 
     fn validate_registry_against_catalog(language: Option<&str>) {
-        let ctx = BuildCtx::new(language);
+        let catalog = catalog();
+        let ctx = BuildCtx::new(language, &catalog);
         let catalog_ids: HashSet<&str> = ctx.catalog.iter().map(|item| item.id.as_str()).collect();
         for preset in built_presets(&ctx) {
             let config = &preset.config;
@@ -2712,7 +2745,8 @@ mod tests {
     fn every_media_preset_has_a_status_role() {
         // The bug the presets fix vs. the old templates: status-driven behavior
         // needs enumRole + statusValues on the status field.
-        let ctx = BuildCtx::new(None);
+        let catalog = catalog();
+        let ctx = BuildCtx::new(None, &catalog);
         for preset in built_presets(&ctx) {
             let Some(status) = find_field(&preset.config, "status") else {
                 continue; // people/hub types have no status

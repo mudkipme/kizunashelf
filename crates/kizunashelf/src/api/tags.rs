@@ -13,7 +13,8 @@ use std::sync::Arc;
 pub(crate) async fn tags(State(state): State<AppState>) -> ApiResult<TagsResponse> {
     let library = get_library(&state).await?;
     let tags = state
-        .tags()
+        .views()
+        .tags
         .get_or_build(&library.content_revision, || async {
             Arc::new(all_tags(&library))
         })

@@ -17,13 +17,14 @@ pub(crate) use util::entity_asset_dir;
 
 use super::entities::EntityPath;
 use super::error::{ApiError, ApiResult};
-use super::mutations::{check_revision, type_config_or_err, write_entity_raw};
+use super::mutations::type_config_or_err;
 use super::state::{get_library, require_content_writes, require_host_asset_ingest, AppState};
 use crate::contract::{
     AssetDownloadItemResult, AssetDownloadPlan, AssetDownloadPlanItem, AssetDownloadRequest,
     AssetDownloadResponse, AssetIngestRequest, AssetIngestResponse, AssetUploadRequest,
     AssetUploadResponse,
 };
+use crate::library::{check_revision, write_entity_raw};
 use crate::library::{
     file_revision, load_entity, serialize_markdown_document, split_markdown_document,
 };

@@ -2,17 +2,19 @@ use super::assets::entity_asset_dir;
 use super::entities::EntityPath;
 use super::error::{ApiError, ApiResult};
 use super::lists::list_file_paths;
-use super::state::{get_library, require_content_writes, AppState, ContentMutationGuard};
+use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CreateEntityRequest, DeleteEntityRequest, DeleteEntityResponse, EntityMutationResponse,
     RenameLinkUpdate, UpdateEntityRequest,
 };
 use crate::daily_notes::normalize_wikilink_target;
 use crate::library::{
-    file_revision, find_target, load_entity, normalize_full_target,
-    normalized_entity_basename_index, parse_daily_note_source_id, rewrite_backlink_wikilinks,
+    check_revision, edit_entity_document_locked, entity_create_path, file_revision, find_target,
+    load_entity, move_to_trash, normalize_full_target, normalized_entity_basename_index,
+    parent_dir, parse_daily_note_source_id, rewrite_backlink_wikilinks, rewrite_file_best_effort,
     rewrite_self_wikilinks, rewrite_wikilinks_matching, serialize_markdown_document,
-    split_markdown_document, MarkdownDocument,
+    split_markdown_document, write_entity_raw, write_new_entity_file, ContentMutationGuard,
+    MarkdownDocument,
 };
 use crate::types::{EntityTypeConfig, KizunaConfig, Library, RelationDirection};
 use crate::vfs::Vfs;
@@ -124,6 +126,7 @@ pub(crate) async fn update_entity(
     // must run before the cache is invalidated (it reads the pre-rename graph).
     let updated_links = if let Some(new_basename) = &renamed_basename {
         let update = update_rename_backlinks(
+            &mutation,
             &library,
             vfs.as_ref(),
             &path.id,
@@ -281,56 +284,6 @@ fn rewrite_asset_prefix(frontmatter: &mut Map<String, Value>, old_dir: &str, new
     }
 }
 
-/// Moves an entity's Markdown file into the vault's `.trash` folder, mirroring
-/// Obsidian's local trash. Returns the vault-relative trash path. Disambiguates
-/// name collisions by appending ` 1`, ` 2`, … before the extension.
-pub(super) async fn move_to_trash(
-    _guard: &ContentMutationGuard<'_>,
-    vfs: &dyn Vfs,
-    source_relative: &str,
-) -> Result<String> {
-    let file_name = source_relative
-        .rsplit('/')
-        .next()
-        .filter(|name| !name.is_empty())
-        .ok_or_else(|| anyhow::anyhow!("entity path has no file name"))?;
-    vfs.create_dir_all(".trash")
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to create trash directory: {error}"))?;
-    let dest = unique_path(vfs, ".trash", file_name).await;
-    vfs.rename(source_relative, &dest)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to move entity to trash {dest}: {error}"))?;
-    Ok(dest)
-}
-
-/// Returns a vault-relative path for `file_name` inside `dir`, appending ` 1`,
-/// ` 2`, … before the extension if a file with that name already exists.
-async fn unique_path(vfs: &dyn Vfs, dir: &str, file_name: &str) -> String {
-    let candidate = format!("{dir}/{file_name}");
-    if !vfs.exists(&candidate).await.unwrap_or(false) {
-        return candidate;
-    }
-    let name = Path::new(file_name);
-    let stem = name
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or(file_name);
-    let extension = name.extension().and_then(|s| s.to_str());
-    let mut counter = 1;
-    loop {
-        let candidate_name = match extension {
-            Some(extension) => format!("{stem} {counter}.{extension}"),
-            None => format!("{stem} {counter}"),
-        };
-        let candidate = format!("{dir}/{candidate_name}");
-        if !vfs.exists(&candidate).await.unwrap_or(false) {
-            return candidate;
-        }
-        counter += 1;
-    }
-}
-
 /// Moves an entity's asset directory into the vault's `.trash` folder, mirroring
 /// its vault-relative path. Best-effort and non-fatal.
 async fn trash_entity_assets(vfs: &dyn Vfs, asset_dir_relative: &str) {
@@ -348,16 +301,6 @@ async fn trash_entity_assets(vfs: &dyn Vfs, asset_dir_relative: &str) {
         }
     }
     let _ = vfs.rename(asset_dir_relative, &dest).await;
-}
-
-/// Optimistic-concurrency guard: rejects a write whose client-supplied `expected`
-/// revision no longer matches the entity's `actual` revision, with the uniform 409
-/// shared by every entity/asset write path.
-pub(super) fn check_revision(expected: &str, actual: &str) -> Result<(), ApiError> {
-    if expected != actual {
-        return Err(ApiError::conflict("Entity changed since it was loaded"));
-    }
-    Ok(())
 }
 
 /// Performs the shared entity read → fresh revision check → parse → mutate →
@@ -381,35 +324,6 @@ where
         state.invalidate_cache().await;
     }
     Ok(value)
-}
-
-/// The guarded Markdown edit primitive for callers that already hold the
-/// AppState content-mutation lock across a larger multi-file transaction.
-pub(super) async fn edit_entity_document_locked<T, F>(
-    guard: &ContentMutationGuard<'_>,
-    vfs: &dyn Vfs,
-    relative: &str,
-    expected_revision: &str,
-    edit: F,
-) -> Result<(T, bool), ApiError>
-where
-    F: FnOnce(&mut MarkdownDocument) -> Result<T, ApiError>,
-{
-    let raw = vfs
-        .read_to_string(relative)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to read entity {relative}: {error}"))?;
-    check_revision(expected_revision, &file_revision(&raw))?;
-
-    let mut document = split_markdown_document(&raw);
-    let value = edit(&mut document)?;
-    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-    let changed = new_raw != raw;
-    if changed {
-        write_entity_raw(guard, vfs, relative, &new_raw).await?;
-    }
-
-    Ok((value, changed))
 }
 
 /// Resolve an entity's declared type against the schema, with the uniform 400
@@ -588,45 +502,6 @@ fn is_reserved_windows_name(basename: &str) -> bool {
             && upper.as_bytes()[3].is_ascii_digit())
 }
 
-/// Vault-relative path for a new entity file under its type directory.
-pub(super) fn entity_create_path(
-    taxonomy_root: &str,
-    type_config: &EntityTypeConfig,
-    basename: &str,
-) -> String {
-    format!(
-        "{}/{}/{basename}.md",
-        taxonomy_root.trim_end_matches('/'),
-        type_config.path
-    )
-}
-
-/// Writes a brand-new entity file at `{taxonomy_root}/{type.path}/{basename}.md`,
-/// returning its vault-relative path. Errors with 409 if the exact path already
-/// exists. Shared by the manual create handler and quick-add (which resolves a
-/// free basename first). Assumes `basename` is already validated.
-pub(super) async fn write_new_entity_file(
-    guard: &ContentMutationGuard<'_>,
-    vfs: &dyn Vfs,
-    taxonomy_root: &str,
-    type_config: &EntityTypeConfig,
-    basename: &str,
-    frontmatter: &Map<String, Value>,
-    body: &str,
-) -> Result<String, ApiError> {
-    let path = entity_create_path(taxonomy_root, type_config, basename);
-    if vfs
-        .exists(&path)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to check entity path: {error}"))?
-    {
-        return Err(ApiError::conflict("Entity file already exists"));
-    }
-    let raw = serialize_markdown_document(frontmatter, body);
-    write_entity_raw(guard, vfs, &path, &raw).await?;
-    Ok(path)
-}
-
 /// Picks a free basename for a new entity: the derived title if its path is free
 /// and not wikilink-ambiguous with an existing entity of the same type, else the
 /// disambiguation candidates (` (year)`, ` (provider)`, numeric) in order. The
@@ -670,33 +545,6 @@ pub(super) async fn resolve_free_basename(
     ))
 }
 
-/// Writes an entity's raw Markdown to a vault-relative path, creating parent
-/// directories. Containment is enforced by the VFS's path normalization.
-///
-/// The active VFS supplies the atomic replacement mechanism, so a crash or a
-/// concurrent reader never observes a truncated half-written Markdown file.
-pub(super) async fn write_entity_raw(
-    _guard: &ContentMutationGuard<'_>,
-    vfs: &dyn Vfs,
-    relative: &str,
-    raw: &str,
-) -> Result<()> {
-    if let Some(parent) = parent_dir(relative) {
-        vfs.create_dir_all(parent).await.map_err(|error| {
-            anyhow::anyhow!("failed to create entity directory {parent}: {error}")
-        })?;
-    }
-    vfs.write_atomic(relative, raw.as_bytes())
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to write entity {relative}: {error}"))
-}
-
-/// Parent directory of a vault-relative path, or `None` when it lives at the
-/// vault root.
-pub(super) fn parent_dir(relative: &str) -> Option<&str> {
-    relative.rsplit_once('/').map(|(parent, _)| parent)
-}
-
 /// Repoints inbound `[[wikilinks]]` after an entity is renamed from
 /// `old_basename` to `new_basename`. The loaded relation graph already knows
 /// exactly which managed files link to the renamed entity (configured type
@@ -709,6 +557,7 @@ pub(super) fn parent_dir(relative: &str) -> Option<&str> {
 /// feature) and no file is left half-written. The rename itself has already
 /// committed, so the worst case degrades to today's behavior rather than error.
 async fn update_rename_backlinks(
+    guard: &ContentMutationGuard<'_>,
     library: &Library,
     vfs: &dyn Vfs,
     old_id: &str,
@@ -741,7 +590,7 @@ async fn update_rename_backlinks(
     let mut files = 0u32;
     let mut links = 0u32;
     for (path, old_targets) in per_file {
-        let changed = rewrite_managed_file(vfs, &path, |raw| {
+        let changed = rewrite_file_best_effort(guard, vfs, &path, |raw| {
             rewrite_backlink_wikilinks(raw, &old_targets, new_basename)
         })
         .await;
@@ -753,7 +602,7 @@ async fn update_rename_backlinks(
 
     // The renamed file's own self-references (e.g. `[[Old]]` in its body, which
     // the relation graph drops as a self-edge).
-    let self_changed = rewrite_managed_file(vfs, renamed_file_path, |raw| {
+    let self_changed = rewrite_file_best_effort(guard, vfs, renamed_file_path, |raw| {
         rewrite_self_wikilinks(raw, old_basename, new_basename)
     })
     .await;
@@ -774,7 +623,7 @@ async fn update_rename_backlinks(
     if !list_paths.is_empty() {
         let by_basename = normalized_entity_basename_index(&library.records);
         for path in list_paths {
-            let changed = rewrite_managed_file(vfs, &path, |raw| {
+            let changed = rewrite_file_best_effort(guard, vfs, &path, |raw| {
                 rewrite_wikilinks_matching(raw, new_basename, |target| {
                     find_target(target, None, &by_basename)
                         .is_some_and(|record| record.summary.id == old_id)
@@ -801,27 +650,6 @@ fn rename_source_path(library: &Library, source_id: &str) -> Option<String> {
             .record_by_id(source_id)
             .map(|record| record.summary.path.clone())
     }
-}
-
-/// Reads `path`, applies `rewrite`, and atomically writes it back only if the
-/// rewrite changed anything. Returns the number of links changed (0 on any I/O
-/// error, keeping the caller best-effort).
-async fn rewrite_managed_file(
-    vfs: &dyn Vfs,
-    path: &str,
-    rewrite: impl FnOnce(&str) -> (String, usize),
-) -> u32 {
-    let Ok(raw) = vfs.read_to_string(path).await else {
-        return 0;
-    };
-    let (rewritten, count) = rewrite(&raw);
-    if count == 0 {
-        return 0;
-    }
-    if vfs.write_atomic(path, rewritten.as_bytes()).await.is_err() {
-        return 0;
-    }
-    count as u32
 }
 
 #[cfg(test)]
@@ -1010,12 +838,6 @@ mod tests {
             !target.contains_key("drop"),
             "a null patch value removes the key"
         );
-    }
-
-    #[test]
-    fn parent_dir_returns_the_directory_or_none_at_root() {
-        assert_eq!(parent_dir("Taxonomy/Anime/Foo.md"), Some("Taxonomy/Anime"));
-        assert_eq!(parent_dir("Foo.md"), None);
     }
 
     #[test]

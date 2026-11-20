@@ -9,9 +9,11 @@ use super::util::{
     value_to_list,
 };
 use crate::api::error::ApiError;
-use crate::api::mutations::{check_revision, edit_entity_document, parent_dir};
-use crate::api::state::{AppState, ContentMutationGuard};
+use crate::api::mutations::edit_entity_document;
+use crate::api::state::AppState;
 use crate::contract::{AssetDownloadItemResult, AssetDownloadStatus};
+use crate::library::ContentMutationGuard;
+use crate::library::{check_revision, parent_dir};
 use crate::library::{file_revision, split_markdown_document};
 use crate::types::{EntityRecord, EntityTypeConfig, FieldType};
 use crate::vfs::{Vfs, VfsError};

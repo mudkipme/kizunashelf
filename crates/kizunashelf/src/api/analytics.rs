@@ -39,7 +39,8 @@ pub(crate) async fn analytics(State(state): State<AppState>) -> ApiResult<Analyt
     // The memo single-flights the whole-library scan: concurrent first hits would
     // otherwise each run it. See [`RevisionMemo::get_or_build`].
     let response = state
-        .analytics()
+        .views()
+        .analytics
         .get_or_build(&library.content_revision, || async {
             std::sync::Arc::new(build_analytics(&library))
         })
@@ -65,7 +66,8 @@ pub(crate) async fn cleanup_queues(
     // reused within a day and recomputed when the local date rolls over.
     let memo_key = format!("{}|{today}", library.content_revision);
     let response = state
-        .cleanup()
+        .views()
+        .cleanup
         .get_or_build(&memo_key, || async {
             let vfs = state.vault_vfs(&library.config.vault_root);
             let (broken_assets, broken_total) = broken_local_assets(&library, vfs.as_ref()).await;

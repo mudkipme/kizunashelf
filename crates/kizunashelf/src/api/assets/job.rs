@@ -59,7 +59,7 @@ pub(crate) async fn create_asset_job(
         .map(|entity_type| format!("type:{entity_type}"))
         .unwrap_or_else(|| "all".to_string());
     let job = AssetDownloadJob {
-        id: state.next_asset_job_id(),
+        id: state.jobs().next_asset_job_id(),
         status: AssetDownloadJobStatus::Queued,
         scope,
         total: entity_ids.len() as u32,
@@ -77,6 +77,7 @@ pub(crate) async fn create_asset_job(
     // against the same hosts. The check-and-insert is atomic (one lock) so two
     // simultaneous requests can't both slip through.
     let inserted = state
+        .jobs()
         .insert_asset_job_if_idle(AssetJobRecord {
             job: job.clone(),
             cancel: Arc::clone(&cancel),
@@ -98,7 +99,7 @@ pub(crate) async fn create_asset_job(
 pub(crate) async fn list_asset_jobs(
     State(state): State<AppState>,
 ) -> ApiResult<AssetDownloadJobListResponse> {
-    let jobs = state.asset_jobs().lock().await;
+    let jobs = state.jobs().asset_jobs().lock().await;
     let mut jobs: Vec<AssetDownloadJob> = jobs.values().map(|record| record.job.clone()).collect();
     jobs.sort_by(|a, b| b.started_at.cmp(&a.started_at));
     Ok(Json(AssetDownloadJobListResponse { jobs }))
@@ -108,7 +109,7 @@ pub(crate) async fn get_asset_job(
     State(state): State<AppState>,
     AxumPath(path): AxumPath<JobPath>,
 ) -> ApiResult<AssetDownloadJob> {
-    let jobs = state.asset_jobs().lock().await;
+    let jobs = state.jobs().asset_jobs().lock().await;
     jobs.get(&path.id)
         .map(|record| Json(record.job.clone()))
         .ok_or_else(|| ApiError::not_found("Job not found"))
@@ -118,7 +119,7 @@ pub(crate) async fn cancel_asset_job(
     State(state): State<AppState>,
     AxumPath(path): AxumPath<JobPath>,
 ) -> ApiResult<AssetDownloadJob> {
-    let mut jobs = state.asset_jobs().lock().await;
+    let mut jobs = state.jobs().asset_jobs().lock().await;
     let Some(record) = jobs.get_mut(&path.id) else {
         return Err(ApiError::not_found("Job not found"));
     };
@@ -140,6 +141,7 @@ async fn run_asset_job(
     // A cancel may have landed between insertion and this task starting. Keep the
     // requested `Cancelling` state instead of resurrecting the job as running.
     state
+        .jobs()
         .update_asset_job(&job_id, |job| {
             if job.status == AssetDownloadJobStatus::Queued {
                 job.status = AssetDownloadJobStatus::Running;
@@ -152,6 +154,7 @@ async fn run_asset_job(
         Err(error) => {
             let message = error.to_string();
             state
+                .jobs()
                 .update_asset_job(&job_id, |job| {
                     job.status = AssetDownloadJobStatus::Failed;
                     job.finished_at = Some(now_iso());
@@ -193,6 +196,7 @@ async fn run_asset_job(
             }
             let Some(entity) = library.record_by_id(&entity_id).cloned() else {
                 task_state
+                    .jobs()
                     .update_asset_job(&job_id, |job| job.processed += 1)
                     .await;
                 return;
@@ -203,6 +207,7 @@ async fn run_asset_job(
                 .cloned()
             else {
                 task_state
+                    .jobs()
                     .update_asset_job(&job_id, |job| job.processed += 1)
                     .await;
                 return;
@@ -234,6 +239,7 @@ async fn run_asset_job(
             };
 
             task_state
+                .jobs()
                 .update_asset_job(&job_id, |job| {
                     job.processed += 1;
                     job.downloaded += downloaded;
@@ -257,6 +263,7 @@ async fn run_asset_job(
 
     let cancelled = cancel.load(Ordering::Relaxed);
     state
+        .jobs()
         .update_asset_job(&job_id, |job| {
             job.status = if cancelled {
                 AssetDownloadJobStatus::Cancelled
@@ -329,7 +336,7 @@ mod tests {
     }
 
     async fn status(state: &AppState, id: &str) -> AssetDownloadJobStatus {
-        state.asset_jobs().lock().await[id].job.status
+        state.jobs().asset_jobs().lock().await[id].job.status
     }
 
     #[tokio::test]
@@ -337,6 +344,7 @@ mod tests {
         let state = test_state();
         assert!(
             state
+                .jobs()
                 .insert_asset_job_if_idle(record("a", AssetDownloadJobStatus::Running))
                 .await
         );
@@ -349,12 +357,14 @@ mod tests {
         assert_eq!(cancelled.status, AssetDownloadJobStatus::Cancelling);
         assert!(
             !state
+                .jobs()
                 .insert_asset_job_if_idle(record("b", AssetDownloadJobStatus::Queued))
                 .await
         );
 
         // The worker owns the terminal transition and the slot is released after it.
         state
+            .jobs()
             .update_asset_job("a", |job| {
                 job.status = AssetDownloadJobStatus::Cancelled;
                 job.finished_at = Some(now_iso());
@@ -362,6 +372,7 @@ mod tests {
             .await;
         assert!(
             state
+                .jobs()
                 .insert_asset_job_if_idle(record("b", AssetDownloadJobStatus::Queued))
                 .await
         );
@@ -372,6 +383,7 @@ mod tests {
         let state = test_state();
         assert!(
             state
+                .jobs()
                 .insert_asset_job_if_idle(record("a", AssetDownloadJobStatus::Queued))
                 .await
         );
@@ -385,7 +397,7 @@ mod tests {
         .await;
 
         assert_eq!(status(&state, "a").await, AssetDownloadJobStatus::Failed);
-        assert!(state.asset_jobs().lock().await["a"]
+        assert!(state.jobs().asset_jobs().lock().await["a"]
             .job
             .finished_at
             .is_some());

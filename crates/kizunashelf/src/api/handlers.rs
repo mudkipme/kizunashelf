@@ -1,5 +1,4 @@
 use super::error::{ApiError, ApiResult};
-use super::mutations::check_revision;
 use super::state::{content_writes_enabled, get_library, revalidate_library, AppState};
 use crate::calendar::{
     build_activity, build_calendar, ActivityBuildOptions, ActivityMode, ActivityResponse,
@@ -12,6 +11,7 @@ use crate::contract::{
     SaveSettingsRequest, SettingsConfigResponse, TypePresetsResponse, VaultChangesResponse,
 };
 use crate::dates::clamp_number;
+use crate::library::check_revision;
 use crate::library::file_revision;
 use crate::vfs::Vfs;
 use axum::extract::{Query, State};
@@ -44,6 +44,7 @@ pub(crate) async fn type_presets(
 ) -> Json<TypePresetsResponse> {
     Json(crate::presets::type_presets_response(
         query.language.as_deref(),
+        &super::external::provider_catalog_items(),
     ))
 }
 
@@ -53,7 +54,10 @@ pub(crate) async fn type_presets(
 pub(crate) async fn resolve_type_presets(
     Json(request): Json<ResolveTypePresetsRequest>,
 ) -> Json<ResolveTypePresetsResponse> {
-    Json(crate::presets::resolve_presets(&request))
+    Json(crate::presets::resolve_presets(
+        &request,
+        &super::external::provider_catalog_items(),
+    ))
 }
 
 pub(crate) async fn duplicate_entity_type(
@@ -311,7 +315,7 @@ async fn check_config_revision(vfs: &dyn Vfs, expected: Option<&str>) -> Result<
         .await
         .map_err(ApiError::from)?;
     let actual = latest.as_deref().map(file_revision).unwrap_or_default();
-    check_revision(expected, &actual)
+    Ok(check_revision(expected, &actual)?)
 }
 
 #[derive(Deserialize, JsonSchema)]

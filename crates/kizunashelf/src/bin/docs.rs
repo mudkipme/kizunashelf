@@ -406,7 +406,7 @@ fn providers_page() -> String {
 
 /// Per-language preset summaries keyed by preset id.
 fn summaries_by_id(language: &str) -> BTreeMap<String, TypePresetSummary> {
-    type_presets_response(Some(language))
+    type_presets_response(Some(language), &provider_catalog_items())
         .presets
         .into_iter()
         .map(|summary| (summary.id.clone(), summary))
@@ -414,7 +414,8 @@ fn summaries_by_id(language: &str) -> BTreeMap<String, TypePresetSummary> {
 }
 
 fn presets_page() -> Result<String> {
-    let en = type_presets_response(Some("en"));
+    let catalog = provider_catalog_items();
+    let en = type_presets_response(Some("en"), &catalog);
     let ja = summaries_by_id("ja");
     let zh_hans = summaries_by_id("zh-Hans");
     let zh_hant = summaries_by_id("zh-Hant");
@@ -423,11 +424,14 @@ fn presets_page() -> Result<String> {
     // relation fields survive — exactly what onboarding does when all presets
     // are picked.
     let preset_ids: Vec<String> = en.presets.iter().map(|preset| preset.id.clone()).collect();
-    let resolved = resolve_presets(&ResolveTypePresetsRequest {
-        current_types: Vec::new(),
-        preset_ids: preset_ids.clone(),
-        language: Some("en".to_string()),
-    });
+    let resolved = resolve_presets(
+        &ResolveTypePresetsRequest {
+            current_types: Vec::new(),
+            preset_ids: preset_ids.clone(),
+            language: Some("en".to_string()),
+        },
+        &catalog,
+    );
     ensure!(
         resolved.collisions.is_empty(),
         "resolving all presets against an empty schema should not collide"
@@ -441,7 +445,7 @@ fn presets_page() -> Result<String> {
         .zip(resolved.types.iter())
         .map(|(id, config)| (id.as_str(), config))
         .collect();
-    let suggestions = kizunashelf::presets::suggested_lists(&resolved.types, Some("en"));
+    let suggestions = kizunashelf::presets::suggested_lists(&resolved.types, Some("en"), &catalog);
     let suggested_lists: BTreeMap<&str, &kizunashelf::presets::SuggestedList> = suggestions
         .iter()
         .map(|section| (section.entity_type.as_str(), section))

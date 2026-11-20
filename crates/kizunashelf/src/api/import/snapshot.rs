@@ -48,7 +48,7 @@ pub(crate) async fn export_import_plan(
     let _mutation = state.content_mutation_lock().await;
     state.invalidate_cache().await;
     let library = require_content_writes(&state).await?;
-    let jobs = state.import_jobs().lock().await;
+    let jobs = state.jobs().import_jobs().lock().await;
     let record = jobs
         .get(&path.id)
         .ok_or_else(|| ApiError::not_found("Import job not found"))?;
@@ -82,7 +82,7 @@ pub(crate) async fn restore_import_plan(
     State(state): State<AppState>,
     Json(request): Json<ImportPlanSnapshot>,
 ) -> ApiResult<ImportJob> {
-    state.import_recovery().check()?;
+    state.jobs().import_recovery().check()?;
     let identity = identity(&state)?;
     if request.snapshot.len() > MAX_SNAPSHOT_BYTES {
         return Err(ApiError::bad_request(
@@ -138,7 +138,7 @@ pub(crate) async fn restore_import_plan(
     }
     // Never replace a live/terminal job with an older journal copy, even after a
     // lost restore response. A repeated restore is allowed only for the same plan.
-    let mut jobs = state.import_jobs().lock().await;
+    let mut jobs = state.jobs().import_jobs().lock().await;
     if let Some(existing) = jobs.get(&snapshot.job.id) {
         if serde_json::to_value(&existing.job)? == serde_json::to_value(&snapshot.job)?
             && serde_json::to_value(&existing.items)? == serde_json::to_value(&snapshot.items)?
@@ -168,7 +168,7 @@ pub(crate) async fn restore_import_plan(
         },
     );
     if let Some(record) = jobs.get(&job.id) {
-        state.import_recovery().save(record).await?;
+        state.jobs().import_recovery().save(record).await?;
     }
     Ok(Json(job))
 }
