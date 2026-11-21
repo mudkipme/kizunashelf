@@ -1,6 +1,6 @@
 {
   "name": "@kizunashelf/desktop",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "private": true,
   "license": "MPL-2.0",
   "type": "module",
@@ -8,6 +8,6 @@
     "tauri": "tauri"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.12.4"
+    "@tauri-apps/cli": "^2.12.6"
   }
 }
