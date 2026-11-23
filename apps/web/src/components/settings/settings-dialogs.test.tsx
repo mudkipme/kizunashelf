@@ -225,7 +225,7 @@ it("rejects a copy completed after the schema draft changes", async () => {
   await screen.getByRole("button", { name: "Add", exact: true }).click();
   await screen.rerender(view([source, copy]));
   complete({ entityType: copy });
-  await expect.element(screen.getByRole("alert")).toHaveTextContent("The schema draft changed");
+  await expect.element(screen.getByRole("alert")).toMatchTextContent("The schema draft changed");
   expect(changed).not.toHaveBeenCalled();
 });
 

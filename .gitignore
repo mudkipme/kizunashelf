@@ -25,6 +25,7 @@ manual/build/
 manual/.docusaurus/
 __screenshots__/
 .vitest-attachments/
+.vitest/
 # Bundled default provider credentials (real keys) — copy values.rs.example
 # to values.rs locally; never commit.
 crates/kizunashelf/src/secrets/bundled/values.rs

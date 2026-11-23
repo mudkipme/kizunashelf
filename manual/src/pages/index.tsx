@@ -28,6 +28,7 @@ const METADATA_SOURCES = [
   "Hardcover",
   "MangaUpdates",
   "Comic Vine",
+  "Eventernote",
 ];
 
 const IMPORT_SOURCES = [

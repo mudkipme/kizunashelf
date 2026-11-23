@@ -99,7 +99,7 @@ describe("command palette", () => {
 
     // Entities lead the list once there is a query, so Enter goes straight
     // there without arrowing past the navigation matches.
-    await expect.element(screen.getByRole("option").first()).toHaveTextContent("Frieren");
+    await expect.element(screen.getByRole("option").first()).toMatchTextContent("Frieren");
     await userEvent.keyboard("{Enter}");
 
     await expect.element(screen.getByTestId("path")).toHaveTextContent("/entities/anime%2FFrieren");

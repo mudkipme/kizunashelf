@@ -70,6 +70,7 @@ External metadata matching is available for:
 - **Games and board games:** IGDB, Steam, and BoardGameGeek.
 - **Books, manga, comics, and general works:** Google Books, Open Library, Hardcover, MangaUpdates, Comic Vine, and NeoDB.
 - **Music and podcasts:** MusicBrainz, Apple Music, Discogs, and Apple Podcasts.
+- **Live events, performers, and venues:** Eventernote.
 
 KizunaShelf can import a library from MyAnimeList, AniList, Kitsu, Trakt, Steam, and public Bangumi profiles, or from IMDb, Goodreads, and Yamtrack CSV exports. Before anything is written, the import plan shows what will be created, what needs review, and what is already present.
 

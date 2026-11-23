@@ -149,7 +149,7 @@ describe("FieldValueInput dispatch", () => {
     await expect.element(trigger).toHaveTextContent("Pick a date");
 
     await trigger.click();
-    await screen.getByRole("gridcell", { name: "15" }).first().click();
+    await screen.getByRole("grid").getByText("15").click();
 
     // Whatever the calendar renders locally, the vault stores plain ISO.
     expect(onChange).toHaveBeenLastCalledWith(expect.stringMatching(/^\d{4}-\d{2}-15$/));

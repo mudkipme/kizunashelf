@@ -23,6 +23,8 @@ it("names each date by its schema label, not just its value", async () => {
     ],
   });
   const screen = await render(<EntityDateList entity={entity} labelsByType={labelsByType} />);
-  await expect.element(screen.getByTitle(/^Premiere: /)).toHaveTextContent(/^Premiere.*2023/);
-  await expect.element(screen.getByTitle(/^Finished on: /)).toHaveTextContent(/^Finished on.*2026/);
+  await expect.element(screen.getByTitle(/^Premiere: /)).toMatchTextContent(/^Premiere.*2023/);
+  await expect
+    .element(screen.getByTitle(/^Finished on: /))
+    .toMatchTextContent(/^Finished on.*2026/);
 });

@@ -64,7 +64,7 @@ it("requires every conflict to be chosen before accepting, and cancellation does
     />,
   );
   await expect.element(screen.getByRole("button", { name: "Use reviewed draft" })).toBeDisabled();
-  await screen.getByRole("radio", { name: "My edits" }).click();
+  await screen.getByRole("radio", { name: "My edits", exact: false }).click();
   await screen.getByRole("button", { name: "Use reviewed draft" }).click();
   expect(accept.mock.calls[0][0].frontmatter.title).toBe("Mine");
   await screen.getByRole("button", { name: "Keep editing" }).click();

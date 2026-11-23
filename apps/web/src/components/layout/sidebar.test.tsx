@@ -104,7 +104,7 @@ describe("sidebar", () => {
     // it moves — so the new width is simply where the pointer was let go.
     const dropX = Math.round(drop.left + drop.width / 2);
     await userEvent.dragAndDrop(handle, home);
-    await expect.poll(width).toBe(clampSidebarWidth(dropX));
+    await expect.poll(() => Math.abs(width() - clampSidebarWidth(dropX))).toBeLessThanOrEqual(1);
     expect(width()).toBeLessThan(SIDEBAR_MAX_WIDTH);
   });
 

@@ -136,7 +136,7 @@ it.each(["upload", "save"])(
       state.save.mockRejectedValueOnce(new Error("Save interrupted"));
     }
     await screen.getByRole("button", { name: "Create", exact: true }).click();
-    await expect.element(screen.getByRole("alert")).toHaveTextContent("interrupted");
+    await expect.element(screen.getByRole("alert")).toMatchTextContent("interrupted");
     await expect.poll(() => document.querySelectorAll('img[src^="blob:"]').length).toBe(3);
     expect(JSON.stringify(state.add.mock.calls)).not.toContain("blob:");
     await screen.getByRole("link", { name: "Library", exact: true }).click();

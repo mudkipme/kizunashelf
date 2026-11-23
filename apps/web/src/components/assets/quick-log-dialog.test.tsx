@@ -35,7 +35,7 @@ it("keeps the note on conflict and previews the same draft with the explicitly r
   await screen.getByRole("textbox", { name: /Note/ }).fill("Episode 4");
   await expect.element(screen.getByRole("button", { name: "Log", exact: true })).toBeEnabled();
   await screen.getByRole("button", { name: "Log", exact: true }).click();
-  await expect.element(screen.getByRole("alert")).toHaveTextContent("Your edits are kept");
+  await expect.element(screen.getByRole("alert")).toMatchTextContent("Your edits are kept");
   expect(close).not.toHaveBeenCalled();
   state.revision = "r2";
   await screen.getByRole("button", { name: "Reload" }).click();
