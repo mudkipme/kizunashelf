@@ -11,6 +11,7 @@ mod bangumi;
 mod bgg;
 mod comicvine;
 mod discogs;
+mod eventernote;
 mod google_books;
 mod hardcover;
 mod igdb;
@@ -282,6 +283,7 @@ fn registry() -> Vec<ProviderEntry> {
         entry::<hardcover::HardcoverProvider>(),
         entry::<neodb::NeoDbProvider>(),
         entry::<anilist::AniListProvider>(),
+        entry::<eventernote::EventernoteProvider>(),
     ]
 }
 
@@ -1373,6 +1375,9 @@ mod tests {
                 "comicvine",
             ),
             ("https://hardcover.app/books/the-hobbit", "hardcover"),
+            ("https://www.eventernote.com/events/464506", "eventernote"),
+            ("https://www.eventernote.com/actors/28", "eventernote"),
+            ("https://www.eventernote.com/places/138", "eventernote"),
         ];
         for (url, expected) in cases {
             assert_eq!(url_owner(url), Some(expected), "for {url}");

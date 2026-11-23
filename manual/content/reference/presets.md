@@ -311,18 +311,21 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `event` (イベント · 活动 · 活動) — Concerts, exhibitions, and events you attend.
 
+- **Provider priority**: `eventernote`
+- **Body section** "Summary": external: `eventernote.description`
 - **Daily-note log**: `- {title} {note} #Event`
 - **Suggested smart list**: "Upcoming Events", sorted by `note.date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en` | Title |
-| `cover_url` | `image` |  | Cover |
+| `title` | `title` | titleLanguage `en`; filled from `eventernote.title` | Title |
+| `cover_url` | `image` | filled from `eventernote.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Planned / Attended | Status |
 | `rating` | `rating` | ratingMax `10` | Rating |
-| `location` | `text` |  | Location |
-| `date` | `date` | dateRole `event` | Date |
-| `artist` | `relation` | relation → `artist` | Artist |
+| `location` | `text` | filled from `eventernote.place` | Location |
+| `date` | `date` | dateRole `event`; filled from `eventernote.date` | Date |
+| `eventernote_url` | `externalRef` | externalRef `eventernote` (types event) | Eventernote |
+| `artist` | `relation` | relation → `artist`; filled from `eventernote.actors` | Artist |
 | `franchise` | `relation` | relation → `franchise` | Franchise |
 

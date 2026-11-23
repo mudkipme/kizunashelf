@@ -1284,20 +1284,42 @@ fn built_presets(ctx: &BuildCtx<'_>) -> Vec<Preset> {
                     "参加的演出、展览与活动。",
                     "參加的演出、展覽與活動。",
                 ),
-                // NeoDB performances (theatre, musicals, stage plays) are the
-                // one catalog covering live events, but its coverage is
-                // overwhelmingly Chinese — seed it only for zh; every other
-                // language starts provider-less, like the hub types.
-                providers: ctx.pick(&["neodb"], &[], &[]),
-                external_types: ctx.pick(&[("neodb", &["performance"])], &[], &[]),
-                title_sources: ctx.pick(&[("neodb", "title")], &[], &[]),
+                // Eventernote backs live events across every language; zh also
+                // wires NeoDB performances (theatre, musicals, stage plays).
+                providers: ctx.pick(
+                    &["neodb", "eventernote"],
+                    &["eventernote"],
+                    &["eventernote"],
+                ),
+                external_types: ctx.pick(
+                    &[("neodb", &["performance"]), ("eventernote", &["event"])],
+                    &[("eventernote", &["event"])],
+                    &[("eventernote", &["event"])],
+                ),
+                title_sources: ctx.pick(
+                    &[("neodb", "title"), ("eventernote", "title")],
+                    &[("eventernote", "title")],
+                    &[("eventernote", "title")],
+                ),
                 original_title: ctx.pick(Some(&[("neodb", "original_title")]), None, None),
-                cover_sources: ctx.pick(&[("neodb", "cover_url")], &[], &[]),
-                summary_sources: ctx.pick(&[("neodb", "description")], &[], &[]),
-                // The event date is the *attendance* date (role Event); the
-                // production's run start is still the best default a catalog
-                // can offer, so seed it and let the user adjust on review.
-                date_sources: ctx.pick(&[("neodb", "opening_date")], &[], &[]),
+                cover_sources: ctx.pick(
+                    &[("neodb", "cover_url"), ("eventernote", "cover_url")],
+                    &[("eventernote", "cover_url")],
+                    &[("eventernote", "cover_url")],
+                ),
+                summary_sources: ctx.pick(
+                    &[("neodb", "description"), ("eventernote", "description")],
+                    &[("eventernote", "description")],
+                    &[("eventernote", "description")],
+                ),
+                // The event date is the *attendance* date (role Event); Eventernote
+                // carries exact dates and NeoDB's run start is a reasonable default
+                // the user can adjust on review.
+                date_sources: ctx.pick(
+                    &[("neodb", "opening_date"), ("eventernote", "date")],
+                    &[("eventernote", "date")],
+                    &[("eventernote", "date")],
+                ),
                 statuses: Some(&EVENT_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::EventDate,
@@ -1306,9 +1328,9 @@ fn built_presets(ctx: &BuildCtx<'_>) -> Vec<Preset> {
                 list: None,
                 extras: EVENT_EXTRAS,
                 relations: ctx.pick(
+                    &[EVENT_ARTIST_ZH_REL, FRANCHISE_REL],
                     &[EVENT_ARTIST_REL, FRANCHISE_REL],
-                    &[EVENT_ARTIST_PLAIN_REL, FRANCHISE_REL],
-                    &[EVENT_ARTIST_PLAIN_REL, FRANCHISE_REL],
+                    &[EVENT_ARTIST_REL, FRANCHISE_REL],
                 ),
                 log_hashtag: Some(l("Event", "イベント", "活动", "活動")),
             },
@@ -1362,19 +1384,17 @@ const PODCAST_HOST_REL: RelationSpec = RelationSpec {
     target: "artist",
     sources: &[("applepodcast", "host"), ("neodb", "hosts")],
 };
+const EVENT_ARTIST_ZH_REL: RelationSpec = RelationSpec {
+    field: "artist",
+    label: l("Artist", "アーティスト", "艺术家", "藝術家"),
+    target: "artist",
+    sources: &[("neodb", "performers"), ("eventernote", "actors")],
+};
 const EVENT_ARTIST_REL: RelationSpec = RelationSpec {
     field: "artist",
     label: l("Artist", "アーティスト", "艺术家", "藝術家"),
     target: "artist",
-    sources: &[("neodb", "performers")],
-};
-/// [`EVENT_ARTIST_REL`] without the NeoDB wiring — the event preset outside zh
-/// ships provider-less, so its artist link is a bare relation.
-const EVENT_ARTIST_PLAIN_REL: RelationSpec = RelationSpec {
-    field: "artist",
-    label: l("Artist", "アーティスト", "艺术家", "藝術家"),
-    target: "artist",
-    sources: &[],
+    sources: &[("eventernote", "actors")],
 };
 const GROUPS_REL: RelationSpec = RelationSpec {
     field: "groups",
@@ -1780,7 +1800,7 @@ const PERSON_EXTRAS: &[Extra] = &[Extra::Date {
 const EVENT_EXTRAS: &[Extra] = &[Extra::Text {
     field: "location",
     label: l("Location", "場所", "地点", "地點"),
-    sources: &[],
+    sources: &[("eventernote", "place")],
 }];
 
 const MUSIC_EXTRAS: &[Extra] = &[
@@ -2716,28 +2736,39 @@ mod tests {
     }
 
     #[test]
-    fn event_preset_is_neodb_backed_only_for_zh() {
-        // NeoDB's performance catalog is overwhelmingly Chinese, so only zh
-        // seeds it — including the run's opening date as the event-date
-        // default (the user adjusts it to the attended date on review).
+    fn event_preset_wires_eventernote_and_neodb_for_zh() {
         let zh = resolve(vec![], &["event"], Some("zh-Hans")).types.remove(0);
-        assert_eq!(zh.external_priority, vec!["neodb".to_string()]);
+        assert_eq!(
+            zh.external_priority,
+            vec!["neodb".to_string(), "eventernote".to_string()]
+        );
         assert!(find_field(&zh, "neodb_url").is_some());
+        assert_external_types(&zh, "eventernote", &["event"]);
         assert!(find_field(&zh, "title_original").is_some());
         let date = find_field(&zh, "date").expect("event date");
         assert_eq!(date.date_role, Some(DateRole::Event));
         assert_mapping(date, "neodb", "opening_date");
+        assert_mapping(date, "eventernote", "date");
+        let location = find_field(&zh, "location").expect("event location");
+        assert_mapping(location, "eventernote", "place");
 
         for language in [None, Some("ja"), Some("en")] {
             let other = resolve(vec![], &["event"], language).types.remove(0);
-            assert!(
-                other.external_priority.is_empty(),
-                "{language:?} event preset should be provider-less"
+            assert_eq!(
+                other.external_priority,
+                vec!["eventernote".to_string()],
+                "{language:?} event preset should be backed by eventernote"
             );
             assert!(find_field(&other, "neodb_url").is_none());
+            assert_external_types(&other, "eventernote", &["event"]);
             assert!(find_field(&other, "title_original").is_none());
             let date = find_field(&other, "date").expect("event date");
-            assert!(date.external_fields.is_empty());
+            assert_mapping(date, "eventernote", "date");
+            let location = find_field(&other, "location").expect("event location");
+            assert_mapping(location, "eventernote", "place");
+            let performer = find_field(&other, "artist").expect("performer fallback");
+            assert_eq!(performer.field_type, FieldType::TextList);
+            assert_mapping(performer, "eventernote", "actors");
         }
     }
 
@@ -2776,12 +2807,11 @@ mod tests {
         assert!(artist.relation_type.is_none());
         assert_mapping(artist, "musicbrainz", "artists");
 
-        // Same for event performers (zh — elsewhere the event preset is
-        // provider-less) and the credit-wired franchise links.
         let event = resolve(vec![], &["event"], Some("zh")).types.remove(0);
         let performer = find_field(&event, "artist").expect("performer fallback");
         assert_eq!(performer.field_type, FieldType::TextList);
         assert_mapping(performer, "neodb", "performers");
+        assert_mapping(performer, "eventernote", "actors");
 
         let books = resolve(vec![], &["books"], None).types.remove(0);
         let series = find_field(&books, "franchise").expect("series fallback");

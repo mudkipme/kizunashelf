@@ -30,6 +30,7 @@ On self-hosted web, credentials come from the listed `KIZUNASHELF_*` environment
 | [Hardcover](#hardcover) | `hardcover` | search + resolve | — | Hardcover API Token |
 | [NeoDB](#neodb) | `neodb` | search + resolve | — | none |
 | [AniList](#anilist) | `anilist` | search + resolve | yes | none |
+| [Eventernote](#eventernote) | `eventernote` | search + resolve | — | none |
 
 ## Bangumi {#bangumi}
 
@@ -630,4 +631,40 @@ Mappable fields (for `externalFields` and external body sections):
 | `synopsis` | Synopsis |
 | `genres` | Genres |
 | `studios` | Studios |
+
+## Eventernote {#eventernote}
+
+`externalRef: eventernote` — Supports free-text search and resolving a pasted URL/id.
+
+`externalTypes` values (defaults marked ✓):
+
+| Value | Meaning | Default |
+| --- | --- | --- |
+| `event` | Event |  |
+| `actor` | Artist / Voice actor |  |
+| `place` | Venue / Place |  |
+
+Mappable fields (for `externalFields` and external body sections):
+
+| Field | Meaning |
+| --- | --- |
+| `title` | Title / Name |
+| `cover_url` | Cover URL |
+| `date` | Event date |
+| `open_time` | Open time |
+| `start_time` | Start time |
+| `end_time` | End time |
+| `place` | Venue / Place |
+| `address` | Address |
+| `postal_code` | Postal code |
+| `tel` | Phone |
+| `capacity` | Capacity |
+| `official_site` | Official site |
+| `seat_url` | Seating info URL |
+| `hashtag` | Hashtag |
+| `participants_count` | Participants count |
+| `kana` | Kana |
+| `favorite_count` | Favorites count |
+| `description` | Description |
+| `actors` | Performers / Actors |
 
