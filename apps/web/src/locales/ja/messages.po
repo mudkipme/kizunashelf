@@ -2610,7 +2610,7 @@ msgstr "保存して移動"
 msgid "Save as smart list"
 msgstr "スマートリストとして保存"
 
-#: src/components/settings/provider-credentials.tsx:83
+#: src/components/settings/provider-credentials.tsx:84
 msgid "Save credentials"
 msgstr "認証情報を保存"
 
@@ -2634,7 +2634,7 @@ msgid "Saves the current type, criteria, and sort as a smart list. Your search i
 msgstr "現在のタイプ・条件・並び順をスマートリストとして保存します。検索語は含まれません。"
 
 #: src/components/assets/quick-log-dialog.tsx:274
-#: src/components/settings/provider-credentials.tsx:83
+#: src/components/settings/provider-credentials.tsx:84
 #: src/components/settings/raw-config-editor.tsx:134
 #: src/components/settings/settings-editor.tsx:228
 #: src/pages/entity-create-page.tsx:164
@@ -2953,8 +2953,8 @@ msgid "Stored in the vault. Taxonomy, assets, daily notes, and types — synced 
 msgstr "保管庫に保存されます。分類、アセット、デイリーノート、タイプは保管庫と同期されます。"
 
 #: src/components/settings/provider-credentials.tsx:58
-msgid "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
-msgstr "システムのキーチェーンに保存されます。ここに表示されているプロバイダーには認証情報が必要です。その他（例: Bangumi、Google Books）には不要です。"
+msgid "Stored in your system keychain. Leave a field blank to use a built-in key when available, or enter your own to override it."
+msgstr "システムのキーチェーンに保存されます。組み込みキーがある場合は空欄のまま使用できます。独自のキーを入力すると上書きされます。"
 
 #: src/components/settings/settings-entity-type.tsx:300
 msgid "Summary"
@@ -3270,6 +3270,10 @@ msgstr "確認した下書きを使う"
 #: src/components/settings/settings-field-form.tsx:354
 msgid "Used as"
 msgstr "用途"
+
+#: src/components/settings/provider-credentials.tsx:70
+msgid "Using built-in key"
+msgstr "組み込みキーを使用中"
 
 #: src/components/smart-lists/rule-value-input.tsx:85
 #: src/components/smart-lists/rule-value-input.tsx:116

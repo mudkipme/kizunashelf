@@ -55,7 +55,7 @@ export function ProviderCredentials({ providers }: { providers: ExternalProvider
   return (
     <SettingsSection
       title={t`Provider Credentials`}
-      description={t`Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none.`}
+      description={t`Stored in your system keychain. Leave a field blank to use a built-in key when available, or enter your own to override it.`}
     >
       <div className="flex flex-col gap-4">
         {credentialed.map((provider) => (
@@ -67,6 +67,7 @@ export function ProviderCredentials({ providers }: { providers: ExternalProvider
                   <Input
                     type={credential.secret ? "password" : "text"}
                     value={credentials[credential.key] ?? ""}
+                    placeholder={credential.hasBundledDefault ? t`Using built-in key` : undefined}
                     autoComplete="off"
                     onChange={(event) => update(credential.key)(event.target.value)}
                   />

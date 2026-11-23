@@ -7029,6 +7029,11 @@
           "required": {
             "description": "A required credential gates the provider; an optional one only refines it.",
             "type": "boolean"
+          },
+          "hasBundledDefault": {
+            "description": "Whether this build ships a compiled-in default for this credential.\nNever exposes the value itself; lets clients hint that an empty field is\nstill backed by a built-in key and that entering a value overrides it.",
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [

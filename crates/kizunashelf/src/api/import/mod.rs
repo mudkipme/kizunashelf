@@ -230,6 +230,7 @@ pub(crate) async fn list_import_sources(
                     label: credential.label.to_string(),
                     secret: credential.secret,
                     required: credential.required,
+                    has_bundled_default: crate::secrets::has_bundled_credential(credential.key),
                 })
                 .collect(),
             available: (entry.available)(&state),

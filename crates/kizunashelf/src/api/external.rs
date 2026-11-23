@@ -949,6 +949,7 @@ pub fn provider_catalog_items() -> Vec<ExternalProviderCatalogItem> {
                     label: credential.label.to_string(),
                     secret: credential.secret,
                     required: credential.required,
+                    has_bundled_default: crate::secrets::has_bundled_credential(credential.key),
                 })
                 .collect(),
             search_supported: provider_entry.searchable,

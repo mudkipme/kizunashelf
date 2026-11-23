@@ -6,11 +6,13 @@
  */
 import * as zod from 'zod';
 
+export const externalProviderCredentialFieldHasBundledDefaultDefault = false;
 export const ExternalProviderCredentialField = zod.object({
   "key": zod.string(),
   "label": zod.string(),
   "secret": zod.boolean().describe('Render as a masked\/password input and never echo back the stored value.'),
-  "required": zod.boolean().describe('A required credential gates the provider; an optional one only refines it.')
+  "required": zod.boolean().describe('A required credential gates the provider; an optional one only refines it.'),
+  "hasBundledDefault": zod.boolean().default(externalProviderCredentialFieldHasBundledDefaultDefault).describe('Whether this build ships a compiled-in default for this credential.\nNever exposes the value itself; lets clients hint that an empty field is\nstill backed by a built-in key and that entering a value overrides it.')
 }).describe('One credential input a provider requires (e.g. an API key). The `key` is the\nsecret-store key (also the `KIZUNASHELF_<UPPER_KEY>` env var on web\/desktop).')
 
 export type ExternalProviderCredentialField = zod.input<typeof ExternalProviderCredentialField>;

@@ -8,7 +8,7 @@ sidebar_position: 9
 
 Generated directly from the app's provider catalog — the same one that powers matching, Quick Capture, and the Settings credential editors — so it always matches the version you're running. A provider is wired into a type through an `externalRef` field (and optionally `externalFields` / external body sections); see [External Metadata](./external.md#external-metadata).
 
-On self-hosted web, credentials come from the listed `KIZUNASHELF_*` environment variables; on desktop use **Settings → Provider Credentials**, and on iOS use **More → Provider Credentials**. Both store credentials in the OS keychain.
+On self-hosted web, credentials come from the listed `KIZUNASHELF_*` environment variables; on desktop use **Settings → Provider Credentials**, and on iOS use **More → Provider Credentials**. Both store credentials in the OS keychain. Official builds include built-in defaults for safe app-identity credentials; any user-configured credential overrides them.
 
 | Provider | `externalRef` id | Search | Episode/track sync | Credentials |
 | --- | --- | --- | --- | --- |

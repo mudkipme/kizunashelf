@@ -28,7 +28,7 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_TRAKT_CLIENT_ID` | Trakt client id (its `trakt-api-key`) for [importing](./external.md#quick-capture-and-import) a Trakt profile. |
 | `KIZUNASHELF_STEAM_API_KEY` | Steam Web API key for importing a Steam library (`GetOwnedGames`). Distinct from the keyless store API the Steam search provider uses. |
 
-**Search-provider credentials** (IGDB, TheTVDB, TMDB, Discogs, MyAnimeList, BGG, Comic Vine, Hardcover, Google Books, …) are also plain environment variables, listed per provider — with each credential's exact env var — on the generated [External providers](./providers.md) page. Each is derived mechanically from the credential key a provider (or [import source](./external.md#quick-capture-and-import)) declares in its catalog (`KIZUNASHELF_<UPPER_KEY>`), so a new credentialed provider needs no change here. Only the web runtime reads these variables — the desktop and iOS apps store credentials in the OS keychain instead.
+**Search-provider credentials** (IGDB, TheTVDB, TMDB, Discogs, MyAnimeList, BGG, Comic Vine, Hardcover, Google Books, …) are also plain environment variables, listed per provider — with each credential's exact env var — on the generated [External providers](./providers.md) page. Each is derived mechanically from the credential key a provider (or [import source](./external.md#quick-capture-and-import)) declares in its catalog (`KIZUNASHELF_<UPPER_KEY>`), so a new credentialed provider needs no change here. Any non-empty variable overrides the built-in default compiled into official images. Only the web runtime reads these variables — the desktop and iOS apps store credentials in the OS keychain instead.
 
 ### Persistent data and caches
 

@@ -193,6 +193,11 @@ pub struct ExternalProviderCredentialField {
     pub secret: bool,
     /// A required credential gates the provider; an optional one only refines it.
     pub required: bool,
+    /// Whether this build ships a compiled-in default for this credential.
+    /// Never exposes the value itself; lets clients hint that an empty field is
+    /// still backed by a built-in key and that entering a value overrides it.
+    #[serde(default)]
+    pub has_bundled_default: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

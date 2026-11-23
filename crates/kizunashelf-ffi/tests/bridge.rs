@@ -545,12 +545,12 @@ fn ios_engine_writes_and_loads_assets_through_the_swift_filesystem() {
     assert!(missing.is_err());
 }
 
-const GAMES_CONFIG: &str = "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: games\n  label: Games\n  path: Games\n  externalPriority:\n  - igdb\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n  - field: igdb_url\n    fieldType: externalRef\n    displayName: IGDB\n    externalRef: igdb\n    externalTypes:\n    - game\n";
+const COMICS_CONFIG: &str = "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: comics\n  label: Comics\n  path: Comics\n  externalPriority:\n  - comicvine\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n  - field: comicvine_url\n    fieldType: externalRef\n    displayName: Comic Vine\n    externalRef: comicvine\n    externalTypes:\n    - comic\n";
 
-fn igdb_provider_summary(secrets: FakeSecretStore) -> Value {
+fn comicvine_provider_summary(secrets: FakeSecretStore) -> Value {
     let vault = FakeVault::default();
-    vault.seed("KizunaShelf/config.yaml", GAMES_CONFIG);
-    vault.seed("Taxonomy/Games/Zelda.md", "---\ntitle: Zelda\n---\n");
+    vault.seed("KizunaShelf/config.yaml", COMICS_CONFIG);
+    vault.seed("Taxonomy/Comics/Watchmen.md", "---\ntitle: Watchmen\n---\n");
 
     let engine = KizunaEngine::with_vault(
         VaultOptions {
@@ -570,7 +570,7 @@ fn igdb_provider_summary(secrets: FakeSecretStore) -> Value {
     // any network call, so this exercises only the credential lookup.
     let response = futures::executor::block_on(engine.request(
         "GET".to_string(),
-        "/api/external/search?provider=igdb&type=games".to_string(),
+        "/api/external/search?provider=comicvine&type=comics".to_string(),
         None,
     ))
     .expect("external search request succeeds");
@@ -581,32 +581,31 @@ fn igdb_provider_summary(secrets: FakeSecretStore) -> Value {
         .as_array()
         .unwrap()
         .iter()
-        .find(|provider| provider["id"] == "igdb")
+        .find(|provider| provider["id"] == "comicvine")
         .cloned()
-        .expect("igdb provider summary present")
+        .expect("comicvine provider summary present")
 }
 
 #[test]
 fn ios_provider_availability_reads_credentials_from_the_secret_store() {
-    use kizunashelf::secrets::{SECRET_IGDB_CLIENT_ID, SECRET_IGDB_CLIENT_SECRET};
+    use kizunashelf::secrets::SECRET_COMICVINE_API_KEY;
 
-    // No credentials in the store → IGDB is unavailable, with a "set credentials"
-    // reason routed through the injected secret store.
-    let without = igdb_provider_summary(FakeSecretStore::default());
+    // Use a non-bundleable provider so the test stays deterministic even when a
+    // local developer build includes bundled credentials for free providers.
+    let without = comicvine_provider_summary(FakeSecretStore::default());
     assert_eq!(without["enabled"], false, "summary: {without}");
     assert!(
         without["reason"]
             .as_str()
             .unwrap_or_default()
-            .contains("IGDB"),
+            .contains("Comic Vine"),
         "reason: {without}"
     );
 
-    // Credentials present in the store → IGDB becomes available.
-    let with = igdb_provider_summary(FakeSecretStore::with(&[
-        (SECRET_IGDB_CLIENT_ID, "client-id"),
-        (SECRET_IGDB_CLIENT_SECRET, "client-secret"),
-    ]));
+    let with = comicvine_provider_summary(FakeSecretStore::with(&[(
+        SECRET_COMICVINE_API_KEY,
+        "api-key",
+    )]));
     assert_eq!(with["enabled"], true, "summary: {with}");
 }
 

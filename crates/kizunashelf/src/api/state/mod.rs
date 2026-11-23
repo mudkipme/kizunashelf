@@ -26,7 +26,7 @@ pub(crate) use tokens::{CachedAccessToken, TokenCache};
 
 use super::error::ApiError;
 use crate::library::{ContentMutationGuard, ContentMutationLock};
-use crate::secrets::SecretStore;
+use crate::secrets::{LayeredSecretStore, SecretStore};
 use crate::types::{AppConfig, Library};
 use crate::vfs::{NativeVfs, Vfs};
 use library_cache::LibraryCache;
@@ -183,12 +183,15 @@ impl AppState {
         let coordination = coordination_for_identity(options.index_cache_identity.as_deref());
         let library = LibraryCache::new(Arc::clone(&coordination.generation));
         let import_recovery = super::import::recovery::ImportRecovery::open(&options);
+        let tokens = Arc::new(TokenCache::new(Arc::clone(&secret_store)));
+        let secret_store: Arc<dyn SecretStore> =
+            Arc::new(LayeredSecretStore::with_bundled_defaults(secret_store));
         Self {
             options,
             vault_fs,
             native_vault,
             app_config,
-            tokens: Arc::new(TokenCache::new(Arc::clone(&secret_store))),
+            tokens,
             secret_store,
             http_client,
             coordination,

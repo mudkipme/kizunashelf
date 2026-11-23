@@ -133,6 +133,17 @@ jobs:
           # Skip linuxdeploy's bundled strip (known issues with newer ELF files).
           # https://github.com/tauri-apps/tauri/issues/8929
           NO_STRIP: ${{ runner.os == 'Linux' && 'true' || '' }}
+          # Optional compiled-in default provider keys (user keychain always wins).
+          KIZUNASHELF_BUNDLED_TMDB_API_KEY: ${{ secrets.KIZUNASHELF_BUNDLED_TMDB_API_KEY }}
+          KIZUNASHELF_BUNDLED_TVDB_API_KEY: ${{ secrets.KIZUNASHELF_BUNDLED_TVDB_API_KEY }}
+          KIZUNASHELF_BUNDLED_MAL_CLIENT_ID: ${{ secrets.KIZUNASHELF_BUNDLED_MAL_CLIENT_ID }}
+          KIZUNASHELF_BUNDLED_IGDB_CLIENT_ID: ${{ secrets.KIZUNASHELF_BUNDLED_IGDB_CLIENT_ID }}
+          KIZUNASHELF_BUNDLED_IGDB_CLIENT_SECRET: ${{ secrets.KIZUNASHELF_BUNDLED_IGDB_CLIENT_SECRET }}
+          KIZUNASHELF_BUNDLED_BGG_API_TOKEN: ${{ secrets.KIZUNASHELF_BUNDLED_BGG_API_TOKEN }}
+          KIZUNASHELF_BUNDLED_DISCOGS_CONSUMER_KEY: ${{ secrets.KIZUNASHELF_BUNDLED_DISCOGS_CONSUMER_KEY }}
+          KIZUNASHELF_BUNDLED_DISCOGS_CONSUMER_SECRET: ${{ secrets.KIZUNASHELF_BUNDLED_DISCOGS_CONSUMER_SECRET }}
+          KIZUNASHELF_BUNDLED_GOOGLE_BOOKS_API_KEY: ${{ secrets.KIZUNASHELF_BUNDLED_GOOGLE_BOOKS_API_KEY }}
+          KIZUNASHELF_BUNDLED_TRAKT_CLIENT_ID: ${{ secrets.KIZUNASHELF_BUNDLED_TRAKT_CLIENT_ID }}
         with:
           projectPath: apps/desktop
           args: >-

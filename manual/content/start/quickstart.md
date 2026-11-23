@@ -42,7 +42,7 @@ Open `http://localhost:8787/` and complete setup. Your library is stored in the 
 
 ## Set up metadata sources
 
-For richer metadata searches on **web and desktop**, configure your own credentials for the providers you use. iOS version includes built-in credentials for most providers.
+Official iOS, desktop, and Docker builds include built-in credentials for most free providers (TMDB, TheTVDB, IGDB, MyAnimeList, BoardGameGeek, Discogs, Google Books). You can leave them unset to use the built-in keys, or configure your own to override them — and per-user providers such as Comic Vine or Hardcover, as well as self-built binaries, require your own credentials.
 
 | What you collect | Provider | Credentials |
 | --- | --- | --- |

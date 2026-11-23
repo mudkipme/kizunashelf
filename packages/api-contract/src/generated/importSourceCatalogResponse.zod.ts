@@ -6,6 +6,7 @@
  */
 import * as zod from 'zod';
 
+export const importSourceCatalogResponseSourcesItemCredentialsItemHasBundledDefaultDefault = false;
 export const ImportSourceCatalogResponse = zod.object({
   "sources": zod.array(zod.object({
   "id": zod.string(),
@@ -17,7 +18,8 @@ export const ImportSourceCatalogResponse = zod.object({
   "key": zod.string(),
   "label": zod.string(),
   "secret": zod.boolean().describe('Render as a masked\/password input and never echo back the stored value.'),
-  "required": zod.boolean().describe('A required credential gates the provider; an optional one only refines it.')
+  "required": zod.boolean().describe('A required credential gates the provider; an optional one only refines it.'),
+  "hasBundledDefault": zod.boolean().default(importSourceCatalogResponseSourcesItemCredentialsItemHasBundledDefaultDefault).describe('Whether this build ships a compiled-in default for this credential.\nNever exposes the value itself; lets clients hint that an empty field is\nstill backed by a built-in key and that entering a value overrides it.')
 }).describe('One credential input a provider requires (e.g. an API key). The `key` is the\nsecret-store key (also the `KIZUNASHELF_<UPPER_KEY>` env var on web\/desktop).')).optional(),
   "available": zod.boolean(),
   "unavailableReason": zod.string().nullish()

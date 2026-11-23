@@ -39,11 +39,36 @@ RUN pnpm --filter "@kizunashelf/web..." build
 
 # Cache the cargo registry/git and the target dir across image builds. The
 # release binary is copied out of the cache-mounted target so it survives into
-# the final image layer (cache mounts are not part of the layer).
+# the final image layer (cache mounts are not part of the layer). Optional
+# BuildKit secrets inject compiled-in default provider keys without leaking into
+# image layers or history; local builds without `--secret` skip them cleanly.
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
   --mount=type=cache,target=/usr/local/cargo/git \
   --mount=type=cache,target=/app/target \
-  cargo build --release --locked -p kizunashelf --bin kizunashelf-api \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_TMDB_API_KEY \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_TVDB_API_KEY \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_MAL_CLIENT_ID \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_IGDB_CLIENT_ID \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_IGDB_CLIENT_SECRET \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_BGG_API_TOKEN \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_DISCOGS_CONSUMER_KEY \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_DISCOGS_CONSUMER_SECRET \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_GOOGLE_BOOKS_API_KEY \
+  --mount=type=secret,id=KIZUNASHELF_BUNDLED_TRAKT_CLIENT_ID \
+  for key in \
+    KIZUNASHELF_BUNDLED_TMDB_API_KEY \
+    KIZUNASHELF_BUNDLED_TVDB_API_KEY \
+    KIZUNASHELF_BUNDLED_MAL_CLIENT_ID \
+    KIZUNASHELF_BUNDLED_IGDB_CLIENT_ID \
+    KIZUNASHELF_BUNDLED_IGDB_CLIENT_SECRET \
+    KIZUNASHELF_BUNDLED_BGG_API_TOKEN \
+    KIZUNASHELF_BUNDLED_DISCOGS_CONSUMER_KEY \
+    KIZUNASHELF_BUNDLED_DISCOGS_CONSUMER_SECRET \
+    KIZUNASHELF_BUNDLED_GOOGLE_BOOKS_API_KEY \
+    KIZUNASHELF_BUNDLED_TRAKT_CLIENT_ID; do \
+    if [ -s "/run/secrets/$key" ]; then export "$key=$(cat "/run/secrets/$key")"; fi; \
+  done \
+  && cargo build --release --locked -p kizunashelf --bin kizunashelf-api \
   && cp target/release/kizunashelf-api /usr/local/bin/kizunashelf-api
 
 FROM alpine:3.22 AS runner

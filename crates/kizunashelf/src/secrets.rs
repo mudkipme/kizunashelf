@@ -14,6 +14,11 @@
 
 use anyhow::Result;
 use std::path::PathBuf;
+use std::sync::Arc;
+
+mod bundled;
+
+pub use bundled::{get as bundled_credential, has_default as has_bundled_credential};
 
 /// The cached provider tokens, as one JSON blob (a `provider -> token` map).
 pub const SECRET_PROVIDER_TOKENS: &str = "provider_tokens";
@@ -113,6 +118,46 @@ impl SecretStore for NativeSecretStore {
     }
 }
 
+/// Wraps a host [`SecretStore`] with compiled-in bundled credential defaults.
+///
+/// A non-empty value in the inner store (runtime env vars on web, OS keychain
+/// on desktop/iOS) always wins. Writes go exclusively to the inner store so
+/// bundled defaults are never persisted.
+pub struct LayeredSecretStore {
+    inner: Arc<dyn SecretStore>,
+    fallback: fn(&str) -> Option<&'static str>,
+}
+
+impl LayeredSecretStore {
+    pub fn with_bundled_defaults(inner: Arc<dyn SecretStore>) -> Self {
+        Self {
+            inner,
+            fallback: bundled::get,
+        }
+    }
+
+    #[cfg(test)]
+    fn with_fallback(
+        inner: Arc<dyn SecretStore>,
+        fallback: fn(&str) -> Option<&'static str>,
+    ) -> Self {
+        Self { inner, fallback }
+    }
+}
+
+impl SecretStore for LayeredSecretStore {
+    fn get(&self, key: &str) -> Option<String> {
+        if let Some(value) = self.inner.get(key).filter(|value| !value.is_empty()) {
+            return Some(value);
+        }
+        (self.fallback)(key).map(str::to_string)
+    }
+
+    fn set(&self, key: &str, value: &str) -> Result<()> {
+        self.inner.set(key, value)
+    }
+}
+
 fn env_nonempty(key: &str) -> Option<String> {
     std::env::var(key).ok().filter(|value| !value.is_empty())
 }
@@ -120,7 +165,62 @@ fn env_nonempty(key: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use std::sync::Mutex;
     use tempfile::TempDir;
+
+    #[derive(Default)]
+    struct MemorySecretStore(Mutex<HashMap<String, String>>);
+
+    impl SecretStore for MemorySecretStore {
+        fn get(&self, key: &str) -> Option<String> {
+            self.0.lock().unwrap().get(key).cloned()
+        }
+
+        fn set(&self, key: &str, value: &str) -> Result<()> {
+            self.0
+                .lock()
+                .unwrap()
+                .insert(key.to_string(), value.to_string());
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn layered_store_prefers_inner_value_over_bundled_fallback() {
+        fn fallback(key: &str) -> Option<&'static str> {
+            match key {
+                SECRET_TMDB_API_KEY => Some("bundled-tmdb"),
+                SECRET_TVDB_API_KEY => Some("bundled-tvdb"),
+                _ => None,
+            }
+        }
+
+        let inner = Arc::new(MemorySecretStore::default());
+        inner.set(SECRET_TMDB_API_KEY, "user-tmdb").unwrap();
+        inner.set(SECRET_TVDB_API_KEY, "").unwrap();
+        let layered = LayeredSecretStore::with_fallback(Arc::clone(&inner) as _, fallback);
+
+        assert_eq!(
+            layered.get(SECRET_TMDB_API_KEY).as_deref(),
+            Some("user-tmdb")
+        );
+        assert_eq!(
+            layered.get(SECRET_TVDB_API_KEY).as_deref(),
+            Some("bundled-tvdb")
+        );
+        assert_eq!(layered.get(SECRET_HARDCOVER_API_KEY), None);
+
+        layered.set(SECRET_TVDB_API_KEY, "override-tvdb").unwrap();
+        assert_eq!(
+            inner.get(SECRET_TVDB_API_KEY).as_deref(),
+            Some("override-tvdb")
+        );
+        assert_eq!(
+            layered.get(SECRET_TVDB_API_KEY).as_deref(),
+            Some("override-tvdb")
+        );
+    }
 
     #[test]
     fn token_cache_round_trips_to_a_file() {
